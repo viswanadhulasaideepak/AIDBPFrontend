@@ -1,7 +1,13 @@
+// src/index.js
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App.jsx";        // extension added
-import "./styles/global.css";       // corrected filename
+import App from "./App.jsx";
+import { AuthProvider } from "./auth/AuthContext.jsx";  // 👈 include extension
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(<App />);
+
+root.render(
+  <AuthProvider>
+    <App />
+  </AuthProvider>
+);

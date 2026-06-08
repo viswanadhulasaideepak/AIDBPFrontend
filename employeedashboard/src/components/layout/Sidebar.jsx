@@ -1,17 +1,51 @@
-import { FaHome, FaUsers, FaBuilding, FaCalendarCheck, FaCog } from "react-icons/fa";
+import React, { useContext } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import "./Sidebar.css";
+import { AuthContext } from "../../auth/AuthContext";
 
 const Sidebar = () => {
+  const { user, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();               // clears localStorage + resets context
+    navigate("/login");     // redirect to login
+  };
+
+  const menuItems = [
+  { id: "dashboard", label: "📊 Dashboard", path: "/dashboard", roles: ["admin", "user"] },
+  { id: "employees", label: "👥 Employees", path: "/employees", roles: ["admin"] },
+  { id: "departments", label: "🏢 Departments", path: "/departments", roles: ["admin"] },
+  { id: "attendance", label: "📅 Attendance", path: "/attendance", roles: ["admin", "user"] },
+  { id: "auditlogs", label: "📜 Audit Logs", path: "/audit-logs", roles: ["admin"] },
+  { id: "settings", label: "⚙️ Settings", path: "/settings", roles: ["admin", "user"] },
+  
+];
+
+
   return (
-    <div className="sidebar">
-      <h3 className="sidebar-title">EMS</h3>
-      <ul>
-        <li><FaHome /> Dashboard</li>
-        <li><FaUsers /> Employees</li>
-        <li><FaBuilding /> Departments</li>
-        <li><FaCalendarCheck /> Attendance</li>
-        <li><FaCog /> Settings</li>
+    <aside className="sidebar">
+      <h2 className="sidebar-title">EEMS</h2>
+      <ul className="sidebar-links">
+        {menuItems
+          .filter((item) => item.roles.includes(user?.role)) // ✅ role-based filtering
+          .map((item) => (
+            <li key={item.id}>
+              <NavLink
+                to={item.path}
+                className={({ isActive }) => (isActive ? "active" : "")}
+              >
+                {item.label}
+              </NavLink>
+            </li>
+          ))}
       </ul>
-    </div>
+
+      {/* ✅ Fixed logout button */}
+      <button className="logout-btn" onClick={handleLogout}>
+        🚪 Logout
+      </button>
+    </aside>
   );
 };
 

@@ -1,0 +1,198 @@
+/* Page Container */
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #f5f7fa;
+}
+
+/* Card */
+.login-card {
+  background: #ffffff;
+  padding: 35px;
+  border-radius: 12px;
+  width: 400px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+/* Header */
+.login-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.login-icon { font-size: 40px; margin-bottom: 10px; }
+.login-header h2 { font-size: 1.8rem; font-weight: 700; color: #2563eb; }
+.login-header p { color: #6b7280; font-size: 0.95rem; }
+
+/* Role Buttons */
+.role-buttons { display: flex; justify-content: space-between; margin-bottom: 20px; }
+.role-btn {
+  flex: 1; margin: 0 5px; padding: 12px;
+  font-size: 15px; font-weight: 600;
+  border: 2px solid #2563eb; border-radius: 6px;
+  background-color: #fff; color: #2563eb;
+  cursor: pointer; transition: 0.3s;
+}
+.role-btn.active, .role-btn:hover { background-color: #2563eb; color: #fff; }
+
+/* Inputs */
+.form-group, .input-group { margin-bottom: 15px; text-align: left; }
+label { display: block; margin-bottom: 6px; font-weight: 600; color: #374151; }
+
+.form-group input,
+.input-field input,
+.signup-form input,
+.signup-form select {
+  width: 100%; border: 1px solid #d1d5db; border-radius: 8px;
+  padding: 10px; background: #f9fafb;
+  font-size: 1rem; color: #1e293b;
+  outline: none; transition: border-color 0.3s ease;
+}
+.form-group input::placeholder,
+.input-field input::placeholder,
+.signup-form input::placeholder { color: #94a3b8; }
+.form-group input:focus,
+.input-field input:focus,
+.signup-form input:focus,
+.signup-form select:focus { border-color: #2563eb; }
+
+/* Input wrapper with icons */
+.input-field {
+  display: flex; align-items: center;
+  border: 1px solid #d1d5db; border-radius: 8px;
+  padding: 10px; background: #f9fafb;
+}
+.input-field .icon { margin-right: 10px; color: #2563eb; }
+
+/* Signup Form Container */
+.signup-form {
+  display: flex; flex-direction: column; gap: 15px;
+  background: linear-gradient(135deg, #1e3a8a, #1e40af);
+  padding: 30px; border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+  color: #f8fafc;
+}
+
+/* Buttons */
+.login-btn, .signup-form button {
+  width: 100%; padding: 12px;
+  background: #2563eb; color: #fff;
+  border: none; border-radius: 8px;
+  font-size: 1rem; font-weight: 600;
+  cursor: pointer; transition: background-color 0.2s ease;
+}
+.login-btn:hover, .signup-form button:hover { background-color: #1e40af; }
+
+/* Signup Text */
+.signup-text {
+  text-align: center;
+  margin-top: 15px;
+  font-size: 14px;
+  color: #6b7280;
+}
+.signup-text button,
+.signup-text a {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-weight: bold;
+  cursor: pointer;
+  text-decoration: none;
+}
+.signup-text a:hover,
+.signup-text button:hover { text-decoration: underline; }
+
+/* Dark Theme Overrides */
+body.dark-theme .login-card,
+body.dark-theme .signup-form {
+  background-color: #1e293b;
+  color: #f1f5f9;
+}
+body.dark-theme .input-field,
+body.dark-theme .form-group input,
+body.dark-theme .signup-form input,
+body.dark-theme .signup-form select {
+  background-color: #334155;
+  border-color: #475569;
+  color: #f1f5f9;
+}
+
+/* Forgot Password Form */
+.forgot-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  background: linear-gradient(135deg, #9333ea, #7e22ce); /* purple accent */
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+  color: #f8fafc;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.forgot-form input {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 10px;
+  background: #f9fafb;
+  font-size: 1rem;
+  color: #1e293b;
+}
+
+.forgot-form button {
+  width: 100%;
+  padding: 12px;
+  background: #5906e8;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.forgot-form button:hover {
+  background-color: #500be4;
+}
+
+/* Smooth fade-in animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.form-select {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #fff;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 10px;
+}
+
+/* focus effect */
+.form-select:focus {
+  border-color: #4a90e2;
+  box-shadow: 0 0 5px rgba(74, 144, 226, 0.4);
+}
+
+/* hover effect */
+.form-select:hover {
+  border-color: #888;
+}

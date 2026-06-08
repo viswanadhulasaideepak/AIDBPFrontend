@@ -1,0 +1,134 @@
+/* Sidebar container */
+.sidebar {
+  width: 260px;
+  background: #1e293b; /* dark slate background */
+  color: #fff;
+  min-height: 100vh;
+  padding: 25px 20px;
+  position: fixed;
+  left: 0;
+  top: 0;
+  overflow-y: auto;
+  box-shadow: 2px 0 6px rgba(0,0,0,0.1);
+}
+
+/* Title */
+.sidebar-title {
+  font-size: 1.8rem;   /* bigger title */
+  font-weight: 700;
+  margin-bottom: 35px;
+  text-align: center;
+  color: #2563eb;      /* natural blue accent */
+}
+
+/* Links list */
+.sidebar-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-links li {
+  margin-bottom: 20px;
+}
+
+/* Link styling */
+.sidebar-links li a {
+  text-decoration: none;
+  color: #f1f5f9;
+  font-size: 1.2rem;   /* larger link text */
+  font-weight: 500;
+  display: block;
+  padding: 14px 18px;
+  border-radius: 8px;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+/* Hover effect */
+.sidebar-links li a:hover {
+  background: #334155; /* lighter slate */
+  color: #60a5fa;      /* lighter natural blue */
+}
+
+/* Active link */
+.sidebar-links li a.active {
+  background: #2563eb; /* strong blue highlight */
+  color: #fff;
+  font-weight: 600;
+}
+
+.logout-btn {
+  margin-top: 20px;
+  padding: 10px;
+  width: 100%;
+  background-color: #007bff; /* natural blue accent */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.logout-btn:hover {
+  background-color: #0056b3;
+}
+
+.sidebar {
+  width: 260px;
+  background: #1e293b;
+  color: #fff;
+  min-height: 100vh;
+  padding: 25px 20px;
+  position: fixed;
+  left: 0;
+  top: 0;
+  overflow-y: auto;
+  box-shadow: 2px 0 6px rgba(0,0,0,0.1);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.dark-theme .sidebar {
+  background-color: #0f172a;
+  color: #f1f5f9;
+}
+
+.sidebar-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 35px;
+  text-align: center;
+  color: #2563eb;
+}
+
+.sidebar-links li a {
+  text-decoration: none;
+  color: #f1f5f9;
+  font-size: 1.2rem;
+  font-weight: 500;
+  display: block;
+  padding: 14px 18px;
+  border-radius: 8px;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+body.dark-theme .sidebar-links li a:hover {
+  background: #334155;
+  color: #60a5fa;
+}
+
+.logout-btn {
+  margin-top: 20px;
+  padding: 10px;
+  width: 100%;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+body.dark-theme .sidebar-links li a.active {
+  background: #2563eb;
+  color: #fff;
+}
+body.dark-theme .sidebar-links li a:hover {
+  background: #1e3a8a; /* deeper blue hover */
+  color: #93c5fd;      /* lighter blue text */
+}

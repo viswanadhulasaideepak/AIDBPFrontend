@@ -1,0 +1,23 @@
+.attendance-dashboard {
+  padding: 30px;
+}
+
+.attendance-title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #222;
+}
+
+.attendance-card {
+  background: #fff;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  height: auto-resize;
+}
+
+.error-text {
+  color: red;
+  font-weight: 500;
+}

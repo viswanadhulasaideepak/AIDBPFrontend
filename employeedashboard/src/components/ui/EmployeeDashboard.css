@@ -1,0 +1,132 @@
+/* Container */
+.employee-dashboard {
+  background-color: #f8fafc;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  font-family: "Segoe UI", Roboto, sans-serif;
+}
+
+/* Title */
+.employee-title {
+  color: #1e40af; /* Deep blue */
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Card */
+.employee-card {
+  background-color: #ffffff;
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Table */
+.employee-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.employee-table th {
+  background-color: #e0e7ff; /* Light blue header */
+  color: #1e3a8a;
+  text-align: left;
+  padding: 12px;
+  font-weight: 600;
+  border-bottom: 2px solid #c7d2fe;
+}
+
+.employee-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  color: #374151;
+}
+
+.employee-table tr:hover {
+  background-color: #f0f7ff;
+  transition: background-color 0.2s ease;
+}
+
+/* Error text */
+.error-text {
+  color: #dc2626;
+  font-weight: 500;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .employee-table th,
+  .employee-table td {
+    padding: 8px;
+    font-size: 0.9rem;
+  }
+}
+
+.filter-buttons {
+  margin-bottom: 15px;
+}
+
+.filter-buttons button {
+  margin-right: 10px;
+  padding: 6px 12px;
+  border: none;
+  background: #2196f3;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.add-employee-form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.add-employee-form input {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.add-employee-form button {
+  background: #4caf50;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.attendance-percentage {
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.attendance-table {
+  width: 100%;
+  margin-top: 20px;
+  border-collapse: collapse;
+}
+
+.attendance-table th,
+.attendance-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+.attendance-table th {
+  background: #f5f5f5;
+  font-weight: 600;
+}
+
+
+

@@ -1,0 +1,83 @@
+/* AuditLogs.css */
+
+.audit-container {
+  padding: 24px;
+}
+
+.audit-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 20px;
+}
+
+.audit-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.audit-table thead {
+  background: #2563eb;
+  color: white;
+}
+
+.audit-table th {
+  padding: 14px;
+  text-align: left;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.audit-table td {
+  padding: 14px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 14px;
+  color: #374151;
+}
+
+.audit-table tbody tr:hover {
+  background: #f8fafc;
+  transition: 0.3s ease;
+}
+
+.audit-user {
+  font-weight: 600;
+  color: #111827;
+}
+
+.audit-action {
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.audit-time {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .audit-container {
+    padding: 15px;
+  }
+
+  .audit-title {
+    font-size: 22px;
+  }
+
+  .audit-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .audit-table th,
+  .audit-table td {
+    padding: 10px;
+    font-size: 13px;
+  }
+}

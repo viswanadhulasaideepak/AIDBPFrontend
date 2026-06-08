@@ -1,0 +1,99 @@
+.departments-container {
+  padding: 30px;
+  background: #f5f7fa;
+  min-height: 100vh;
+}
+
+.departments-title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #222;
+}
+
+.departments-card {
+  background: #fff;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.departments-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.departments-table th,
+.departments-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.departments-table th {
+  background-color: #2196f3;
+  color: #fff;
+  font-weight: 600;
+}
+
+.departments-table tr:hover {
+  background-color: #f1f1f1;
+}
+
+.error-text {
+  color: red;
+  font-weight: 500;
+}
+.departments-container {
+  padding: 30px;
+  background: #f5f7fa;
+  min-height: 100vh;
+}
+
+/* Page title */
+.departments-title {
+  font-size: 2rem;        /* bigger title */
+  font-weight: 700;       /* bolder */
+  margin-bottom: 25px;
+  color: #1e293b;         /* dark slate */
+}
+
+/* Card wrapper */
+.departments-card {
+  background: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Table styling */
+.departments-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1.1rem;      /* larger text */
+}
+
+.departments-table th,
+.departments-table td {
+  padding: 14px 18px;     /* more breathing space */
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.departments-table th {
+  background-color: #2563eb; /* natural blue */
+  color: #fff;
+  font-weight: 600;
+  font-size: 1.2rem;          /* bigger header text */
+}
+
+.departments-table tr:hover {
+  background-color: #f1f5f9;  /* subtle hover */
+}
+
+/* Error text */
+.error-text {
+  color: #dc2626;        /* natural red tone */
+  font-weight: 600;
+  font-size: 1.1rem;
+}

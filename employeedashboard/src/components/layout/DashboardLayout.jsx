@@ -1,14 +1,16 @@
+import React from "react";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
+import "./DashboardLayout.css";
 
-const DashboardLayout = () => {
+const DashboardLayout = ({ children }) => {
   return (
-    <div className="dashboard-container">
+    <div className="dashboard-layout">
       <Sidebar />
       <div className="dashboard-main">
         <Navbar />
         <div className="dashboard-content">
-          <h2>Dashboard Content Area</h2>
+          {children}
         </div>
       </div>
     </div>

@@ -1,0 +1,126 @@
+/* Overall layout */
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f5f7fa;
+}
+
+/* Sidebar fixed on the left */
+.sidebar {
+  width: 260px;                /* consistent width */
+  background: #1e293b;         /* dark slate */
+  color: #fff;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  padding: 25px 20px;
+  overflow-y: auto;
+  box-shadow: 2px 0 6px rgba(0,0,0,0.1);
+}
+
+/* Sidebar title */
+.sidebar-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 30px;
+  text-align: center;
+  color: #2563eb;              /* natural blue accent */
+}
+
+/* Sidebar links */
+.sidebar-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-links li {
+  margin-bottom: 18px;
+}
+
+.sidebar-links li a {
+  text-decoration: none;
+  color: #f1f5f9;
+  font-size: 1.2rem;           /* bigger text */
+  font-weight: 500;
+  display: block;
+  padding: 12px 15px;
+  border-radius: 8px;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.sidebar-links li a:hover {
+  background: #334155;         /* lighter slate */
+  color: #60a5fa;              /* lighter blue hover */
+}
+
+.sidebar-links li a.active {
+  background: #2563eb;         /* strong blue highlight */
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Main content area shifted right */
+.dashboard-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-left: 260px;          /* match sidebar width */
+}
+
+/* Navbar pinned at top */
+.navbar {
+  background: #fff;
+  padding: 15px 25px;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  font-size: 1.2rem;           /* bigger navbar text */
+  font-weight: 600;
+}
+
+/* Scrollable content area */
+.dashboard-content {
+  flex: 1;
+  padding: 30px;
+  background: #f5f7fa;
+  overflow-y: auto;
+}
+
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f5f7fa;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.dark-theme .dashboard-layout {
+  background-color: #0f172a;
+  color: #f1f5f9;
+}
+
+.dashboard-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-left: 260px;
+}
+
+body.dark-theme .dashboard-main {
+  background-color: #0f172a;
+  color: #f1f5f9;
+}
+
+.dashboard-content {
+  flex: 1;
+  padding: 30px;
+  background: #f5f7fa;
+  overflow-y: auto;
+}
+
+body.dark-theme .dashboard-content {
+  background-color: #1e293b;
+  color: #f1f5f9;
+}
