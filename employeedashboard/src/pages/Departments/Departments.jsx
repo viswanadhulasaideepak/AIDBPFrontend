@@ -3,7 +3,7 @@ import toast from "react-hot-toast";
 import { fetchDepartments } from "../../services/api";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import DashboardLayout from "../../components/layout/DashboardLayout";  // ✅ added
+import DashboardLayout from "../../components/layout/DashboardLayout";  
 import "./Departments.css";
 
 const Departments = () => {
@@ -33,7 +33,7 @@ const Departments = () => {
   if (departments.length === 0) return <p>No departments found.</p>;
 
   return (
-    <DashboardLayout>   {/* ✅ wrap content in layout */}
+    <DashboardLayout>   {/* wrap content in layout */}
       <div className="departments-container">
         <h2 className="departments-title">🏢 Departments</h2>
         <div className="departments-card">

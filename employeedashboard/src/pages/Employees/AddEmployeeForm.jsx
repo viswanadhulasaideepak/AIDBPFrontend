@@ -17,11 +17,7 @@ const AddEmployeeForm = ({ onAdd, onClose }) => {
     const date = new Date(
       start.getTime() + Math.random() * (end.getTime() - start.getTime())
     );
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
+    return date.toISOString().split("T")[0];
   };
 
   //  Validation logic
@@ -53,10 +49,12 @@ const AddEmployeeForm = ({ onAdd, onClose }) => {
     };
 
     try {
-      //const token = localStorage.getItem("token");
       const user = JSON.parse(localStorage.getItem("user"));
       const token = user?.token;
-      const response = await fetch("http://127.0.0.1:8000/employees", {
+      console.log("Sending employee:", newEmployee);
+      console.log("Token:", token);
+
+      const response = await fetch("http://localhost:8000/employees", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -133,7 +131,7 @@ const AddEmployeeForm = ({ onAdd, onClose }) => {
           {errors.departmentName && (
             <span className="error">{errors.departmentName}</span>
           )}
-          {/* ✅ Status Dropdown */}
+          {/* Status Dropdown */}
           <select value={status} onChange={(e) => setStatus(e.target.value)} required>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>

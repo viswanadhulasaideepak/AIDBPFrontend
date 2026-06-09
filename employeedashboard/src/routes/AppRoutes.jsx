@@ -10,8 +10,6 @@ import { AuthContext } from "../auth/AuthContext";
 import AuditLogs from "../pages/AuditLogs/AuditLogs";
 
 
-
-// ✅ Logout component
 const Logout = () => {
   const { logout } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -25,7 +23,7 @@ const Logout = () => {
 };
 
 const AppRoutes = () => {
-  const { user } = useContext(AuthContext); // ✅ use context instead of localStorage
+  const { user } = useContext(AuthContext);
 
   return (
     <Router>

@@ -1,9 +1,8 @@
 import React, { useEffect, useState, useContext } from "react";
 import toast from "react-hot-toast";
-import { FaFileCsv, FaFileExcel, FaFilePdf } from "react-icons/fa";
+import { FaFileExcel, FaFilePdf } from "react-icons/fa";  
 import { 
-  fetchAttendance, 
-  downloadAttendanceReportCSV, 
+  fetchAttendance,  
   downloadAttendanceReportExcel, 
   downloadAttendanceReportPDF 
 } from "../../services/api";
@@ -50,9 +49,8 @@ const Attendance = () => {
             <thead>
               <tr>
                 <th>Date</th>
-                <th>Present</th>
-                <th>On Leave</th>
-                <th>Absent</th>
+                <th>Employee ID</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody>
@@ -61,8 +59,8 @@ const Attendance = () => {
                   <td>{rec.date}</td>
                   <td>{rec.employee_id}</td>
                   <td>{rec.status}</td>
-                  </tr>
-                ))}
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -70,9 +68,6 @@ const Attendance = () => {
         {/* Admin-only download buttons */}
         {user?.role === "admin" && (
           <div className="download-actions">
-            <button onClick={downloadAttendanceReportCSV}>
-              <FaFileCsv /> Download CSV
-            </button>
             <button onClick={downloadAttendanceReportExcel}>
               <FaFileExcel /> Download Excel
             </button>

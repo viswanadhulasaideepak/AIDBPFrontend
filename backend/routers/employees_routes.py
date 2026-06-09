@@ -37,7 +37,6 @@ def read_employees(
         raise HTTPException(status_code=403, detail="Not authorized")
 
     employees = crud.get_employees(db, current_user["company_id"])
-    
     print("CURRENT USER:", current_user)
 
     return [
@@ -69,12 +68,21 @@ def add_employee(
     ).first()
 
     if not department:
-        department = Department(name=request.department_name,  
-                                company_id=current_user["company_id"])
-        
+        department = Department(
+            name=request.department_name,
+            company_id=current_user["company_id"]
+        )
         db.add(department)
         db.commit()
         db.refresh(department)
+
+    # Convert joined_date string → datetime
+    joined_date = None
+    if request.joined_date:
+        try:
+            joined_date = datetime.strptime(request.joined_date, "%Y-%m-%d")
+        except Exception:
+            joined_date = None
 
     new_emp = crud.create_employee(
         db=db,
@@ -82,23 +90,16 @@ def add_employee(
         department_id=department.id,
         email=request.email,
         role=request.role,
-        joined_date=request.joined_date,
+        joined_date=joined_date,   
         status=request.status,
         company_id=current_user["company_id"]
     )
 
-    # CRUD NOTIFICATION (OPTION A)
-    crud.create_notification(
-        db=db,
-        message=f"New employee {new_emp.name} was added",
-        recipient_email=new_emp.email,
-        company_id=current_user["company_id"]
-    )
-
+    # Audit log only (no notification)
     audit = AuditLog(
-        user_name=current_user["username"],
+        user_name=current_user["email"],
         action="Employee Created",
-        related_user=new_emp.name,
+        related_user=new_emp.email,
         company_id=current_user["company_id"]
     )
     db.add(audit)
@@ -129,8 +130,6 @@ def update_employee(
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
 
-    old_status = emp.status
-
     if request.name is not None:
         emp.name = request.name
     if request.email is not None:
@@ -157,23 +156,15 @@ def update_employee(
     db.commit()
     db.refresh(emp)
 
+    # Audit log only (no notification)
     audit = AuditLog(
-        user_name=current_user["username"],
+        user_name=current_user["email"],
         action="Employee Updated",
-        related_user=emp.name,
+        related_user=emp.email,
         company_id=current_user["company_id"]
     )
     db.add(audit)
     db.commit()
-
-    # CRUD NOTIFICATION (OPTION A)
-    if old_status != emp.status:
-        crud.create_notification(
-            db=db,
-            message=f"Employee {emp.name} status changed from {old_status} to {emp.status}",
-            recipient_email=emp.email,
-            company_id=current_user["company_id"]
-        )
 
     return {
         "id": emp.id,
@@ -200,10 +191,11 @@ def delete_employee(
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
 
+    # Audit log only (no notification)
     audit = AuditLog(
-        user_name=current_user["username"],
+        user_name=current_user["email"],
         action="Employee Deleted",
-        related_user=emp.name,
+        related_user=emp.email,
         company_id=current_user["company_id"]
     )
     db.add(audit)

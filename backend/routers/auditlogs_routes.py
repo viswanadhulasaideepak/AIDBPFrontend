@@ -1,9 +1,8 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
 from auth import get_current_user
 from models import AuditLog
-from fastapi import HTTPException
 
 router = APIRouter(prefix="/audit-logs", tags=["Audit Logs"])
 
@@ -23,12 +22,13 @@ def get_audit_logs(
     )
 
     return [
-    {
-        "id": log.id,
-        "user_name": log.user_name,
-        "action": log.action,
-        "related_user": log.related_user,
-        "timestamp": log.timestamp
-    }
-    for log in logs
-]
+        {
+            "id": log.id,
+            "user_name": log.user_name,
+            "action": log.action,
+            "related_user": log.related_user,
+            "timestamp": log.timestamp.strftime("%Y-%m-%d %H:%M:%S"), 
+            "company_id": log.company_id
+        }
+        for log in logs
+    ]

@@ -18,16 +18,18 @@ class UserCreate(BaseModel):
 class EmployeeBase(BaseModel):
     name: str
     email: str
+    role: str
     status: StatusEnum = StatusEnum.active
 
 class EmployeeCreate(EmployeeBase):
-    pass
+    company_id: int
 
 class EmployeeUpdate(BaseModel):
     status: StatusEnum
 
 class EmployeeOut(EmployeeBase):
     id: int
+    company_id: int
 
     class Config:
         orm_mode = True

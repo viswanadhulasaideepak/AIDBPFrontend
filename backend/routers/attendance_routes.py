@@ -18,28 +18,18 @@ router = APIRouter(prefix="/attendance", tags=["Attendance"])
 def get_attendance(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
-    
 ):
-    
     records = crud.get_attendance(db, current_user["company_id"])
 
-    # Audit log + notification
+    #  Audit log only
     audit = AuditLog(
-        user_name=current_user["username"],
+        user_name=current_user["email"],
         action="Attendance Viewed",
         related_user=None,
         company_id=current_user["company_id"]
     )
     db.add(audit)
     db.commit()
-    
-    
-    crud.create_notification(
-        db=db,
-        message="Attendance records viewed",
-        recipient_email=current_user["username"],
-        company_id=current_user["company_id"]
-    )
 
     return [
         {
@@ -71,27 +61,20 @@ def add_attendance(
         company_id=current_user["company_id"]
     )
 
-    # Audit log + notification
+    # Audit log only
     audit = AuditLog(
-        user_name=current_user["username"],
-        action="Attendance Added",
+        user_name=current_user["email"],
+        action=f"Attendance Added ({status})",
         related_user=str(employee_id),
         company_id=current_user["company_id"]
     )
     db.add(audit)
     db.commit()
 
-    crud.create_notification(
-        db=db,
-        message=f"Attendance added for employee {employee_id}",
-        recipient_email=current_user["username"],
-        company_id=current_user["company_id"]
-    )
-
     return {
         "id": record.id,
         "employee_id": record.employee_id,
-        "date": record.date,
+        "date": record.date.strftime("%Y-%m-%d"),
         "status": record.status,
         "company_id": record.company_id
     }
@@ -115,9 +98,9 @@ def get_attendance_report(
         if rec.status in report[date_str]:
             report[date_str][rec.status] += 1
 
-    # Audit log + notification
+    #  Audit log only
     audit = AuditLog(
-        user_name=current_user["username"],
+        user_name=current_user["email"],
         action="Attendance Report Generated (JSON)",
         related_user=None,
         company_id=current_user["company_id"]
@@ -125,18 +108,12 @@ def get_attendance_report(
     db.add(audit)
     db.commit()
 
-    crud.create_notification(
-        db=db,
-        message="Attendance report (JSON) generated",
-        recipient_email=current_user["username"],
-        company_id=current_user["company_id"]
-    )
-
+    dates = sorted(report.keys())
     return {
-        "dates": list(report.keys()),
-        "present": [report[d]["present"] for d in report],
-        "leave": [report[d]["leave"] for d in report],
-        "absent": [report[d]["absent"] for d in report],
+        "dates": dates,
+        "present": [report[d]["present"] for d in dates],
+        "leave": [report[d]["leave"] for d in dates],
+        "absent": [report[d]["absent"] for d in dates],
     }
 
 # ---------------- REPORT (EXCEL) ----------------
@@ -144,12 +121,12 @@ def get_attendance_report(
 def get_attendance_report_excel(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
-    
 ):
     if current_user["role"] != "admin":
         raise HTTPException(status_code=403, detail="Access denied")
 
     records = crud.get_attendance(db, current_user["company_id"])
+    records = sorted(records, key=lambda r: r.date)
 
     wb = Workbook()
     ws = wb.active
@@ -163,22 +140,15 @@ def get_attendance_report_excel(
     wb.save(stream)
     stream.seek(0)
 
-    # Audit log + notification
+    # Audit log only
     audit = AuditLog(
-        user_name=current_user["username"],
+        user_name=current_user["email"],
         action="Attendance Report Exported (Excel)",
         related_user=None,
         company_id=current_user["company_id"]
     )
     db.add(audit)
     db.commit()
-
-    crud.create_notification(
-        db=db,
-        message="Attendance report exported (Excel)",
-        recipient_email=current_user["username"],
-        company_id=current_user["company_id"]
-    )
 
     return StreamingResponse(
         stream,
@@ -196,6 +166,7 @@ def get_attendance_report_pdf(
         raise HTTPException(status_code=403, detail="Access denied")
 
     records = crud.get_attendance(db, current_user["company_id"])
+    records = sorted(records, key=lambda r: r.date)
 
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=letter)
@@ -218,22 +189,15 @@ def get_attendance_report_pdf(
     c.save()
     buffer.seek(0)
 
-    # Audit log + notification
+    # Audit log only
     audit = AuditLog(
-        user_name=current_user["username"],
+        user_name=current_user["email"],
         action="Attendance Report Exported (PDF)",
         related_user=None,
         company_id=current_user["company_id"]
     )
     db.add(audit)
     db.commit()
-
-    crud.create_notification(
-        db=db,
-        message="Attendance report exported (PDF)",
-        recipient_email=current_user["username"],
-        company_id=current_user["company_id"]
-    )
 
     return StreamingResponse(
         buffer,

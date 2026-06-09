@@ -9,7 +9,7 @@ class StatusEnum(str, enum.Enum):
     active = "active"
     inactive = "inactive"
     onleave = "onleave"
-    
+
 #-------------DepartmentModel--------
 class Department(Base):
     __tablename__ = "departments"
@@ -18,7 +18,7 @@ class Department(Base):
     name = Column(String, nullable=False)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
     company = relationship("Company", back_populates="departments")
-    employees = relationship("Employee",back_populates="department_rel")
+    employees = relationship("Employee", back_populates="department_rel")
 
 #-------------EmployeeModel-----------
 class Employee(Base):
@@ -28,15 +28,16 @@ class Employee(Base):
     name = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
     role = Column(String, nullable=False)
-   
+
     department_id = Column(Integer, ForeignKey("departments.id"))
     joined_date = Column(DateTime, default=datetime.utcnow)
-    status = Column(String, default="active")
+    status = Column(Enum(StatusEnum), default=StatusEnum.active, nullable=False)
 
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
     department_rel = relationship("Department", back_populates="employees")
     company = relationship("Company", back_populates="employees")
-    
+
+#-------------UserModel-----------
 class User(Base):
     __tablename__ = "users"
 
@@ -48,9 +49,8 @@ class User(Base):
 
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
     company = relationship("Company", back_populates="users")
-    
+
 #------------------AttendanceModel------------------    
-    
 class Attendance(Base):
     __tablename__ = "attendance"
 
@@ -61,10 +61,8 @@ class Attendance(Base):
 
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
     company = relationship("Company", backref="attendance_records")
-    
-    
-#-----------------Notifications-----------------    
 
+#-----------------Notifications-----------------    
 class Notification(Base):
     __tablename__ = "notifications"
 
@@ -75,10 +73,8 @@ class Notification(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
     company = relationship("Company", back_populates="notifications")
-    
-    
-#----------------------RoleChangeRequestModel-------------------
 
+#----------------------RoleChangeRequestModel-------------------
 class RoleChangeStatus(str, enum.Enum):
     pending = "pending"
     approved = "approved"
@@ -94,11 +90,9 @@ class RoleChangeRequest(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
 
-    # Relationship to User
     user = relationship("User", backref="role_requests")
-    
-#------------------CompanyModel---------    
 
+#------------------CompanyModel---------    
 class Company(Base):
     __tablename__ = "companies"
 
@@ -106,10 +100,9 @@ class Company(Base):
     name = Column(String, unique=True, nullable=False)
     domain = Column(String, unique=True, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
     departments = relationship("Department", back_populates="company")
     notifications = relationship("Notification", back_populates="company")
-
-    # Relationships
     employees = relationship("Employee", back_populates="company")
     users = relationship("User", back_populates="company")
 
@@ -121,5 +114,5 @@ class AuditLog(Base):
     user_name = Column(String, nullable=False)
     action = Column(String, nullable=False)
     related_user = Column(String, nullable=True)
-    timestamp = Column(DateTime, default=datetime.utcnow)    
+    timestamp = Column(DateTime, default=datetime.utcnow)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)

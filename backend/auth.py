@@ -1,3 +1,4 @@
+import os
 from jose import jwt, JWTError
 from datetime import datetime, timedelta
 from fastapi import Depends, HTTPException
@@ -10,7 +11,8 @@ from models import User
 # ---------------- CONFIG ----------------
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
-SECRET_KEY = "your_secret_key"
+# ✅ Load secret key from environment variable (fallback for dev)
+SECRET_KEY = os.getenv("SECRET_KEY", "dev_secret_key")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -24,10 +26,10 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 # ---------------- TOKEN CREATION ----------------
-def create_token(username: str, role: str, company_id: int):
+def create_token(email: str, role: str, company_id: int):
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     payload = {
-        "sub": username,
+        "sub": email,              #  use email consistently
         "role": role,
         "company_id": company_id,
         "exp": expire
@@ -41,15 +43,15 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username = payload.get("sub")
+        email = payload.get("sub")
         role = payload.get("role")
         company_id = payload.get("company_id")
 
-        if not username or not role or company_id is None:
+        if not email or not role or company_id is None:
             raise HTTPException(status_code=401, detail="Invalid token payload")
 
         return {
-            "username": username,
+            "email": email,          # return email instead of username
             "role": role,
             "company_id": company_id
         }

@@ -2,8 +2,6 @@ import AppRoutes from "./routes/AppRoutes";
 import Notifier from "./components/common/Notifier";
 import "./styles/global.css";
 import "react-loading-skeleton/dist/skeleton.css";
-
-// ✅ Import providers
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./auth/AuthContext";
 

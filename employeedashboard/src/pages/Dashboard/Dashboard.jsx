@@ -5,8 +5,7 @@ import {
   fetchDepartments,
   fetchAttendance,
   fetchEmployees,
-  fetchDashboardStats,
-  downloadAttendanceReportCSV,   
+  fetchDashboardStats,   
   downloadAttendanceReportExcel,
   downloadAttendanceReportPDF  
 } from "../../services/api";
@@ -26,7 +25,7 @@ const Dashboard = () => {
 
   const { user } = useContext(AuthContext);
 
-  //  Load departments
+  // Load departments
   useEffect(() => {
     const loadDepartments = async () => {
       try {
@@ -34,19 +33,17 @@ const Dashboard = () => {
         const validData = data.map((d) => ({
           name: d.name || d.department,
           employee_count: Number(d.employee_count || d.count || 0),
-          
         }));
         console.log("DEPARTMENTS API:", data);
         setDepartments(validData);
       } catch {
         toast.error("Failed to load departments");
       }
-      
     };
     loadDepartments();
   }, []);
 
-  //  Load attendance
+  // Load attendance
   useEffect(() => {
     const loadAttendance = async () => {
       try {
@@ -61,21 +58,17 @@ const Dashboard = () => {
             ],
           });
         } else {
-          setAttendanceData({
-            labels: [],
-            datasets: [],
-          });
+          setAttendanceData({ labels: [], datasets: [] });
         }
+        console.log("ATTENDANCE API:", data);
       } catch {
         toast.error("Failed to load attendance");
       }
-      const data = await fetchAttendance();
-      console.log("ATTENDANCE API:", data);
     };
     loadAttendance();
   }, []);
 
-  //  Load employees
+  // Load employees
   useEffect(() => {
     const loadEmployees = async () => {
       try {
@@ -85,12 +78,11 @@ const Dashboard = () => {
       } catch {
         toast.error("Failed to load employees");
       }
-      
     };
     loadEmployees();
   }, []);
 
-  //  Load stats
+  // Load stats
   useEffect(() => {
     const loadStats = async () => {
       try {
@@ -117,19 +109,16 @@ const Dashboard = () => {
 
   // Attendance percentage
   const totalEmployees = employees.length;
-  const totalDays = attendanceData ?.labels.length || 0;
+  const totalDays = attendanceData?.labels.length || 0;
   const totalPossible = totalEmployees * totalDays;
 
   const totalPresent =
-  attendanceData?.datasets?.[0]?.data?.reduce(
-    (sum, val) => sum + val,
-    0
-  ) || 0;
+    attendanceData?.datasets?.[0]?.data?.reduce((sum, val) => sum + val, 0) || 0;
 
   const attendancePercentage =
     totalPossible > 0 ? Math.round((totalPresent / totalPossible) * 100) : 0;
 
-  //  Sort employees by join date (latest first)
+  // Sort employees by join date (latest first)
   const sortedEmployees = [...employees].sort(
     (a, b) => new Date(b.joined_date) - new Date(a.joined_date)
   );
@@ -138,14 +127,14 @@ const Dashboard = () => {
     <DashboardLayout>
       <div className="dashboard-page">
         <h2 className="dashboard-title">
-          {user?.company_name || "Company"} Dashboard</h2>
-          <p className="dashboard-subtitle">
-            Welcome back, {user?.role === "admin" ? "Admin" : "User"} 👋
-            </p>
-            <p className="company-label">
-              🏢 {user?.company_name}</p>
+          {user?.company_name || "Company"} Dashboard
+        </h2>
+        <p className="dashboard-subtitle">
+          Welcome back, {user?.role === "admin" ? "Admin" : "User"} 👋
+        </p>
+        <p className="company-label">🏢 {user?.company_name}</p>
 
-        {/*  Stats row */}
+        {/* Stats row */}
         <div className="stats-row">
           <div className="stat-card">
             <div className="stat-icon">👥</div>
@@ -171,7 +160,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/*  Charts */}
+        {/* Charts */}
         <div className="dashboard-grid">
           <div className="chart-card large-chart">
             <h3>Employee Activity Overview</h3>
@@ -203,41 +192,32 @@ const Dashboard = () => {
             <h3>Attendance Analytics</h3>
             {attendanceData?.labels?.length > 0 ? (
               <div className="chart-container">
-                <Line
-                  data={attendanceData}
-                  options={{ maintainAspectRatio: false }}
-                />
+                <Line data={attendanceData} options={{ maintainAspectRatio: false }} />
               </div>
             ) : (
               <p>Loading attendance...</p>
             )}
             {user?.role === "admin" && (
-  <div className="download-actions">
-    <button
-      className="dashboard-btn"
-      onClick={downloadAttendanceReportCSV}
-      style={{ marginTop: "15px" }}
-    >
-      Download CSV Report
-    </button>
-    <button
-      className="dashboard-btn"
-      onClick={downloadAttendanceReportExcel}
-      style={{ marginTop: "15px" }}
-    >
-      Download Excel Report
-    </button>
-    <button
-      className="dashboard-btn"
-      onClick={downloadAttendanceReportPDF}
-      style={{ marginTop: "15px" }}
-    >
-      Download PDF Report
-    </button>
-  </div>
-)}
+              <div className="download-actions">
+                <button
+                  className="dashboard-btn"
+                  onClick={downloadAttendanceReportExcel}
+                  style={{ marginTop: "15px" }}
+                >
+                  Download Excel Report
+                </button>
+                <button
+                  className="dashboard-btn"
+                  onClick={downloadAttendanceReportPDF}
+                  style={{ marginTop: "15px" }}
+                >
+                  Download PDF Report
+                </button>
+              </div>
+            )}
           </div>
-          {/*  Admin-only Department Distribution + Recent Employees */}
+
+          {/* Admin-only Department Distribution + Recent Employees */}
           {user?.role === "admin" && (
             <div className="chart-row">
               {/* Department Distribution */}
@@ -245,10 +225,7 @@ const Dashboard = () => {
                 <h3>Department Distribution</h3>
                 {departments.length > 0 ? (
                   <div className="chart-container">
-                    <Bar
-                      data={departmentData}
-                      options={{ maintainAspectRatio: false }}
-                    />
+                    <Bar data={departmentData} options={{ maintainAspectRatio: false }} />
                   </div>
                 ) : (
                   <p>Loading departments...</p>

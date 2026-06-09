@@ -49,7 +49,7 @@ def mark_notification_as_read(
 
     # Audit log entry
     audit = AuditLog(
-        user_name=current_user["username"],
+        user_name=current_user["email"],
         action="Notification Marked as Read",
         related_user=note.recipient_email,
         company_id=current_user["company_id"]
@@ -111,7 +111,7 @@ def add_notification(
 
     # Audit log entry
     audit = AuditLog(
-        user_name=current_user["username"],
+        user_name=current_user["email"],
         action="Notification Created (API)",
         related_user=request.recipient_email,
         company_id=current_user["company_id"]

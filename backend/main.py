@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
-
+from datetime import datetime
 import schema, models, crud, database
 from auth import verify_password, create_token, hash_password
 
@@ -17,8 +17,6 @@ from routers import (
     auditlogs_routes
 )
 from routers.role_requests_routes import router as role_requests_router
-
-from datetime import datetime
 
 app = FastAPI()
 
@@ -34,7 +32,8 @@ app.include_router(auditlogs_routes.router)
 # ---------------- CORS ----------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000",
+                    "http://localhost:8000", "http://127.0.0.1:8000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -63,10 +62,12 @@ def get_db():
         db.close()
 
 # ---------------- SEED FUNCTION ----------------
+import random
+
 def seed_data():
     db = database.SessionLocal()
 
-    # ---------------- COMPANIES ----------------
+    # Create companies if missing
     company_a = db.query(models.Company).filter_by(name="Company A").first()
     if not company_a:
         company_a = models.Company(name="Company A", domain="companya.com")
@@ -83,44 +84,41 @@ def seed_data():
 
     companies = [company_a, company_b]
 
-    # ---------------- CHECK IF ALREADY SEEDED ----------------
-    if db.query(models.Employee).first():
-        print("Already seeded")
+    # Skip if already seeded
+    if db.query(models.Employee).count() > 0:
+        print("⚠️ Already seeded, skipping fake data.")
         db.close()
         return
 
-    # ---------------- FETCH FAKE USERS ----------------
+    # Fetch fake users
     response = requests.get(FAKE_API_URL)
     users = response.json()
 
-    # ---------------- INSERT DATA ----------------
+    # Insert employees, departments, attendance, audit logs
     for i, u in enumerate(users):
-
         company = companies[i % 2]  # alternate A/B
 
-        # Department
-        dept = models.Department(
-            name=f"Dept-{i % 3}",
-            company_id=company.id
-        )
-        db.add(dept)
-        db.commit()
-        db.refresh(dept)
+        dept_name = u["company"]["name"]
+        dept = db.query(models.Department).filter_by(
+            name=dept_name, company_id=company.id
+        ).first()
+        if not dept:
+            dept = models.Department(name=dept_name, company_id=company.id)
+            db.add(dept)
+            db.commit()
+            db.refresh(dept)
 
-        # Employee
         emp = models.Employee(
             name=u["name"],
             email=u["email"],
             department_id=dept.id,
             role="Employee",
-            status="active",
+            status=random.choice(["active", "onleave", "inactive"]),
             company_id=company.id
         )
         db.add(emp)
-        db.commit()
-        db.refresh(emp)
+        db.flush()
 
-        # Attendance
         att = models.Attendance(
             employee_id=emp.id,
             date=datetime.utcnow(),
@@ -129,18 +127,18 @@ def seed_data():
         )
         db.add(att)
 
-        # Audit Log
         log = models.AuditLog(
             user_name="system",
             action="Seeded Fake Data",
-            related_user=emp.email,
+            related_user=u["email"],
             company_id=company.id
         )
         db.add(log)
 
+    # 
     db.commit()
     db.close()
-    print("Seed completed successfully")
+    print(" Seed completed successfully!")
 
 # ---------------- STARTUP ----------------
 @app.on_event("startup")
@@ -197,7 +195,6 @@ def login(
 # ---------------- SIGNUP ----------------
 @app.post("/signup")
 def signup(user: schema.UserCreate, db: Session = Depends(get_db)):
-
     existing = db.query(models.User).filter_by(email=user.email).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -242,7 +239,6 @@ class ForgotPasswordRequest(BaseModel):
 
 @app.post("/forgot-password")
 def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
-
     user = db.query(models.User).filter_by(email=request.email).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")

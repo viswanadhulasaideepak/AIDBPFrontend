@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "http://localhost:8000"; //  use localhost to match frontend origin
 
 /* ---------------- AXIOS INSTANCE ---------------- */
 const api = axios.create({
@@ -65,47 +65,41 @@ export const fetchAuditLogs = async () =>
 
 /* ---------------- LOGIN ---------------- */
 export const loginUser = async (email, password, role) => {
-  console.log("LOGIN REQUEST", {
-    email,
-    password,
-    role
-  });
- 
+  console.log("LOGIN REQUEST", { email, password, role });
+
   const response = await fetch(`${API_BASE}/login`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
-      username: email,
+      username: email, // backend expects "username"
       password: password,
       role: role,
     }),
   });
- 
+
   const data = await response.json();
- 
   console.log("LOGIN RESPONSE", data);
- 
+
   if (!response.ok) {
     throw new Error(data.detail || "Login failed");
   }
- 
+
+  // Save token in localStorage
+  localStorage.setItem("user", JSON.stringify(data));
   return data;
 };
+
 /* ---------------- SIGNUP ---------------- */
 export const signupUser = async (email, password, role, CompanyName) => {
   const response = await fetch(`${API_BASE}/signup`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      username: email,   
+      username: email, // backend expects username
       email,
       password,
       role,
-      company_name: CompanyName
+      company_name: CompanyName,
     }),
   });
 
@@ -117,7 +111,7 @@ export const signupUser = async (email, password, role, CompanyName) => {
   }
 
   return data;
-};;
+};
 
 /* ---------------- PASSWORD RESET ---------------- */
 export const resetPassword = async (email, newPassword) => {
@@ -133,20 +127,8 @@ export const resetPassword = async (email, newPassword) => {
 
   return response.json(); // { message: "Password reset successful" }
 };
-/* ---------------- REPORT DOWNLOADS ---------------- */
-export const downloadAttendanceReportCSV = async () => {
-  const response = await api.get("/attendance/report/csv", {
-    responseType: "blob",
-  });
-  const url = window.URL.createObjectURL(new Blob([response.data]));
-  const link = document.createElement("a");
-  link.href = url;
-  link.setAttribute("download", "attendance_report.csv");
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
 
+/* ---------------- REPORT DOWNLOADS ---------------- */
 export const downloadAttendanceReportExcel = async () => {
   const response = await api.get("/attendance/report/excel", {
     responseType: "blob",

@@ -5,14 +5,13 @@ from auth import get_current_user
 from pydantic import BaseModel
 from database import get_db
 
+
 router = APIRouter(prefix="/departments", tags=["Departments"])
 
-
+# ---------------- GET DEPARTMENTS ----------------
 class DepartmentRequest(BaseModel):
     name: str
 
-
-# ---------------- GET DEPARTMENTS ----------------
 @router.get("/")
 def read_departments(
     db: Session = Depends(get_db),
@@ -47,6 +46,7 @@ def add_department(
 
 
 # ---------------- LIST DEPARTMENTS ----------------
+
 @router.get("/list")
 def list_departments(
     db: Session = Depends(get_db),
