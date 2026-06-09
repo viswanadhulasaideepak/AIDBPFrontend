@@ -22,31 +22,40 @@ const Settings = () => {
     document.body.classList.toggle("dark-theme", mode === "dark");
   };
 
+  //  Notifications fetch with token + localhost
   useEffect(() => {
-  const fetchNotifications = async () => {
-    try {
-      const res = await fetch("http://127.0.0.1:8000/notifications");
-      const data = await res.json();
+    const fetchNotifications = async () => {
+      try {
+        if (!user?.token) return;
+        const res = await fetch("http://localhost:8000/notifications/", {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        });
+        if (!res.ok) throw new Error("Unauthorized or server error");
+        const data = await res.json();
 
-      if (Array.isArray(data)) {
-        setNotifications(prev =>
-          JSON.stringify(prev) !== JSON.stringify(data) ? data : prev
-        );
+        if (Array.isArray(data)) {
+          setNotifications(prev =>
+            JSON.stringify(prev) !== JSON.stringify(data) ? data : prev
+          );
+        }
+      } catch (err) {
+        console.error("Error fetching notifications:", err);
       }
-    } catch (err) {
-      console.error(err);
-    }
-  };
+    };
 
-  fetchNotifications();
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 3000);
+    return () => clearInterval(interval);
+  }, [user]);
 
-  const interval = setInterval(fetchNotifications, 3000);
-
-  return () => clearInterval(interval);
-}, []);
+//----mark as read-----------
   const markAsRead = async (id) => {
-    await fetch(`http://127.0.0.1:8000/notifications/${id}/read`, {
+    if (!user?.token) return;
+    await fetch(`http://localhost:8000/notifications/${id}/read`, {
       method: "PUT",
+      headers: { Authorization: `Bearer ${user.token}` },
     });
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
@@ -54,10 +63,12 @@ const Settings = () => {
   };
 
   const markAllAsRead = async () => {
+    if (!user?.token) return;
     await Promise.all(
       notifications.map((n) =>
-        fetch(`http://127.0.0.1:8000/notifications/${n.id}/read`, {
+        fetch(`http://localhost:8000/notifications/${n.id}/read`, {
           method: "PUT",
+          headers: { Authorization: `Bearer ${user.token}` },
         })
       )
     );
@@ -66,57 +77,77 @@ const Settings = () => {
 
   // Fetch Role Requests (Admin only)
   useEffect(() => {
-    if (user?.role === "admin") {
-      fetch("http://127.0.0.1:8000/role-change-request", {
+    if (user?.role === "admin" && user?.token) {
+      fetch("http://localhost:8000/role-change-request/", {
         headers: { Authorization: `Bearer ${user.token}` },
       })
         .then((res) => res.json())
         .then((data) => setRoleRequests(Array.isArray(data) ? data : []))
-        .catch((err) => console.error(err));
+        .catch((err) => console.error("Error fetching role requests:", err));
     }
   }, [user]);
 
-  // User sends role change request
+  // User sends role request
   const sendRoleRequest = async (e) => {
     e.preventDefault();
-    const form = e.target;
-    const payload = {
-      current_password: form.password.value,
-      admin_email: form.adminEmail.value,
-    };
+    const password = e.target.password.value;
+    const adminEmail = e.target.adminEmail.value;
 
-    const res = await fetch("http://127.0.0.1:8000/role-change-request", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${user.token}`,
-      },
-      body: JSON.stringify(payload),
-    });
+    try {
+      if (!user?.token) return;
+      const res = await fetch("http://localhost:8000/role-change-request/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+        body: JSON.stringify({
+          current_password: password,
+          admin_email: adminEmail,
+        }),
+      });
 
-    if (res.ok) {
-      alert("Request sent to admin!");
-      form.reset();
-    } else {
-      alert("Failed to send request");
+      if (res.ok) {
+        const data = await res.json();
+        alert("Role request submitted successfully!");
+        console.log("Response:", data);
+        e.target.reset();
+      } else {
+        const err = await res.json();
+        console.error("Request failed:", err);
+        alert(JSON.stringify(err, null, 2));
+      }
+    } catch (error) {
+      console.error("Error sending role request:", error);
+      alert("Unable to connect to backend. Check if FastAPI is running and CORS allows your frontend port.");
     }
   };
 
   // Admin approves/rejects
   const updateRequest = async (id, status) => {
-    const res = await fetch(`http://127.0.0.1:8000/role-change-request/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${user.token}`,
-      },
-      body: JSON.stringify({ status }),
-    });
+    try {
+      if (!user?.token) return;
+      const res = await fetch(`http://localhost:8000/role-change-request/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+        body: JSON.stringify({ status }),
+      });
 
-    if (res.ok) {
-      setRoleRequests((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, status } : r))
-      );
+      if (res.ok) {
+        setRoleRequests((prev) =>
+          prev.map((r) => (r.id === id ? { ...r, status } : r))
+        );
+      } else {
+        const err = await res.json();
+        console.error("Update failed:", err);
+        alert(JSON.stringify(err, null, 2));
+      }
+    } catch (error) {
+      console.error("Error updating request:", error);
+      alert("Unable to connect to backend. Check if FastAPI is running and CORS allows your frontend port.");
     }
   };
 
@@ -192,8 +223,7 @@ const Settings = () => {
               style={{
                 fontWeight: n.is_read ? "normal" : "bold",
                 cursor: "pointer",
-              }}
-            >
+              }}>
               {n.message}
             </p>
           ))}

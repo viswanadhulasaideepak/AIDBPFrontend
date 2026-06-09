@@ -98,16 +98,6 @@ def get_attendance_report(
         if rec.status in report[date_str]:
             report[date_str][rec.status] += 1
 
-    #  Audit log only
-    audit = AuditLog(
-        user_name=current_user["email"],
-        action="Attendance Report Generated (JSON)",
-        related_user=None,
-        company_id=current_user["company_id"]
-    )
-    db.add(audit)
-    db.commit()
-
     dates = sorted(report.keys())
     return {
         "dates": dates,

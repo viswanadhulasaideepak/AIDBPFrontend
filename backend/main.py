@@ -32,8 +32,8 @@ app.include_router(auditlogs_routes.router)
 # ---------------- CORS ----------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000",
-                    "http://localhost:8000", "http://127.0.0.1:8000"],
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+                    #"http://localhost:8000", "http://127.0.0.1:8000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -84,7 +84,6 @@ def seed_data():
 
     companies = [company_a, company_b]
 
-    # Skip if already seeded
     if db.query(models.Employee).count() > 0:
         print("⚠️ Already seeded, skipping fake data.")
         db.close()

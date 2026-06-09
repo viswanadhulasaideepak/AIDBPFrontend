@@ -27,7 +27,8 @@ def submit_role_change_request(
     role_request = RoleChangeRequest(
         user_id=user.id,
         admin_email=request.admin_email,
-        status=RoleChangeStatus.pending
+        status=RoleChangeStatus.pending,
+        company_id=user.company_id
     )
     db.add(role_request)
     db.commit()
@@ -57,7 +58,10 @@ def get_role_change_requests(
     if not admin or admin.role != "admin":
         raise HTTPException(status_code=403, detail="Only Admin accounts can view requests")
 
-    requests = db.query(RoleChangeRequest).filter(RoleChangeRequest.status == RoleChangeStatus.pending).all()
+    requests = db.query(RoleChangeRequest).join(User).filter(
+    RoleChangeRequest.status == RoleChangeStatus.pending,
+    User.company_id == admin.company_id
+    ).all()
     return requests
 
 
