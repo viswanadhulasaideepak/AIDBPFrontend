@@ -7,7 +7,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 from datetime import datetime
 import schema, models, crud, database
 from auth import verify_password, create_token, hash_password
-
+from routers.analytics_routes import router as analytics_router
+from routers.role_requests_routes import router as role_requests_router
 from routers import (
     employees_routes,
     departments_routes,
@@ -16,7 +17,7 @@ from routers import (
     notifications_routes,
     auditlogs_routes
 )
-from routers.role_requests_routes import router as role_requests_router
+
 
 app = FastAPI()
 
@@ -28,6 +29,7 @@ app.include_router(dashboard_routes.router)
 app.include_router(notifications_routes.router)
 app.include_router(role_requests_router)
 app.include_router(auditlogs_routes.router)
+app.include_router(analytics_router)
 
 # ---------------- CORS ----------------
 app.add_middleware(

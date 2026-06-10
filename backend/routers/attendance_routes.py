@@ -21,7 +21,7 @@ def get_attendance(
 ):
     records = crud.get_attendance(db, current_user["company_id"])
 
-    #  Audit log only
+    # Audit log
     audit = AuditLog(
         user_name=current_user["email"],
         action="Attendance Viewed",
@@ -50,18 +50,18 @@ def add_attendance(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    if current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Not authorized")
+    if not current_user.get("company_id"):
+        raise HTTPException(status_code=401, detail="Company not found in token")
 
     record = crud.create_attendance(
         db=db,
         employee_id=employee_id,
         date=datetime.utcnow(),
-        status=status,
+        status=status.lower(),  # normalize status
         company_id=current_user["company_id"]
     )
 
-    # Audit log only
+    # Audit log
     audit = AuditLog(
         user_name=current_user["email"],
         action=f"Attendance Added ({status})",
@@ -79,14 +79,14 @@ def add_attendance(
         "company_id": record.company_id
     }
 
-# ---------------- REPORT (JSON) ----------------
+# ---------------- REPORT (JSON for Analytics) ----------------
 @router.get("/report")
 def get_attendance_report(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    if current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Access denied")
+    if not current_user.get("company_id"):
+        raise HTTPException(status_code=401, detail="Company not found in token")
 
     records = crud.get_attendance(db, current_user["company_id"])
 
@@ -95,10 +95,22 @@ def get_attendance_report(
         date_str = rec.date.strftime("%Y-%m-%d")
         if date_str not in report:
             report[date_str] = {"present": 0, "leave": 0, "absent": 0}
-        if rec.status in report[date_str]:
-            report[date_str][rec.status] += 1
+        status = rec.status.lower()
+        if status in report[date_str]:
+            report[date_str][status] += 1
 
     dates = sorted(report.keys())
+
+    # Audit log
+    audit = AuditLog(
+        user_name=current_user["email"],
+        action="Attendance Report Viewed (Analytics)",
+        related_user=None,
+        company_id=current_user["company_id"]
+    )
+    db.add(audit)
+    db.commit()
+
     return {
         "dates": dates,
         "present": [report[d]["present"] for d in dates],
@@ -130,7 +142,7 @@ def get_attendance_report_excel(
     wb.save(stream)
     stream.seek(0)
 
-    # Audit log only
+    # Audit log
     audit = AuditLog(
         user_name=current_user["email"],
         action="Attendance Report Exported (Excel)",
@@ -179,7 +191,7 @@ def get_attendance_report_pdf(
     c.save()
     buffer.seek(0)
 
-    # Audit log only
+    # Audit log
     audit = AuditLog(
         user_name=current_user["email"],
         action="Attendance Report Exported (PDF)",

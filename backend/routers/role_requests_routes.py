@@ -5,6 +5,7 @@ from models import RoleChangeRequest, RoleChangeStatus, User, AuditLog
 from schema import RoleChangeRequestCreate, RoleChangeRequestOut, RoleChangeRequestUpdate
 from auth import verify_user_identity, get_current_user
 from typing import List
+import models
 
 router = APIRouter(prefix="/role-change-request", tags=["Role Change Requests"])
 
@@ -62,6 +63,12 @@ def get_role_change_requests(
     RoleChangeRequest.status == RoleChangeStatus.pending,
     User.company_id == admin.company_id
     ).all()
+    
+    pending_requests = db.query(models.RoleChangeRequest).filter(
+        models.RoleChangeRequest.company_id == current_user["company_id"],
+        models.RoleChangeRequest.status == models.RoleChangeStatus.pending
+        ).count()
+
     return requests
 
 

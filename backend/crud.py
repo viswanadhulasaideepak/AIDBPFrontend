@@ -134,3 +134,9 @@ def get_audit_logs(db: Session, company_id: int):
     return db.query(models.AuditLog).filter(
         models.AuditLog.company_id == company_id
     ).all()
+
+def get_pending_role_requests(db: Session, company_id: int):
+    return db.query(models.RoleChangeRequest).filter(
+        models.RoleChangeRequest.company_id == company_id,
+        models.RoleChangeRequest.status == models.RoleChangeStatus.pending
+    ).count()

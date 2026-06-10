@@ -23,16 +23,19 @@ class EmployeeBase(BaseModel):
 
 class EmployeeCreate(EmployeeBase):
     company_id: int
-
-class EmployeeUpdate(BaseModel):
-    status: StatusEnum
-
-class EmployeeOut(EmployeeBase):
-    id: int
-    company_id: int
-
+    
     class Config:
         orm_mode = True
+
+
+class EmployeeUpdate(BaseModel):
+    name: str | None = None
+    email: EmailStr | None = None
+    role: str | None = None
+    department_name: str | None = None
+    joined_date: datetime | None = None
+    status: StatusEnum | None = None
+
 
 # Role change request status
 class RoleChangeStatus(str, Enum):
@@ -107,3 +110,20 @@ class AttendanceOut(BaseModel):
 
     class Config:
         orm_mode = True
+
+class DepartmentOut(BaseModel):
+    id: int
+    name: str
+    company_id: int
+
+    class Config:
+        orm_mode = True
+
+class DashboardStatsOut(BaseModel):
+    total_employees: int
+    active_employees: int
+    departments: int
+    attendance_percentage: int
+    role_distribution: list[dict]
+    status_overview: list[dict]
+    pending_requests: int

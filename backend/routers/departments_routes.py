@@ -5,7 +5,6 @@ from auth import get_current_user
 from pydantic import BaseModel
 from database import get_db
 
-
 router = APIRouter(prefix="/departments", tags=["Departments"])
 
 # ---------------- GET DEPARTMENTS ----------------

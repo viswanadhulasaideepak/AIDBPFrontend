@@ -94,14 +94,17 @@ const Employees = () => {
 const handleStatusChange = async (id, newStatus) => {
   try {
     console.log("STATUS FUNCTION CALLED");
-    console.log("Employee ID:", id);
-    console.log("New Status:", newStatus);
-
     const user = JSON.parse(localStorage.getItem("user"));
     const token = user?.token;
 
-    // Find the full employee object from state
+    // Find full employee object
     const emp = employees.find(e => e.id === id);
+
+    // Ensure joined_date is formatted correctly
+    const joinedDate =
+      emp.joined_date && emp.joined_date.length > 10
+        ? emp.joined_date.slice(0, 10)
+        : emp.joined_date;
 
     const response = await fetch(`http://127.0.0.1:8000/employees/${id}`, {
       method: "PUT",
@@ -112,35 +115,31 @@ const handleStatusChange = async (id, newStatus) => {
       body: JSON.stringify({
         name: emp.name,
         email: emp.email,
-        role: emp.role,
-        department_id: emp.department_id,
-        joined_date: emp.joined_date,
+        role: emp.role, //  will reflect dropdown selection
+        department_name: emp.department_name, // backend expects name, not id
+        joined_date: joinedDate,
         status: newStatus,
       }),
     });
 
-    console.log("Response Status:", response.status);
     const data = await response.json();
+    console.log("Response Status:", response.status);
 
     if (!response.ok) {
-      console.log("Status Update Error:", data);
       toast.error(data.detail || "Failed to update status");
       return;
     }
 
-    // Update Employees State
+    // Update local state
     setEmployees(prev =>
-      prev.map(e => e.id === id ? { ...e, status: newStatus } : e)
+      prev.map(e => (e.id === id ? { ...e, status: newStatus } : e))
     );
-
-    // Update Filtered Employees State
     setFilteredEmployees(prev =>
-      prev.map(e => e.id === id ? { ...e, status: newStatus } : e)
+      prev.map(e => (e.id === id ? { ...e, status: newStatus } : e))
     );
 
-    //  Notification API
+    // Notification API
     try {
-      console.log("Creating notification...");
       await fetch("http://127.0.0.1:8000/notifications", {
         method: "POST",
         headers: {
@@ -170,33 +169,49 @@ const handleStatusChange = async (id, newStatus) => {
     setFilteredEmployees(updatedList);
     toast.success("Employee added successfully!");
   };
-
-
-  // ----Delete Employee------
-  const handleDeleteEmployee = async (id) => {
-    try {
-      const response = await fetch(`http://127.0.0.1:8000/employees/${id}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) {
-        const data = await response.json();
-        toast.error(data.detail || "Failed to delete employee");
-        return;
-      }
-      const updatedList = employees.filter(emp => emp.id !== id);
-      setEmployees(updatedList);
-      setFilteredEmployees(updatedList);
-      toast.success("Employee deleted successfully!");
-    } catch (error) {
-      console.error("Error deleting employee:", error);
-      toast.error("Unable to connect to backend");
-    }
-  };
-
-  // Edit Employee
-  const handleEditEmployee = async (updatedEmp) => {
+// ----Delete Employee------
+const handleDeleteEmployee = async (id) => {
   try {
-    const token = localStorage.getItem("token");
+    const user = JSON.parse(localStorage.getItem("user"));
+    const token = user?.token;
+
+    const response = await fetch(`http://127.0.0.1:8000/employees/${id}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, // ✅ include token
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      toast.error(data.detail || "Failed to delete employee");
+      return;
+    }
+
+    const updatedList = employees.filter(emp => emp.id !== id);
+    setEmployees(updatedList);
+    setFilteredEmployees(updatedList);
+
+    toast.success("Employee deleted successfully!");
+  } catch (error) {
+    console.error("Error deleting employee:", error);
+    toast.error("Unable to connect to backend");
+  }
+};
+
+// Edit Employee
+const handleEditEmployee = async (updatedEmp) => {
+  try {
+    const user = JSON.parse(localStorage.getItem("user"));
+    const token = user?.token;
+
+    // Ensure joined_date is formatted correctly
+    const joinedDate =
+      updatedEmp.joined_date && updatedEmp.joined_date.length > 10
+        ? updatedEmp.joined_date.slice(0, 10)
+        : updatedEmp.joined_date;
 
     const response = await fetch(
       `http://127.0.0.1:8000/employees/${updatedEmp.id}`,
@@ -211,7 +226,8 @@ const handleStatusChange = async (id, newStatus) => {
           email: updatedEmp.email,
           role: updatedEmp.role,
           department_name: updatedEmp.department_name,
-          joined_date: updatedEmp.joined_date,
+          joined_date: joinedDate,
+          status: updatedEmp.status, //  include status
         }),
       }
     );
@@ -223,15 +239,16 @@ const handleStatusChange = async (id, newStatus) => {
       return;
     }
 
+    // Update local state immediately
     const updatedList = employees.map((emp) =>
-      emp.id === updatedEmp.id ? data : emp
+      emp.id === updatedEmp.id ? { ...emp, ...updatedEmp } : emp
     );
 
     setEmployees(updatedList);
     setFilteredEmployees(updatedList);
 
     toast.success("Employee updated successfully!");
-    setEditEmployee(null);
+    setEditEmployee(null); // close modal
   } catch (error) {
     console.error("Error updating employee:", error);
     toast.error("Unable to connect to backend");

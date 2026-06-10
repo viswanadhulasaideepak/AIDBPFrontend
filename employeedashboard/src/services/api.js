@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE = "http://localhost:8000"; //  use localhost to match frontend origin
+const API_BASE = "http://localhost:8000";
 
 /* ---------------- AXIOS INSTANCE ---------------- */
 const api = axios.create({
@@ -51,9 +51,17 @@ export const fetchDepartments = async () =>
 export const addDepartment = async (department) =>
   (await api.post("/departments", department)).data;
 
-// Attendance
-export const fetchAttendance = async () =>
+// Attendance (FIXED to use /report)
+//export const fetchAttendance = async () =>
+ // (await api.get("/attendance/report")).data;
+
+// Attendance records (array)
+export const fetchAttendanceRecords = async () =>
   (await api.get("/attendance")).data;
+
+// Attendance analytics (object)
+export const fetchAttendanceReport = async () =>
+  (await api.get("/attendance/report")).data;
 
 // Notifications
 export const fetchNotifications = async () =>
@@ -65,51 +73,43 @@ export const fetchAuditLogs = async () =>
 
 /* ---------------- LOGIN ---------------- */
 export const loginUser = async (email, password, role) => {
-  console.log("LOGIN REQUEST", { email, password, role });
-
   const response = await fetch(`${API_BASE}/login`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
-      username: email, // backend expects "username"
+      username: email,
       password: password,
       role: role,
     }),
   });
 
   const data = await response.json();
-  console.log("LOGIN RESPONSE", data);
-
   if (!response.ok) {
     throw new Error(data.detail || "Login failed");
   }
 
-  // Save token in localStorage
   localStorage.setItem("user", JSON.stringify(data));
   return data;
 };
 
 /* ---------------- SIGNUP ---------------- */
-export const signupUser = async (email, password, role, CompanyName) => {
+export const signupUser = async (email, password, role, companyName) => {
   const response = await fetch(`${API_BASE}/signup`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      username: email, // backend expects username
+      username: email,
       email,
       password,
       role,
-      company_name: CompanyName,
+      company_name: companyName,
     }),
   });
 
   const data = await response.json();
-  console.log("SIGNUP RESPONSE:", data);
-
   if (!response.ok) {
     throw new Error(data.detail || "Signup failed");
   }
-
   return data;
 };
 
@@ -124,8 +124,7 @@ export const resetPassword = async (email, newPassword) => {
   if (!response.ok) {
     throw new Error("Password reset failed");
   }
-
-  return response.json(); // { message: "Password reset successful" }
+  return response.json();
 };
 
 /* ---------------- REPORT DOWNLOADS ---------------- */

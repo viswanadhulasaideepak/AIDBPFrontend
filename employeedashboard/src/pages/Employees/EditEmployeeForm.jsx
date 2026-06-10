@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import "./Employees.css";
 
 const EditEmployeeForm = ({ employee, onSave, onClose }) => {
@@ -6,14 +6,14 @@ const EditEmployeeForm = ({ employee, onSave, onClose }) => {
     id: employee.id,
     name: employee.name,
     email: employee.email,
-    role: employee.role || "HR",
+    role: employee.role || "Employee", //  default to Employee
     department_name: employee.department_name || "",
-    joined_date: employee.joined_date || "",
+    joined_date: employee.joined_date ? employee.joined_date.slice(0, 10) : "", // format YYYY-MM-DD
+    status: employee.status || "active", // include status field
   });
 
   const [errors, setErrors] = useState({});
 
-  // Validation logic
   const validate = () => {
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = "Name is required";
@@ -34,14 +34,8 @@ const EditEmployeeForm = ({ employee, onSave, onClose }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!validate()) return;
-    onSave(formData);
+    onSave(formData); //  parent will send PUT request
   };
-
-  const isValid =
-    formData.name.trim() !== "" &&
-    formData.email.trim() !== "" &&
-    formData.role.trim() !== "" &&
-    formData.department_name.trim() !== "";
 
   return (
     <div className="modal-overlay">
@@ -74,6 +68,7 @@ const EditEmployeeForm = ({ employee, onSave, onClose }) => {
             onChange={handleChange}
             required
           >
+            <option value="Employee">Employee</option>
             <option value="HR">HR</option>
             <option value="Finance">Finance</option>
             <option value="IT">IT</option>
@@ -93,15 +88,26 @@ const EditEmployeeForm = ({ employee, onSave, onClose }) => {
           )}
 
           <input
-            type="text"
+            type="date" //  use date input for proper format
             name="joined_date"
             value={formData.joined_date}
             onChange={handleChange}
             placeholder="Joined Date"
           />
 
+          <select
+            name="status"
+            value={formData.status}
+            onChange={handleChange}
+            required
+          >
+            <option value="active">Active</option>
+            <option value="onleave">On Leave</option>
+            <option value="inactive">Inactive</option>
+          </select>
+
           <div className="form-actions">
-            <button type="submit" className="save-btn" disabled={!isValid}>
+            <button type="submit" className="save-btn">
               Save
             </button>
             <button type="button" className="cancel-btn" onClick={onClose}>

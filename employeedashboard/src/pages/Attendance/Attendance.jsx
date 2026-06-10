@@ -2,7 +2,7 @@ import React, { useEffect, useState, useContext } from "react";
 import toast from "react-hot-toast";
 import { FaFileExcel, FaFilePdf } from "react-icons/fa";  
 import { 
-  fetchAttendance,  
+  fetchAttendanceRecords,   // ✅ use records endpoint
   downloadAttendanceReportExcel, 
   downloadAttendanceReportPDF 
 } from "../../services/api";
@@ -22,9 +22,14 @@ const Attendance = () => {
   useEffect(() => {
     const loadAttendance = async () => {
       try {
-        const data = await fetchAttendance();
-        setAttendance(data);
-        toast.success("Attendance loaded successfully!");
+        const data = await fetchAttendanceRecords(); // ✅ array of records
+        if (Array.isArray(data)) {
+          setAttendance(data);
+          toast.success("Attendance loaded successfully!");
+        } else {
+          setAttendance([]);
+          toast.error("Unexpected data format");
+        }
       } catch (err) {
         const message = err.response?.data?.detail || err.message;
         setError(message);
