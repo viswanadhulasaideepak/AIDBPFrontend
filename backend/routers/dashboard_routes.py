@@ -57,14 +57,28 @@ def get_dashboard_stats(
     role_data = [{"role": r, "count": c} for r, c in role_distribution]
 
     # Employee Status Overview
-    status_distribution = (
-        db.query(Employee.status, func.count(Employee.id))
-        .filter(Employee.company_id == company_id)
-        .group_by(Employee.status)
-        .all()
-    )
-    status_data = [{"status": s.value, "count": c} for s, c in status_distribution]
 
+    active_count = db.query(Employee).filter(
+        Employee.company_id == company_id,
+        Employee.status == StatusEnum.active
+        ).count()
+
+    inactive_count = db.query(Employee).filter(
+        Employee.company_id == company_id,
+        Employee.status == StatusEnum.inactive
+        ).count()
+    
+    leave_count = db.query(Employee).filter(
+        Employee.company_id == company_id,
+        Employee.status == StatusEnum.onleave
+        ).count()
+
+    status_data = [
+        {"status": "active", "count": active_count},
+        {"status": "inactive", "count": inactive_count},
+        {"status": "onleave", "count": leave_count},
+        ]
+    
     # Pending Role Requests
     pending_requests = (
         db.query(RoleChangeRequest)

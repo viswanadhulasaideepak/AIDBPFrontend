@@ -35,7 +35,12 @@ class Employee(Base):
 
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
     department_rel = relationship("Department", back_populates="employees")
-    company = relationship("Company", back_populates="employees")
+    company = relationship("Company", back_populates="employees") 
+    
+# ---------------- User Status ----------------
+class UserStatus(str, enum.Enum):
+    active = "active"
+    deactivated = "deactivated"    
 
 #-------------UserModel-----------
 class User(Base):
@@ -116,3 +121,42 @@ class AuditLog(Base):
     related_user = Column(String, nullable=True)
     timestamp = Column(DateTime, default=datetime.utcnow)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
+
+# ---------------- Invitation Status ----------------
+class InvitationStatus(str, enum.Enum):
+    pending = "pending"
+    revoked = "revoked"
+    accepted = "accepted"
+
+class Invitation(Base):
+    __tablename__ = "invitations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, nullable=False)
+    token = Column(String, unique=True, nullable=False)
+    status = Column(Enum(InvitationStatus), default=InvitationStatus.pending, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=True)
+    company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
+
+    company = relationship("Company", backref="invitations")
+
+
+
+# ---------------- Reactivation Request ----------------
+class ReactivationStatus(str, enum.Enum):
+    pending = "pending"
+    approved = "approved"
+    rejected = "rejected"
+
+class ReactivationRequest(Base):
+    __tablename__ = "reactivation_requests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    admin_email = Column(String, nullable=False)
+    status = Column(Enum(ReactivationStatus), default=ReactivationStatus.pending, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
+
+    user = relationship("User", backref="reactivation_requests")

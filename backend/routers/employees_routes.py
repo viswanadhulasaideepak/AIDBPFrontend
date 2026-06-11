@@ -108,12 +108,12 @@ def add_employee(
     elif new_emp.status.lower() == "inactive":
         attendance_status = "absent"
         
-    attendance = Attendance(
+    '''attendance = Attendance(
         employee_id=new_emp.id,
         date=datetime.utcnow(),
         status=attendance_status,
         company_id=new_emp.company_id
-        )
+        )'''
 
 # Audit log only (no notification)
 
@@ -175,7 +175,9 @@ def update_employee(
         except Exception:
             pass
         
-    if request.department_name is not None:
+    department = None
+    
+    if request.department_name:
         department = db.query(Department).filter(
         Department.name == request.department_name,
         Department.company_id == current_user["company_id"]

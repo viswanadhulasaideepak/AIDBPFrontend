@@ -127,3 +127,62 @@ class DashboardStatsOut(BaseModel):
     role_distribution: list[dict]
     status_overview: list[dict]
     pending_requests: int
+
+# ---------------- Invitation Status ----------------
+class InvitationStatus(str, Enum):
+    pending = "pending"
+    revoked = "revoked"
+    accepted = "accepted"
+
+class InvitationCreate(BaseModel):
+    email: EmailStr
+    expires_at: datetime | None = None
+
+class InvitationOut(BaseModel):
+    id: int
+    email: EmailStr
+    token: str
+    status: InvitationStatus
+    created_at: datetime
+    expires_at: datetime | None
+    company_id: int
+
+    class Config:
+        orm_mode = True
+
+# ---------------- User Status ----------------
+class UserStatus(str, Enum):
+    active = "active"
+    deactivated = "deactivated"
+
+class UserOut(BaseModel):
+    id: int
+    username: str
+    email: EmailStr
+    role: str
+    status: UserStatus
+    company_id: int
+
+    class Config:
+        orm_mode = True
+
+# ---------------- Reactivation Request ----------------
+class ReactivationStatus(str, Enum):
+    pending = "pending"
+    approved = "approved"
+    rejected = "rejected"
+
+class ReactivationRequestCreate(BaseModel):
+    user_id: int
+    admin_email: EmailStr
+
+class ReactivationRequestOut(BaseModel):
+    id: int
+    user_id: int
+    admin_email: EmailStr
+    status: ReactivationStatus
+    created_at: datetime
+    company_id: int
+
+    class Config:
+        orm_mode = True

@@ -10,12 +10,9 @@ from auth import verify_password, create_token, hash_password
 from routers.analytics_routes import router as analytics_router
 from routers.role_requests_routes import router as role_requests_router
 from routers import (
-    employees_routes,
-    departments_routes,
-    attendance_routes,
-    dashboard_routes,
-    notifications_routes,
-    auditlogs_routes
+    employees_routes, departments_routes, attendance_routes, dashboard_routes,
+    notifications_routes, auditlogs_routes, invitations_routes,  members_routes, 
+    reactivation_routes
 )
 
 
@@ -30,6 +27,9 @@ app.include_router(notifications_routes.router)
 app.include_router(role_requests_router)
 app.include_router(auditlogs_routes.router)
 app.include_router(analytics_router)
+app.include_router(invitations_routes.router)
+app.include_router(members_routes.router)
+app.include_router(reactivation_routes.router)
 
 # ---------------- CORS ----------------
 app.add_middleware(
@@ -176,7 +176,7 @@ def login(
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    token = create_token(user.email, user.role, user.company_id)
+    token = create_token(user.email, user.role, user.company_id, user.status.value)
 
     audit = models.AuditLog(
         user_name=user.email,

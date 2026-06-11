@@ -1,7 +1,9 @@
 from sqlalchemy.orm import Session
 from datetime import datetime
 import models
-from models import Notification
+from models import Notification, InvitationStatus, UserStatus, ReactivationStatus
+import uuid
+from models import Invitation, User, ReactivationRequest
 
 # ---------------- EMPLOYEES ----------------
 def get_employees(db: Session, company_id: int):
@@ -140,3 +142,84 @@ def get_pending_role_requests(db: Session, company_id: int):
         models.RoleChangeRequest.company_id == company_id,
         models.RoleChangeRequest.status == models.RoleChangeStatus.pending
     ).count()
+
+# ---------------- INVITATIONS ----------------
+def create_invitation(db: Session, email: str, company_id: int, expires_at: datetime | None = None):
+    token = str(uuid.uuid4())
+    invitation = Invitation(
+        email=email,
+        token=token,
+        status=InvitationStatus.pending,
+        created_at=datetime.utcnow(),
+        expires_at=expires_at,
+        company_id=company_id
+    )
+    db.add(invitation)
+    db.commit()
+    db.refresh(invitation)
+    return invitation
+
+def get_invitations(db: Session, company_id: int):
+    return db.query(Invitation).filter(Invitation.company_id == company_id).all()
+
+def revoke_invitation(db: Session, invitation_id: int, company_id: int):
+    invitation = db.query(Invitation).filter(
+        Invitation.id == invitation_id,
+        Invitation.company_id == company_id
+    ).first()
+    if invitation:
+        invitation.status = InvitationStatus.revoked
+        db.commit()
+        db.refresh(invitation)
+    return invitation
+
+# ---------------- MEMBERS ----------------
+def get_members(db: Session, company_id: int):
+    return db.query(User).filter(
+        User.company_id == company_id,
+        User.status == UserStatus.active
+    ).all()
+
+def deactivate_user(db: Session, user_id: int, company_id: int):
+    user = db.query(User).filter(User.id == user_id, User.company_id == company_id).first()
+    if user:
+        user.status = UserStatus.deactivated
+        db.commit()
+        db.refresh(user)
+    return user
+
+def reactivate_user(db: Session, user_id: int, company_id: int):
+    user = db.query(User).filter(User.id == user_id, User.company_id == company_id).first()
+    if user:
+        user.status = UserStatus.active
+        db.commit()
+        db.refresh(user)
+    return user
+
+# ---------------- REACTIVATION REQUESTS ----------------
+def create_reactivation_request(db: Session, user_id: int, admin_email: str, company_id: int):
+    request = ReactivationRequest(
+        user_id=user_id,
+        admin_email=admin_email,
+        status=ReactivationStatus.pending,
+        created_at=datetime.utcnow(),
+        company_id=company_id
+    )
+    db.add(request)
+    db.commit()
+    db.refresh(request)
+    return request
+
+def get_reactivation_requests(db: Session, company_id: int):
+    return db.query(ReactivationRequest).filter(ReactivationRequest.company_id == company_id).all()
+
+def update_reactivation_request(db: Session, request_id: int, status: ReactivationStatus, company_id: int):
+    req = db.query(ReactivationRequest).filter(
+        ReactivationRequest.id == request_id,
+        ReactivationRequest.company_id == company_id
+    ).first()
+    if req:
+        req.status = status
+        db.commit()
+        db.refresh(req)
+    return req
