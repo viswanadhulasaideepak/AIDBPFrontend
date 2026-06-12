@@ -206,10 +206,11 @@ def get_members(db: Session, company_id: int):
         User.status == UserStatus.active
     ).all()
 
-def deactivate_user(db: Session, user_id: int, company_id: int):
+def deactivate_user(db: Session, user_id: int, company_id: int, admin_email: str):
     user = db.query(User).filter(User.id == user_id, User.company_id == company_id).first()
     if user:
         user.status = UserStatus.deactivated
+        user.deactivated_by = admin_email
         db.commit()
         db.refresh(user)
         

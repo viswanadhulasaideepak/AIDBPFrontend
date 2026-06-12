@@ -37,7 +37,9 @@ def deactivate_member(
     user = crud.deactivate_user(
         db, 
         id, 
-        current_user["company_id"])
+        current_user["company_id"],
+        current_user["email"]
+        )
     
     if not user:
         raise HTTPException(status_code=404, detail="User not found")

@@ -1,124 +1,51 @@
-/* Root container */
-.invitations-page {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: calc(100vh - 60px); /* adjust if Navbar height is ~60px */
-  width: 100%;
-  padding: 24px; /* match audit logs padding */
-  background: var(--color-bg, #f9fafb);
-  box-sizing: border-box;
+.invitation-page {
+    padding: 30px;
+    background: #f4f7fb;
+    min-height: 100vh;
 }
 
-/* Title */
-.invitations-page h1 {
-  font-size: 28px; /* match audit title size */
-  font-weight: 700;
-  color: var(--color-primary, #2563eb);
-  margin-bottom: 20px;
-  text-align: center;
+.invitation-header {
+    margin-bottom: 25px;
 }
 
-/* Navigation bar */
-.invitations-page nav {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  margin-bottom: 24px;
+.invitation-header h1 {
+    margin: 0;
+    color: #1f2937;
+    font-size: 30px;
+    font-weight: 700;
 }
 
-.invitations-page nav button {
-  padding: 12px 20px;
-  font-size: 15px;
-  font-weight: 600;
-  border: none;
-  border-radius: 8px;
-  background: #e5e7eb;
-  color: #1f2937;
-  cursor: pointer;
-  transition: all 0.25s ease;
+.invitation-header p {
+    color: #6b7280;
+    margin-top: 8px;
 }
 
-.invitations-page nav button:hover {
-  background: var(--color-primary, #2563eb);
-  color: #fff;
+.invitation-nav {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
 }
 
-.invitations-page nav button.active {
-  background: var(--color-primary, #2563eb);
-  color: #fff;
-  font-weight: 700;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+.invitation-nav button {
+    padding: 12px 22px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    background: white;
+    color: #374151;
+    font-size: 15px;
+    font-weight: 600;
+    transition: .3s;
+    box-shadow: 0 5px 15px rgba(0,0,0,.06);
 }
 
-/* Tab content area */
-.tab-content {
-  flex: 1;
-  background: #fff;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  overflow-y: auto;
+.invitation-nav button:hover{
+    background:#2563eb;
+    color:white;
+    transform:translateY(-2px);
 }
 
-/* Section headings inside tabs */
-.tab-content h2 {
-  font-size: 20px;
-  font-weight: 600;
-  margin-bottom: 20px;
-  color: var(--color-primary, #2563eb);
-}
-
-/* Tables inside tabs */
-.tab-content table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 900px; /* ensures proper width for columns */
-  background: #fff;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-}
-
-.tab-content th,
-.tab-content td {
-  padding: 14px;
-  text-align: left;
-  border-bottom: 1px solid #e5e7eb;
-  font-size: 14px;
-  color: #374151;
-}
-
-.tab-content th {
-  background: #f1f5f9;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.tab-content tr:hover {
-  background: #f8fafc;
-  transition: 0.3s ease;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .invitations-page {
-    padding: 15px;
-  }
-
-  .invitations-page h1 {
-    font-size: 22px;
-  }
-
-  .tab-content table {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
-
-  .tab-content th,
-  .tab-content td {
-    padding: 10px;
-    font-size: 13px;
-  }
+.invitation-nav button.active{
+    background:#2563eb;
+    color:white;
 }

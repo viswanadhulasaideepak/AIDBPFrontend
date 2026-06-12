@@ -121,10 +121,12 @@ export const resetPassword = async (email, newPassword) => {
     body: JSON.stringify({ email, new_password: newPassword }),
   });
 
+  const data = await response.json();
+
   if (!response.ok) {
     throw new Error("Password reset failed");
   }
-  return response.json();
+  return data;
 };
 
 /* ---------------- REPORT DOWNLOADS ---------------- */
@@ -183,5 +185,8 @@ export const getReactivationRequests = async () =>
 
 export const updateReactivationRequest = async (id, status) =>
   (await api.put(`/reactivation/${id}`, null, { params: { status } })).data;
+
+export const getMyReactivationRequest = async () =>
+  (await api.get("/reactivation/my-request")).data;
 
 export default api;

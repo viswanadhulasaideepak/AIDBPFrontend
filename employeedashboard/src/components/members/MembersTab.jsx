@@ -10,19 +10,39 @@ function MembersTab() {
   }, []);
 
   const refreshMembers = async () => {
-    const data = await getMembers();
-    setMembers(data);
-  };
+    try {
+        const data = await getMembers();
+        setMembers(data);
+    } catch (err) {
+        console.error(err);
+    }
+};
 
   const handleDeactivate = async (id) => {
-    await deactivateMember(id);
-    refreshMembers();
-  };
+    if (!window.confirm("Deactivate this member?")) return;
+
+    try {
+        await deactivateMember(id);
+        alert("Member deactivated successfully.");
+        refreshMembers();
+    } catch (err) {
+        console.error(err);
+        alert("Failed to deactivate member.");
+    }
+};
 
   const handleReactivate = async (id) => {
-    await reactivateMember(id);
-    refreshMembers();
-  };
+    if (!window.confirm("Reactivate this member?")) return;
+
+    try {
+        await reactivateMember(id);
+        alert("Member reactivated successfully.");
+        refreshMembers();
+    } catch (err) {
+        console.error(err);
+        alert("Failed to reactivate member.");
+    }
+};
 
   return (
     <div>

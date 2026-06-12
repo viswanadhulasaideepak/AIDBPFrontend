@@ -1,76 +1,72 @@
-.members-tab {
-  background: #fff;
-  border-radius: 12px;
-  padding: 30px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  animation: fadeIn 0.4s ease;
+.members-container{
+    padding:30px;
 }
 
-.members-tab h2 {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: #3b82f6; /* blue accent */
-  margin-bottom: 25px;
+.members-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
 }
 
-/* Table styling */
-.members-table {
-  width: 100%;
-  border-collapse: collapse;
+.search-member{
+    width:300px;
+    padding:12px;
+    border-radius:10px;
+    border:1px solid #d1d5db;
 }
 
-.members-table th,
-.members-table td {
-  padding: 14px 18px;
-  text-align: left;
-  border-bottom: 1px solid #e2e8f0;
-  font-size: 0.95rem;
-  color: #334155;
+.members-table{
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+    border-radius:15px;
+    overflow:hidden;
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
 }
 
-.members-table th {
-  background: #f1f5f9;
-  font-weight: 600;
-  color: #1e293b;
+.members-table th{
+    background:#1e293b;
+    color:white;
+    padding:18px;
 }
 
-.members-table tr:hover {
-  background: #f9fafb;
+.members-table td{
+    padding:16px;
 }
 
-/* Action buttons */
-.action-btn {
-  padding: 8px 14px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background 0.25s ease, transform 0.2s ease;
-  margin-right: 8px;
+.members-table tr:hover{
+    background:#eff6ff;
 }
 
-.action-btn.deactivate {
-  background: #ef4444;
-  color: #fff;
+.active-badge{
+    background:#22c55e;
+    color:white;
+    padding:6px 15px;
+    border-radius:20px;
 }
 
-.action-btn.deactivate:hover {
-  background: #dc2626;
-  transform: scale(1.05);
+.deactive-badge{
+    background:#ef4444;
+    color:white;
+    padding:6px 15px;
+    border-radius:20px;
 }
 
-.action-btn.reactivate {
-  background: #22c55e;
-  color: #fff;
+.deactivate-btn{
+    background:#dc2626;
+    color:white;
+    border:none;
+    padding:9px 18px;
+    border-radius:8px;
+    cursor:pointer;
 }
 
-.action-btn.reactivate:hover {
-  background: #16a34a;
-  transform: scale(1.05);
-}
-
-/* Fade-in animation */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+.activate-btn{
+    background:#16a34a;
+    color:white;
+    border:none;
+    padding:9px 18px;
+    border-radius:8px;
+    cursor:pointer;
 }

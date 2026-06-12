@@ -1,50 +1,47 @@
-.account-deactivated {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  background: #f9fafb;
-  color: #1e293b;
-  text-align: center;
-  animation: fadeIn 0.5s ease;
+.deactivated-page{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    background:#f4f7fb;
 }
 
-.account-deactivated h2 {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #ef4444; /* red accent for deactivated state */
-  margin-bottom: 20px;
+.deactivated-card{
+    width:500px;
+    background:white;
+    border-radius:18px;
+    padding:40px;
+    text-align:center;
+    box-shadow:0 15px 30px rgba(0,0,0,.08);
 }
 
-.account-deactivated p {
-  font-size: 1.1rem;
-  margin-bottom: 25px;
-  color: #334155;
+.deactivated-card h1{
+    color:#dc2626;
+    margin-bottom:15px;
 }
 
-.account-deactivated button {
-  padding: 12px 24px;
-  background: #3b82f6; /* blue accent */
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.25s ease, transform 0.2s ease;
+.deactivated-card p{
+    color:#64748b;
+    margin-bottom:25px;
 }
 
-.account-deactivated button:hover {
-  background: #2563eb;
-  transform: translateY(-2px);
+.request-btn{
+    background:#2563eb;
+    color:white;
+    border:none;
+    padding:14px 25px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:15px;
 }
 
-.account-deactivated strong {
-  color: #3b82f6; /* highlight status text */
+.request-btn:hover{
+    background:#1d4ed8;
 }
 
-/* Fade-in animation */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+.status-box{
+    margin-top:20px;
+    background:#eff6ff;
+    padding:15px;
+    border-radius:10px;
 }

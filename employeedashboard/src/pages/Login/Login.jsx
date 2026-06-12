@@ -1,6 +1,6 @@
 import { useState, useContext } from "react";
 import { FaEnvelope, FaLock } from "react-icons/fa";
-import { loginUser, signupUser, resetPassword } from "../../services/api"; // 🔹 Added resetPassword
+import { loginUser, signupUser, resetPassword } from "../../services/api";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../auth/AuthContext";
@@ -11,7 +11,6 @@ const SignupForm = ({ onCancel }) => {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("");
   const [companyName, setCompanyName] = useState("");
-
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -21,40 +20,26 @@ const SignupForm = ({ onCancel }) => {
       toast.success("Signup successful!");
       navigate("/login");
     } catch (err) {
-      console.error(err);
-      toast.error("Signup failed");
+      toast.error(err.response?.data?.detail || "Signup failed");
     }
   };
 
   return (
     <form className="signup-form" onSubmit={handleSubmit}>
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e)=>setEmail(e.target.value)}
-        required
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e)=>setPassword(e.target.value)}
-        required
-      />
+      <input type="email" placeholder="Email" value={email}
+        onChange={(e)=>setEmail(e.target.value)} required />
+      <input type="password" placeholder="Password" value={password}
+        onChange={(e)=>setPassword(e.target.value)} required />
       <select value={role} onChange={(e)=>setRole(e.target.value)} required>
         <option value="">Select Role</option>
         <option value="admin">Admin</option>
         <option value="user">User</option>
       </select>
-
-      <select value={companyName}
-      onChange={(e) => setCompanyName(e.target.value)} required>
+      <select value={companyName} onChange={(e)=>setCompanyName(e.target.value)} required>
         <option value="">Select Company</option>
         <option value="Company A">Company A</option>
         <option value="Company B">Company B</option>
-        </select>
-
+      </select>
       <button type="submit">Signup</button>
       <p className="signup-text">
         Already have an account?{" "}
@@ -64,7 +49,6 @@ const SignupForm = ({ onCancel }) => {
   );
 };
 
-//  Forgot Password Form
 const ForgotPasswordForm = ({ onCancel }) => {
   const [email, setEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -79,36 +63,20 @@ const ForgotPasswordForm = ({ onCancel }) => {
     try {
       await resetPassword(email, newPassword);
       toast.success("Password reset successful!");
-      onCancel(); // go back to login
+      onCancel();
     } catch (err) {
-      console.error(err);
-      toast.error("Password reset failed");
+      toast.error(err.response?.data?.detail || "Password reset failed");
     }
   };
 
   return (
     <form className="forgot-form" onSubmit={handleSubmit}>
-      <input
-        type="email"
-        placeholder="Enter your email"
-        value={email}
-        onChange={(e)=>setEmail(e.target.value)}
-        required
-      />
-      <input
-        type="password"
-        placeholder="New Password"
-        value={newPassword}
-        onChange={(e)=>setNewPassword(e.target.value)}
-        required
-      />
-      <input
-        type="password"
-        placeholder="Confirm Password"
-        value={confirmPassword}
-        onChange={(e)=>setConfirmPassword(e.target.value)}
-        required
-      />
+      <input type="email" placeholder="Enter your email" value={email}
+        onChange={(e)=>setEmail(e.target.value)} required />
+      <input type="password" placeholder="New Password" value={newPassword}
+        onChange={(e)=>setNewPassword(e.target.value)} required />
+      <input type="password" placeholder="Confirm Password" value={confirmPassword}
+        onChange={(e)=>setConfirmPassword(e.target.value)} required />
       <button type="submit">Reset Password</button>
       <p className="signup-text">
         Back to{" "}
@@ -117,9 +85,8 @@ const ForgotPasswordForm = ({ onCancel }) => {
     </form>
   );
 };
-//-------------------Login------------------------
+
 const Login = () => {
-  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("");
@@ -138,15 +105,22 @@ const Login = () => {
     try {
       const data = await loginUser(email, password, role);
       login(data);
-      // Save token and role consistently
+
+      // Save user context
       localStorage.setItem("user", JSON.stringify(data));
       localStorage.setItem("token", data.token);
       localStorage.setItem("role", data.role);
-      toast.success("Login successful!");
-      navigate("/dashboard");
+      localStorage.setItem("company_id", data.company_id);
+
+      // Redirect based on status
+      if (data.status === "deactivated") {
+        navigate("/account-deactivated");
+      } else {
+        toast.success("Login successful!");
+        navigate("/dashboard");
+      }
     } catch (err) {
-      //console.error(err);
-      toast.error("Login failed");
+      toast.error(err.response?.data?.detail || "Login failed");
     }
   };
 
@@ -174,18 +148,14 @@ const Login = () => {
         ) : (
           <>
             <div className="role-buttons">
-              <button
-                type="button"
+              <button type="button"
                 className={`role-btn ${role === "admin" ? "active" : ""}`}
-                onClick={() => setRole("admin")}
-              >
+                onClick={() => setRole("admin")}>
                 Admin Login
               </button>
-              <button
-                type="button"
+              <button type="button"
                 className={`role-btn ${role === "user" ? "active" : ""}`}
-                onClick={() => setRole("user")}
-              >
+                onClick={() => setRole("user")}>
                 User Login
               </button>
             </div>
@@ -194,35 +164,19 @@ const Login = () => {
               <div className="form-group">
                 <label className="form-label">Company</label>
                 <select className="form-select" value={companyName}
-                 onChange={(e) => setCompanyName(e.target.value)}
-                  required>
-                    <option value="">Select Company</option>
-                    <option value="Company A">Company A</option>
-                    <option value="Company B">Company B</option>
-                    </select>
-                
-                <label>Full Name</label>
-
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Enter your full name"
-                  required
-                />
+                  onChange={(e) => setCompanyName(e.target.value)} required>
+                  <option value="">Select Company</option>
+                  <option value="Company A">Company A</option>
+                  <option value="Company B">Company B</option>
+                </select>
               </div>
 
               <div className="input-group">
                 <label>Email</label>
                 <div className="input-field">
                   <FaEnvelope className="icon" />
-                  <input
-                    type="email"
-                    placeholder="Enter email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
+                  <input type="email" placeholder="Enter email"
+                    value={email} onChange={(e) => setEmail(e.target.value)} required />
                 </div>
               </div>
 
@@ -230,13 +184,8 @@ const Login = () => {
                 <label>Password</label>
                 <div className="input-field">
                   <FaLock className="icon" />
-                  <input
-                    type="password"
-                    placeholder="Enter password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
+                  <input type="password" placeholder="Enter password"
+                    value={password} onChange={(e) => setPassword(e.target.value)} required />
                 </div>
               </div>
 
@@ -244,15 +193,11 @@ const Login = () => {
 
               <p className="signup-text">
                 Don’t have an account?{" "}
-                <button type="button" onClick={() => setShowSignup(true)}>
-                  Sign up
-                </button>
+                <button type="button" onClick={() => setShowSignup(true)}>Sign up</button>
               </p>
               <p className="signup-text">
                 Forgot your password?{" "}
-                <button type="button" onClick={() => setShowForgot(true)}>
-                  Reset
-                </button>
+                <button type="button" onClick={() => setShowForgot(true)}>Reset</button>
               </p>
             </form>
           </>

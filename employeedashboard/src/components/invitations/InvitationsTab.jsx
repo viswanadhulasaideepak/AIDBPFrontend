@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { createInvitation, getInvitations, revokeInvitation } from "../../services/api";
+import toast from "react-hot-toast";
 import "./InvitationsTab.css"
 
 function InvitationsTab() {
@@ -33,7 +34,7 @@ function InvitationsTab() {
   const handleCopyLink = (token) => {
     const link = `${window.location.origin}/signup?token=${token}`;
     navigator.clipboard.writeText(link);
-    alert("Invitation link copied!");
+    toast.success("Invitation link copied");
   };
 
   return (

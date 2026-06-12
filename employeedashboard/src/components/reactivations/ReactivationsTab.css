@@ -1,76 +1,60 @@
-.reactivation-tab {
-  background: #fff;
-  border-radius: 12px;
-  padding: 30px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  animation: fadeIn 0.4s ease;
+.reactivation-container{
+    padding:30px;
 }
 
-.reactivation-tab h2 {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: #3b82f6; /* blue accent */
-  margin-bottom: 25px;
+.reactivation-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
 }
 
-/* Table styling */
-.reactivation-table {
-  width: 100%;
-  border-collapse: collapse;
+.reactivation-table{
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+    border-radius:15px;
+    overflow:hidden;
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
 }
 
-.reactivation-table th,
-.reactivation-table td {
-  padding: 14px 18px;
-  text-align: left;
-  border-bottom: 1px solid #e2e8f0;
-  font-size: 0.95rem;
-  color: #334155;
+.reactivation-table th{
+    background:#1e293b;
+    color:white;
+    padding:18px;
 }
 
-.reactivation-table th {
-  background: #f1f5f9;
-  font-weight: 600;
-  color: #1e293b;
+.reactivation-table td{
+    padding:16px;
 }
 
-.reactivation-table tr:hover {
-  background: #f9fafb;
+.reactivation-table tr:hover{
+    background:#eff6ff;
 }
 
-/* Action buttons */
-.action-btn {
-  padding: 8px 14px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background 0.25s ease, transform 0.2s ease;
-  margin-right: 8px;
+.approve-btn{
+    background:#16a34a;
+    color:white;
+    border:none;
+    padding:8px 16px;
+    border-radius:8px;
+    cursor:pointer;
+    margin-right:8px;
 }
 
-.action-btn.approve {
-  background: #22c55e;
-  color: #fff;
+.reject-btn{
+    background:#dc2626;
+    color:white;
+    border:none;
+    padding:8px 16px;
+    border-radius:8px;
+    cursor:pointer;
 }
 
-.action-btn.approve:hover {
-  background: #16a34a;
-  transform: scale(1.05);
+.approve-btn:hover{
+    background:#15803d;
 }
 
-.action-btn.reject {
-  background: #ef4444;
-  color: #fff;
-}
-
-.action-btn.reject:hover {
-  background: #dc2626;
-  transform: scale(1.05);
-}
-
-/* Fade-in animation */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+.reject-btn:hover{
+    background:#b91c1c;
 }

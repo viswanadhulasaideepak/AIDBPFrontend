@@ -173,6 +173,8 @@ def get_companies(db: Session = Depends(get_db)):
 
 class TokenResponse(BaseModel):
     token: str
+    id: int
+    email: str
     role: str
     company_id: int
     status: str
@@ -213,6 +215,8 @@ def login(
 
     return {
         "token": token,
+        "id": user.id,
+        "email": user.email,
         "role": user.role,
         "company_id": user.company_id,
         "status": user.status.value

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from auth import get_current_user
 import crud, schema
-from models import User
+from models import User, ReactivationRequest
 
 router = APIRouter(prefix="/reactivation", tags=["Reactivation"])
 
@@ -15,30 +15,35 @@ def submit_reactivation_request(
     request = crud.create_reactivation_request(
         db,
         user_id=current_user["id"],
-        deactivated_by="system",  # or track actual admin later
-        admin_email="admin@company.com",  # placeholder until linked
+        deactivated_by=user.deactivated_by,
+        admin_email=user.deactivated_by,
         company_id=current_user["company_id"]
         )
     
-    admin = db.query(User).filter(
-        User.company_id == current_user["company_id"],
-        User.role == "admin"
+    # Get the current user from DB
+    user = db.query(User).filter(
+        User.id == current_user["id"]
         ).first()
     
-    if admin:
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if user.deactivated_by:
         crud.create_notification(
-            db=db,
-            message=f"Reactivation request submitted by {current_user['email']}",
-            recipient_email=admin.email,
-            company_id=current_user["company_id"]
-            )
+        db=db,
+        message=f"Reactivation request submitted by {current_user['email']}",
+        recipient_email=user.deactivated_by,
+        company_id=current_user["company_id"]
+        )
     
     crud.create_audit_log(
         db, 
         current_user["email"], 
         "Reactivation Request Submitted", 
         None,
-        current_user["company_id"])
+        current_user["company_id"]
+        )
+    
     return request
 
 @router.get("/", response_model=list[schema.ReactivationRequestOut])
@@ -98,5 +103,25 @@ def update_reactivation_request(
         req.user.email,
         current_user["company_id"]
     )
+
+    return req
+
+@router.get("/my-request", response_model=schema.ReactivationRequestOut)
+def get_my_request(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    req = (
+        db.query(ReactivationRequest)
+        .filter(ReactivationRequest.user_id == current_user["id"])
+        .order_by(ReactivationRequest.created_at.desc())
+        .first()
+    )
+
+    if not req:
+        raise HTTPException(
+            status_code=404,
+            detail="No reactivation request found"
+        )
 
     return req

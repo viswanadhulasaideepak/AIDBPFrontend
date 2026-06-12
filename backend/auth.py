@@ -54,11 +54,11 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
             raise HTTPException(status_code=401, detail="Invalid token payload")
 
         return {
-            "id": payload["id"],
-            "email": payload["sub"],
-            "role": payload["role"],
-            "company_id": payload["company_id"],
-            "status": payload["status"]
+            "id": payload.get("id"),
+            "email": email,
+            "role": role,
+            "company_id": company_id,
+            "status": status
             }
 
     except JWTError:
