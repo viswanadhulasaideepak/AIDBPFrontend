@@ -51,7 +51,7 @@ class User(Base):
     email = Column(String, unique=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     role = Column(String, default="user")
-
+    status = Column(Enum(UserStatus), default=UserStatus.active, nullable=False)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
     company = relationship("Company", back_populates="users")
 
@@ -105,7 +105,7 @@ class Company(Base):
     name = Column(String, unique=True, nullable=False)
     domain = Column(String, unique=True, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
-
+    invitations = relationship("Invitation", back_populates="company")
     departments = relationship("Department", back_populates="company")
     notifications = relationship("Notification", back_populates="company")
     employees = relationship("Employee", back_populates="company")
@@ -121,6 +121,7 @@ class AuditLog(Base):
     related_user = Column(String, nullable=True)
     timestamp = Column(DateTime, default=datetime.utcnow)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
+    performed_by = Column(String)
 
 # ---------------- Invitation Status ----------------
 class InvitationStatus(str, enum.Enum):
@@ -139,9 +140,7 @@ class Invitation(Base):
     expires_at = Column(DateTime, nullable=True)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
 
-    company = relationship("Company", backref="invitations")
-
-
+    company = relationship("Company", back_populates="invitations")
 
 # ---------------- Reactivation Request ----------------
 class ReactivationStatus(str, enum.Enum):
@@ -158,5 +157,5 @@ class ReactivationRequest(Base):
     status = Column(Enum(ReactivationStatus), default=ReactivationStatus.pending, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
-
+    
     user = relationship("User", backref="reactivation_requests")

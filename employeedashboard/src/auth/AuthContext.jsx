@@ -8,20 +8,19 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
-      setUser(JSON.parse(storedUser)); 
-     } // token + role restored
+      setUser(JSON.parse(storedUser));
+    }
   }, []);
 
   const login = (data) => {
-  const userData = {
-    token: data.token,
-    role: data.role,
-    //fullName: data.fullName || "User", // fallback if not provided
+    const userData = {
+      token: data.token,
+      role: data.role,
+      status: data.status,
+    };
+    setUser(userData);
+    localStorage.setItem("user", JSON.stringify(userData));
   };
-  setUser(userData);
-  localStorage.setItem("user", JSON.stringify(userData));
-};
-
 
   const logout = () => {
     setUser(null);

@@ -26,9 +26,10 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 # ---------------- TOKEN CREATION ----------------
-def create_token(email: str, role: str, company_id: int, status: str):
+def create_token(user_id: int, email: str, role: str, company_id: int, status: str):
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     payload = {
+        "id":user_id,
         "sub": email,              #  use email consistently
         "role": role,
         "company_id": company_id,
@@ -53,11 +54,12 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
             raise HTTPException(status_code=401, detail="Invalid token payload")
 
         return {
-            "email": email,         
-            "role": role,
-            "company_id": company_id,
-            "status": status
-        }
+            "id": payload["id"],
+            "email": payload["sub"],
+            "role": payload["role"],
+            "company_id": payload["company_id"],
+            "status": payload["status"]
+            }
 
     except JWTError:
         raise HTTPException(status_code=401, detail="Token expired or invalid")

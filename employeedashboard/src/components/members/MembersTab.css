@@ -1,0 +1,76 @@
+.members-tab {
+  background: #fff;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  animation: fadeIn 0.4s ease;
+}
+
+.members-tab h2 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #3b82f6; /* blue accent */
+  margin-bottom: 25px;
+}
+
+/* Table styling */
+.members-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.members-table th,
+.members-table td {
+  padding: 14px 18px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.95rem;
+  color: #334155;
+}
+
+.members-table th {
+  background: #f1f5f9;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.members-table tr:hover {
+  background: #f9fafb;
+}
+
+/* Action buttons */
+.action-btn {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.25s ease, transform 0.2s ease;
+  margin-right: 8px;
+}
+
+.action-btn.deactivate {
+  background: #ef4444;
+  color: #fff;
+}
+
+.action-btn.deactivate:hover {
+  background: #dc2626;
+  transform: scale(1.05);
+}
+
+.action-btn.reactivate {
+  background: #22c55e;
+  color: #fff;
+}
+
+.action-btn.reactivate:hover {
+  background: #16a34a;
+  transform: scale(1.05);
+}
+
+/* Fade-in animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}

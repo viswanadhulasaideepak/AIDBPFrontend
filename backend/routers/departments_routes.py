@@ -8,6 +8,7 @@ from database import get_db
 router = APIRouter(prefix="/departments", tags=["Departments"])
 
 # ---------------- GET DEPARTMENTS ----------------
+
 class DepartmentRequest(BaseModel):
     name: str
 
@@ -30,8 +31,8 @@ def read_departments(
         for dept in departments
     ]
 
-
 # ---------------- ADD DEPARTMENT ----------------
+
 @router.post("/")
 def add_department(
     request: DepartmentRequest,

@@ -1,7 +1,8 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from enum import Enum
 from datetime import datetime
 
+model_config = ConfigDict(from_attributes=True)
 
 class StatusEnum(str, Enum):
     active = "active"
@@ -24,8 +25,8 @@ class EmployeeBase(BaseModel):
 class EmployeeCreate(EmployeeBase):
     company_id: int
     
-    class Config:
-        orm_mode = True
+    #class Config:
+    #    orm_mode = True
 
 
 class EmployeeUpdate(BaseModel):
@@ -172,9 +173,9 @@ class ReactivationStatus(str, Enum):
     approved = "approved"
     rejected = "rejected"
 
-class ReactivationRequestCreate(BaseModel):
-    user_id: int
-    admin_email: EmailStr
+#class ReactivationRequestCreate(BaseModel):
+ #   user_id: int
+    #admin_email: EmailStr
 
 class ReactivationRequestOut(BaseModel):
     id: int

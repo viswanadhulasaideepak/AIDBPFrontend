@@ -154,23 +154,49 @@ def create_invitation(db: Session, email: str, company_id: int, expires_at: date
         expires_at=expires_at,
         company_id=company_id
     )
+    
+    existing = db.query(Invitation).filter(
+        Invitation.email == email,
+        Invitation.company_id == company_id,
+        Invitation.status == InvitationStatus.pending,
+        
+        ).first()
+    
+    if existing:
+        return None
+    
     db.add(invitation)
+    
+    invitation.status = InvitationStatus.revoked
+    
     db.commit()
     db.refresh(invitation)
+    
+    create_audit_log(db, user_name=email, action="Invitation Created",
+                 related_user=None, company_id=company_id)
+
     return invitation
 
 def get_invitations(db: Session, company_id: int):
     return db.query(Invitation).filter(Invitation.company_id == company_id).all()
 
-def revoke_invitation(db: Session, invitation_id: int, company_id: int):
+def revoke_invitation(db: Session, invitation_id: int, company_id: int, performed_by: str):
     invitation = db.query(Invitation).filter(
         Invitation.id == invitation_id,
-        Invitation.company_id == company_id
+        Invitation.company_id == company_id,
+        Invitation.status == InvitationStatus.pending
     ).first()
-    if invitation:
-        invitation.status = InvitationStatus.revoked
-        db.commit()
-        db.refresh(invitation)
+    
+    if not invitation:
+        return None
+    
+    invitation.status = InvitationStatus.revoked
+    db.commit()
+    db.refresh(invitation)
+    
+    create_audit_log(db, user_name=invitation.email, action="Invitation Revoked",
+                    related_user=None, company_id=company_id)
+    
     return invitation
 
 # ---------------- MEMBERS ----------------
@@ -186,6 +212,12 @@ def deactivate_user(db: Session, user_id: int, company_id: int):
         user.status = UserStatus.deactivated
         db.commit()
         db.refresh(user)
+        
+        create_audit_log(db, user_name=user.email, action="User Deactivated",
+                        related_user=None, company_id=company_id)
+        create_notification(
+            db, f"User {user.email} was deactivated", 
+             company_id)
     return user
 
 def reactivate_user(db: Session, user_id: int, company_id: int):
@@ -197,7 +229,13 @@ def reactivate_user(db: Session, user_id: int, company_id: int):
     return user
 
 # ---------------- REACTIVATION REQUESTS ----------------
-def create_reactivation_request(db: Session, user_id: int, admin_email: str, company_id: int):
+def create_reactivation_request(
+    db: Session, 
+    user_id: int,deactivated_by: str, 
+    admin_email: str, 
+    company_id: int
+    ):
+    
     request = ReactivationRequest(
         user_id=user_id,
         admin_email=admin_email,
@@ -205,9 +243,23 @@ def create_reactivation_request(db: Session, user_id: int, admin_email: str, com
         created_at=datetime.utcnow(),
         company_id=company_id
     )
+    
+    existing = db.query(ReactivationRequest).filter(
+        ReactivationRequest.user_id == user_id,
+        ReactivationRequest.status == ReactivationStatus.pending
+        ).first()
+    
+    if existing:
+        return None
+    
     db.add(request)
     db.commit()
     db.refresh(request)
+    
+    create_audit_log(db, user_name=str(user_id), action="Reactivation Request Submitted",
+                 related_user=None, company_id=company_id)
+    create_notification(db, f"Reactivation request submitted by user {user_id}", admin_email, company_id)
+
     return request
 
 def get_reactivation_requests(db: Session, company_id: int):
@@ -222,4 +274,5 @@ def update_reactivation_request(db: Session, request_id: int, status: Reactivati
         req.status = status
         db.commit()
         db.refresh(req)
+        
     return req

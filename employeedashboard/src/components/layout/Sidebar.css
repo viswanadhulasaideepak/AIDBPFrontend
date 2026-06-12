@@ -132,3 +132,14 @@ body.dark-theme .sidebar-links li a:hover {
   background: #1e3a8a; /* deeper blue hover */
   color: #93c5fd;      /* lighter blue text */
 }
+
+/* Special styling for Invitations link */
+.sidebar-links li a[href="/invitations"] {
+  font-weight: 600;          /* slightly bolder */
+  color: #93c5fd;            /* lighter blue text */
+}
+
+.sidebar-links li a[href="/invitations"].active {
+  background: #2563eb;       /* same strong blue highlight */
+  color: #fff;
+}

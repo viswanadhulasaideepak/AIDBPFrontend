@@ -1,0 +1,114 @@
+.invitations-tab {
+  background: #fff;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  animation: fadeIn 0.4s ease;
+}
+
+.invitations-tab h2 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #3b82f6; /* blue accent */
+  margin-bottom: 25px;
+}
+
+/* Form styling */
+.invitations-form {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.invitations-form input {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.invitations-form input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.25);
+  outline: none;
+}
+
+.invitations-form button {
+  padding: 12px 20px;
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.25s ease, transform 0.2s ease;
+}
+
+.invitations-form button:hover {
+  background: #2563eb;
+  transform: translateY(-2px);
+}
+
+/* Table styling */
+.invitations-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.invitations-table th,
+.invitations-table td {
+  padding: 14px 18px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.95rem;
+  color: #334155;
+}
+
+.invitations-table th {
+  background: #f1f5f9;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.invitations-table tr:hover {
+  background: #f9fafb;
+}
+
+/* Action buttons */
+.action-btn {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.25s ease, transform 0.2s ease;
+  margin-right: 8px;
+}
+
+.action-btn.copy {
+  background: #3b82f6;
+  color: #fff;
+}
+
+.action-btn.copy:hover {
+  background: #2563eb;
+  transform: scale(1.05);
+}
+
+.action-btn.revoke {
+  background: #ef4444;
+  color: #fff;
+}
+
+.action-btn.revoke:hover {
+  background: #dc2626;
+  transform: scale(1.05);
+}
+
+/* Fade-in animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}

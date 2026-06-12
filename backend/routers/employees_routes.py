@@ -77,24 +77,24 @@ def add_employee(
         db.refresh(department)
     
         
-        if request.joined_date:
-            try:
-                joined_date = datetime.strptime(request.joined_date, "%Y-%m-%d")
+    if request.joined_date:
+        try:
+            joined_date = datetime.strptime(request.joined_date, "%Y-%m-%d")
 
-            except Exception:
-                joined_date = None
+        except Exception:
+            joined_date = None
                 
-        joined_date = None        
-        new_emp = crud.create_employee(
-            db=db,
-            name=request.name,
-            department_id=department.id,
-            email=request.email,
-            role=request.role,
-            joined_date=joined_date,   
-            status=request.status,
-            company_id=current_user["company_id"]
-            )
+    joined_date = None        
+    new_emp = crud.create_employee(
+        db=db,
+        name=request.name,
+        department_id=department.id,
+        email=request.email,
+        role=request.role,
+        joined_date=joined_date,   
+        status=request.status,
+        company_id=current_user["company_id"]
+        )
         
         # Attendance record for new employee
     attendance_status = "present"
@@ -137,6 +137,7 @@ def add_employee(
             }
 
 #------------------ UPDATE EMPLOYEE ------------------
+
 @router.put("/{id}")
 def update_employee(
     id: int,

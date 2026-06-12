@@ -14,6 +14,7 @@ from models import AuditLog
 router = APIRouter(prefix="/attendance", tags=["Attendance"])
 
 # ---------------- GET ATTENDANCE ----------------
+
 @router.get("/")
 def get_attendance(
     db: Session = Depends(get_db),
@@ -21,15 +22,6 @@ def get_attendance(
 ):
     records = crud.get_attendance(db, current_user["company_id"])
 
-    # Audit log
-    audit = AuditLog(
-        user_name=current_user["email"],
-        action="Attendance Viewed",
-        related_user=None,
-        company_id=current_user["company_id"]
-    )
-    db.add(audit)
-    db.commit()
 
     return [
         {
@@ -43,6 +35,7 @@ def get_attendance(
     ]
 
 # ---------------- ADD ATTENDANCE ----------------
+
 @router.post("/")
 def add_attendance(
     employee_id: int,
@@ -61,16 +54,6 @@ def add_attendance(
         company_id=current_user["company_id"]
     )
 
-    # Audit log
-    audit = AuditLog(
-        user_name=current_user["email"],
-        action=f"Attendance Added ({status})",
-        related_user=str(employee_id),
-        company_id=current_user["company_id"]
-    )
-    db.add(audit)
-    db.commit()
-
     return {
         "id": record.id,
         "employee_id": record.employee_id,
@@ -80,6 +63,7 @@ def add_attendance(
     }
 
 # ---------------- REPORT (JSON for Analytics) ----------------
+
 @router.get("/report")
 def get_attendance_report(
     db: Session = Depends(get_db),
@@ -101,16 +85,6 @@ def get_attendance_report(
 
     dates = sorted(report.keys())
 
-    # Audit log
-    audit = AuditLog(
-        user_name=current_user["email"],
-        action="Attendance Report Viewed (Analytics)",
-        related_user=None,
-        company_id=current_user["company_id"]
-    )
-    db.add(audit)
-    db.commit()
-
     return {
         "dates": dates,
         "present": [report[d]["present"] for d in dates],
@@ -119,6 +93,7 @@ def get_attendance_report(
     }
 
 # ---------------- REPORT (EXCEL) ----------------
+
 @router.get("/report/excel")
 def get_attendance_report_excel(
     db: Session = Depends(get_db),
@@ -142,16 +117,6 @@ def get_attendance_report_excel(
     wb.save(stream)
     stream.seek(0)
 
-    # Audit log
-    audit = AuditLog(
-        user_name=current_user["email"],
-        action="Attendance Report Exported (Excel)",
-        related_user=None,
-        company_id=current_user["company_id"]
-    )
-    db.add(audit)
-    db.commit()
-
     return StreamingResponse(
         stream,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -159,6 +124,7 @@ def get_attendance_report_excel(
     )
 
 # ---------------- REPORT (PDF) ----------------
+
 @router.get("/report/pdf")
 def get_attendance_report_pdf(
     db: Session = Depends(get_db),

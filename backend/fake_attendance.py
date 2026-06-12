@@ -1,14 +1,14 @@
-import sqlite3
+from database import SessionLocal
+from models import User
 
-conn = sqlite3.connect("employees.db")
-cur = conn.cursor()
+db = SessionLocal()
 
-cur.execute("""
-DELETE FROM attendance
-WHERE status IN ('active','inactive','onleave')
-""")
+users = db.query(User).all()
 
-conn.commit()
-conn.close()
-
-print("Cleaned old attendance records")
+for u in users:
+    print(
+        "ID:", u.id,
+        "Email:", u.email,
+        "Username:", getattr(u, "username", None),
+        "Role:", u.role
+    )

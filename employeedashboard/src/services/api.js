@@ -154,4 +154,34 @@ export const downloadAttendanceReportPDF = async () => {
   document.body.removeChild(link);
 };
 
+//----------------Invitations-----------------
+export const createInvitation = async (email, expiresAt) =>
+  (await api.post("/invitations", { email, expires_at: expiresAt })).data;
+
+export const getInvitations = async () =>
+  (await api.get("/invitations")).data;
+
+export const revokeInvitation = async (id) =>
+  (await api.delete(`/invitations/${id}`)).data;
+
+//----------------Members-----------------------
+export const getMembers = async () =>
+  (await api.get("/members")).data;
+
+export const deactivateMember = async (id) =>
+  (await api.put(`/members/${id}/deactivate`)).data;
+
+export const reactivateMember = async (id) =>
+  (await api.put(`/members/${id}/reactivate`)).data;
+
+//----------------Reactivation-----------------
+export const submitReactivationRequest = async () =>
+  (await api.post("/reactivation/request")).data;
+
+export const getReactivationRequests = async () =>
+  (await api.get("/reactivation")).data;
+
+export const updateReactivationRequest = async (id, status) =>
+  (await api.put(`/reactivation/${id}`, null, { params: { status } })).data;
+
 export default api;

@@ -13,22 +13,23 @@ const Sidebar = () => {
   };
 
   const menuItems = [
-  { id: "dashboard", label: "📊 Dashboard", path: "/dashboard", roles: ["admin", "user"] },
-  { id: "employees", label: "👥 Employees", path: "/employees", roles: ["admin"] },
-  { id: "departments", label: "🏢 Departments", path: "/departments", roles: ["admin"] },
-  { id: "attendance", label: "📅 Attendance", path: "/attendance", roles: ["admin", "user"] },
-  { id: "auditlogs", label: "📜 Audit Logs", path: "/audit-logs", roles: ["admin"] },
-  { id: "settings", label: "⚙️ Settings", path: "/settings", roles: ["admin", "user"] },
-  
-];
+    { id: "dashboard", label: "📊 Dashboard", path: "/dashboard", roles: ["admin", "user"] },
+    { id: "employees", label: "👥 Employees", path: "/employees", roles: ["admin"] },
+    { id: "departments", label: "🏢 Departments", path: "/departments", roles: ["admin"] },
+    { id: "attendance", label: "📅 Attendance", path: "/attendance", roles: ["admin", "user"] },
+    { id: "auditlogs", label: "📜 Audit Logs", path: "/audit-logs", roles: ["admin"] },
 
+    { id: "invitations", label: "📩 Invitations", path: "/invitations", roles: ["admin"] },
+
+    { id: "settings", label: "⚙️ Settings", path: "/settings", roles: ["admin", "user"] },
+  ];
 
   return (
     <aside className="sidebar">
       <h2 className="sidebar-title">EEMS</h2>
       <ul className="sidebar-links">
         {menuItems
-          .filter((item) => item.roles.includes(user?.role)) // ✅ role-based filtering
+          .filter((item) => item.roles.includes(user?.role))
           .map((item) => (
             <li key={item.id}>
               <NavLink
@@ -41,7 +42,7 @@ const Sidebar = () => {
           ))}
       </ul>
 
-      {/* ✅ Fixed logout button */}
+      {/* Fixed logout button */}
       <button className="logout-btn" onClick={handleLogout}>
         🚪 Logout
       </button>

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import { fetchAuditLogs } from "../../services/api";
+import "./AuditLogs.css"
 
 const AuditLogs = () => {
   const [logs, setLogs] = useState([]);

@@ -3,6 +3,7 @@ from fastapi import FastAPI, HTTPException, Depends, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import datetime
 import schema, models, crud, database
@@ -15,8 +16,16 @@ from routers import (
     reactivation_routes
 )
 
-
 app = FastAPI()
+# ---------------- CORS ----------------
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+                    #"http://localhost:8000", "http://127.0.0.1:8000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ---------------- ROUTERS ----------------
 app.include_router(employees_routes.router)
@@ -31,15 +40,7 @@ app.include_router(invitations_routes.router)
 app.include_router(members_routes.router)
 app.include_router(reactivation_routes.router)
 
-# ---------------- CORS ----------------
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
-                    #"http://localhost:8000", "http://127.0.0.1:8000"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
 
 # ---------------- FAKE API ----------------
 FAKE_API_URL = "https://jsonplaceholder.typicode.com/users"
@@ -145,12 +146,23 @@ def seed_data():
 @app.on_event("startup")
 def startup_event():
     seed_data()
-
-# ---------------- USERS ----------------
-@app.get("/users")
-def get_users(db: Session = Depends(get_db)):
+    
+#-------debugUsers------------
+@app.get("/debug-users")
+def debug_users(db: Session = Depends(get_db)):
     users = db.query(models.User).all()
-    return [{"id": u.id, "email": u.email, "role": u.role} for u in users]
+
+    return [
+        {
+            "id": u.id,
+            "username": u.username,
+            "email": u.email,
+            "role": u.role,
+            "status": str(u.status),
+            "company_id": u.company_id
+        }
+        for u in users
+    ]
 
 # ---------------- COMPANIES ----------------
 @app.get("/companies")
@@ -158,31 +170,43 @@ def get_companies(db: Session = Depends(get_db)):
     return db.query(models.Company).all()
 
 # ---------------- LOGIN ----------------
+
 class TokenResponse(BaseModel):
     token: str
     role: str
     company_id: int
+    status: str
 
 @app.post("/login", response_model=TokenResponse)
 def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db),
-    role: str = Form(...)
+    db: Session = Depends(get_db)
+    #role: str = Form(...)
 ):
     user = db.query(models.User).filter(
-        models.User.email == form_data.username
-    ).first()
+        or_(
+        models.User.email == form_data.username,
+        models.User.username == form_data.username
+    )
+        ).first()
 
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    token = create_token(user.email, user.role, user.company_id, user.status.value)
+    token = create_token(
+        user.id,
+        user.email, 
+        user.role, 
+        user.company_id, 
+        user.status.value
+        )
 
     audit = models.AuditLog(
         user_name=user.email,
         action="User Login",
         related_user=user.email,
-        company_id=user.company_id
+        company_id=user.company_id,
+        performed_by=user.email
     )
     db.add(audit)
     db.commit()
@@ -190,15 +214,24 @@ def login(
     return {
         "token": token,
         "role": user.role,
-        "company_id": user.company_id
+        "company_id": user.company_id,
+        "status": user.status.value
     }
 
 # ---------------- SIGNUP ----------------
 @app.post("/signup")
 def signup(user: schema.UserCreate, db: Session = Depends(get_db)):
-    existing = db.query(models.User).filter_by(email=user.email).first()
+    existing = db.query(models.User).filter(
+    or_(
+        models.User.email == user.email,
+        models.User.username == user.username
+        )
+    ).first()
     if existing:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(
+        status_code=400,
+        detail="Email or Username already registered"
+        )
 
     company = db.query(models.Company).filter_by(name=user.company_name).first()
     if not company:
