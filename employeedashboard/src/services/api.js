@@ -85,9 +85,9 @@ export const loginUser = async (email, password, role) => {
 
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data.detail || "Login failed");
-  }
-
+  console.log(data);
+  throw new Error(JSON.stringify(data));
+}
   localStorage.setItem("user", JSON.stringify(data));
   return data;
 };
@@ -111,13 +111,13 @@ export const signupUser = async (
       password,
       role,
       company_name: companyName,
-      invite_token: inviteToken,
     }),
   });
 
   const data = await response.json();
 
   if (!response.ok) {
+    console.log("Signup Error:", data);
     throw new Error(data.detail || "Signup failed");
   }
 
@@ -209,8 +209,14 @@ export const downloadAttendanceReportPDF = async () => {
 };
 
 //----------------Invitations-----------------
-export const createInvitation = async (email, expiresAt) =>
-  (await api.post("/invitations", { email, expires_at: expiresAt })).data;
+export const createInvitation = async (email, role, expiresAt) =>
+  (
+    await api.post("/invitations", {
+      email,
+      role,
+      expires_at: expiresAt || null,
+    })
+  ).data;
 
 export const getInvitations = async () =>
   (await api.get("/invitations")).data;

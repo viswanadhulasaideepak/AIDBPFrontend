@@ -146,13 +146,16 @@ def get_pending_role_requests(db: Session, company_id: int):
 # ---------------- INVITATIONS ----------------
 def create_invitation(
     db: Session, 
-    email: str, company_id: int, 
-    expires_at: datetime | None = None
+    email: str, 
+    company_id: int, 
+    role: str,
+    expires_at:  None
     ):
     token = str(uuid.uuid4())
     invitation = Invitation(
         email=email,
         token=token,
+        role=role,
         status=InvitationStatus.pending,
         created_at=datetime.utcnow(),
         expires_at=expires_at,

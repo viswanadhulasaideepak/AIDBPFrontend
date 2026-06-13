@@ -1,6 +1,6 @@
 import { useState, useContext, useEffect } from "react";
 import { FaEnvelope, FaLock } from "react-icons/fa";
-import { loginUser, signupUser, resetPassword } from "../../services/api";
+import { loginUser, signupUser, resetPassword,signupWithInvitation,validateInvitation } from "../../services/api";
 import toast from "react-hot-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AuthContext } from "../../auth/AuthContext";
@@ -13,34 +13,46 @@ const SignupForm = ({
   companyName,
   inviteToken
  }) => {
-  const [emailState, setEmail] = useState(email || "");
+  const [emailState, setEmailState] = useState(email || "");
   const [password, setPassword] = useState("");
   const [roleState, setRole] = useState(role || "");
   const [companyState, setCompanyName] = useState(companyName || "");
   const navigate = useNavigate();
   
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const data = await signupUser(emailState, password, roleState, companyState, inviteToken);
-      toast.success("Signup successful!");
-      if (inviteToken) {
-        navigate("/login");
+  e.preventDefault();
+  try {
+    if (inviteToken) {
+      // Signup using invitation
+      await signupWithInvitation(
+        inviteToken,
+        emailState,
+        password
+      );
+      toast.success("Invitation accepted successfully!");
       } else {
-    navigate("/login");
-}
+        // Normal signup
+        await signupUser(
+          emailState,
+          password,
+          roleState,
+         companyState
+        );
+        toast.success("Signup successful!");
+      }
+      navigate("/login");
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Signup failed");
-    }
-  };
+    toast.error(err.message || "Signup failed");
+  }
+};
 
   return (
     <form className="signup-form" onSubmit={handleSubmit} >
       <input type="email" value={emailState} disabled={!!inviteToken}
-        onChange={(e)=>setEmail(e.target.value)} required />
+        onChange={(e)=>setEmailState(e.target.value)} required />
       <input type="password" placeholder="Password" value={password}
         onChange={(e)=>setPassword(e.target.value)} required />
-      <select value={roleState}  disabled={Boolean(inviteToken)} onChange={(e)=>setRole(e.target.value)} required>
+      <select value={roleState}  disabled={!!inviteToken} onChange={(e)=>setRole(e.target.value)} required>
         <option value="">Select Role</option>
         <option value="admin">Admin</option>
         <option value="user">User</option>
@@ -106,29 +118,30 @@ const Login = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const inviteToken = searchParams.get("invite");
-  const inviteEmail = searchParams.get("email");
-  const inviteRole = searchParams.get("role");
-  const inviteCompany = searchParams.get("company");
   const { login } = useContext(AuthContext);
 
   useEffect(() => {
-  if (inviteToken) {
-    setShowSignup(true);
+  const loadInvitation = async () => {
+    if (!inviteToken) return;
 
-    if (inviteEmail) {
-      setEmail(inviteEmail);
+    try {
+      const invitation = await validateInvitation(inviteToken);
+
+      setShowSignup(true);
+      setEmail(invitation.email);
+      setCompanyName(invitation.company_name);
+
+      // Invitation signup is always a normal user
+      setRole("user");
+
+    } catch (err) {
+      toast.error("Invitation is invalid or expired.");
+      navigate("/login");
     }
+  };
 
-    if (inviteRole) {
-      setRole(inviteRole);
-    }
-
-    if (inviteCompany) {
-      setCompanyName(inviteCompany);
-    }
-  }
-}, [inviteToken, inviteEmail, inviteRole, inviteCompany]);
-
+  loadInvitation();
+}, [inviteToken, navigate]);
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!role) {

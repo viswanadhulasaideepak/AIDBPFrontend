@@ -7,6 +7,7 @@ function InvitationsTab() {
   const [invitations, setInvitations] = useState([]);
   const [email, setEmail] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
+  const [role, setRole] = useState("user");
 
   // Load invitations on mount
   useEffect(() => {
@@ -22,7 +23,7 @@ function InvitationsTab() {
     e.preventDefault();
 
     try {
-        await createInvitation(email, expiresAt || null);
+        await createInvitation(email,role, expiresAt || null);
         toast.success("Invitation created successfully!");
         setEmail("");
         setExpiresAt("");
@@ -43,10 +44,11 @@ function InvitationsTab() {
   };
 
   const handleCopyLink = (inv) => {
-    const link =`${window.location.origin}/login?invite=${inv.token}`;
+    const link = `${window.location.origin}/login?invite=${inv.token}`;
+
     navigator.clipboard.writeText(link);
     toast.success("Invitation link copied!");
-  };
+};
   return (
     <div>
       <h2>Invitations</h2>
@@ -60,6 +62,10 @@ function InvitationsTab() {
           onChange={(e) => setEmail(e.target.value)}
           required
         />
+        <select value={role} onChange={(e) => setRole(e.target.value)}>
+          <option value="user">User</option>
+          <option value="admin">Admin</option>
+          </select>
         <input
           type="date"
           value={expiresAt}

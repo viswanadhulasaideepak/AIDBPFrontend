@@ -144,11 +144,11 @@ class InvitationOut(BaseModel):
     id: int
     email: EmailStr
     token: str
-    used: bool
     status: InvitationStatus
     created_at: datetime
     expires_at: datetime | None
     company_id: int
+    is_used: bool
 
     class Config:
         orm_mode = True
@@ -168,7 +168,11 @@ class UserOut(BaseModel):
 
     class Config:
         orm_mode = True
-
+        
+class InvitationSignupRequest(BaseModel):
+    token: str
+    username: str
+    password: str
 # ---------------- Reactivation Request ----------------
 class ReactivationStatus(str, Enum):
     pending = "pending"

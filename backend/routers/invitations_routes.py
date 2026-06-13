@@ -41,10 +41,11 @@ def create_invitation(
         )
             
     invitation = crud.create_invitation(
-        db, 
-        request.email, 
-        current_user["company_id"], 
-        request.expires_at
+        db=db,
+        email=request.email,
+        company_id=current_user["company_id"],
+        role=request.role,
+        expires_at=request.expires_at
         )
     
     return invitation
