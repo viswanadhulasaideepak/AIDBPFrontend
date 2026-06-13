@@ -137,12 +137,14 @@ class InvitationStatus(str, Enum):
 
 class InvitationCreate(BaseModel):
     email: EmailStr
+    role: str
     expires_at: datetime | None = None
 
 class InvitationOut(BaseModel):
     id: int
     email: EmailStr
     token: str
+    used: bool
     status: InvitationStatus
     created_at: datetime
     expires_at: datetime | None
@@ -173,16 +175,19 @@ class ReactivationStatus(str, Enum):
     approved = "approved"
     rejected = "rejected"
 
-#class ReactivationRequestCreate(BaseModel):
- #   user_id: int
-    #admin_email: EmailStr
+class ReactivationRequestCreate(BaseModel):
+    message: str | None=None
 
 class ReactivationRequestOut(BaseModel):
     id: int
     user_id: int
     admin_email: EmailStr
+    message: str | None
     status: ReactivationStatus
     created_at: datetime
+    reviewed_at: datetime | None
+    reviewed_by: str | None
+    admin_comment: str | None
     company_id: int
 
     class Config:

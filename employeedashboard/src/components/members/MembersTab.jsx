@@ -27,7 +27,8 @@ function MembersTab() {
         refreshMembers();
     } catch (err) {
         console.error(err);
-        alert("Failed to deactivate member.");
+        const message = err.response?.data?.detail
+        alert(message);
     }
 };
 
@@ -40,7 +41,8 @@ function MembersTab() {
         refreshMembers();
     } catch (err) {
         console.error(err);
-        alert("Failed to reactivate member.");
+        const message = err.response?.data?.detail
+        alert(message);
     }
 };
 

@@ -7,6 +7,7 @@ from sqlalchemy import or_
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import datetime
 import schema, models, crud, database
+from models import Invitation, InvitationStatus
 from auth import verify_password, create_token, hash_password
 from routers.analytics_routes import router as analytics_router
 from routers.role_requests_routes import router as role_requests_router
@@ -221,7 +222,12 @@ def login(
         "company_id": user.company_id,
         "status": user.status.value
     }
-
+    
+class InvitationSignupRequest(BaseModel):
+    token: str
+    username: str
+    password: str
+    
 # ---------------- SIGNUP ----------------
 @app.post("/signup")
 def signup(user: schema.UserCreate, db: Session = Depends(get_db)):
@@ -270,6 +276,89 @@ def signup(user: schema.UserCreate, db: Session = Depends(get_db)):
 
     return {"message": "User created successfully"}
 
+@app.post("/signup/invitation")
+def signup_with_invitation(
+    request: InvitationSignupRequest,
+    db: Session = Depends(get_db)
+):
+    invitation = db.query(models.Invitation).filter(
+        models.Invitation.token == request.token,
+        models.Invitation.status == models.InvitationStatus.pending
+    ).first()
+
+    if not invitation:
+        raise HTTPException(
+            status_code=404,
+            detail="Invalid or expired invitation."
+        )
+
+    existing_user = db.query(models.User).filter(
+        models.User.email == invitation.email
+    ).first()
+
+    if existing_user:
+        raise HTTPException(
+            status_code=400,
+            detail="User already exists."
+        )
+
+    new_user = models.User(
+        username=request.username,
+        email=invitation.email,
+        hashed_password=hash_password(request.password),
+        role="user",
+        company_id=invitation.company_id,
+        status=models.UserStatus.active
+    )
+
+    db.add(new_user)
+
+    invitation.status = models.InvitationStatus.accepted
+
+    db.commit()
+    db.refresh(new_user)
+
+    crud.create_audit_log(
+        db=db,
+        user_name=new_user.email,
+        action="Accepted Invitation",
+        related_user=new_user.email,
+        company_id=new_user.company_id
+    )
+
+    crud.create_notification(
+        db=db,
+        message="Invitation accepted successfully.",
+        recipient_email=new_user.email,
+        company_id=new_user.company_id
+    )
+
+    return {
+        "message": "Account created successfully. Please login."
+    }
+
+@app.get("/invitation/{token}")
+def validate_invitation(
+    token: str,
+    db: Session = Depends(get_db)
+):
+    invitation = db.query(models.Invitation).filter(
+        models.Invitation.token == token,
+        models.Invitation.status == models.InvitationStatus.pending
+    ).first()
+
+    if not invitation:
+        raise HTTPException(
+            status_code=404,
+            detail="Invitation is invalid or expired."
+        )
+
+    return {
+        "email": invitation.email,
+        "company_id": invitation.company_id,
+        "company_name": invitation.company.name
+    }
+    
 # ---------------- FORGOT PASSWORD ----------------
 class ForgotPasswordRequest(BaseModel):
     email: str

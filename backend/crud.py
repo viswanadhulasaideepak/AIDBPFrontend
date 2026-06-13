@@ -144,7 +144,11 @@ def get_pending_role_requests(db: Session, company_id: int):
     ).count()
 
 # ---------------- INVITATIONS ----------------
-def create_invitation(db: Session, email: str, company_id: int, expires_at: datetime | None = None):
+def create_invitation(
+    db: Session, 
+    email: str, company_id: int, 
+    expires_at: datetime | None = None
+    ):
     token = str(uuid.uuid4())
     invitation = Invitation(
         email=email,
@@ -166,8 +170,6 @@ def create_invitation(db: Session, email: str, company_id: int, expires_at: date
         return None
     
     db.add(invitation)
-    
-    invitation.status = InvitationStatus.revoked
     
     db.commit()
     db.refresh(invitation)
@@ -214,17 +216,21 @@ def deactivate_user(db: Session, user_id: int, company_id: int, admin_email: str
         db.commit()
         db.refresh(user)
         
-        create_audit_log(db, user_name=user.email, action="User Deactivated",
-                        related_user=None, company_id=company_id)
-        create_notification(
-            db, f"User {user.email} was deactivated", 
-             company_id)
+    create_audit_log(db, user_name=user.email, action="User Deactivated",
+                     related_user=None, company_id=company_id)
+    create_notification(
+        db=db,
+        message="Your account has been deactivated by the administrator.",
+        recipient_email=user.email,
+        company_id=company_id
+        )
     return user
 
 def reactivate_user(db: Session, user_id: int, company_id: int):
     user = db.query(User).filter(User.id == user_id, User.company_id == company_id).first()
     if user:
         user.status = UserStatus.active
+        user.deactivated_by = None
         db.commit()
         db.refresh(user)
     return user
@@ -232,7 +238,8 @@ def reactivate_user(db: Session, user_id: int, company_id: int):
 # ---------------- REACTIVATION REQUESTS ----------------
 def create_reactivation_request(
     db: Session, 
-    user_id: int,deactivated_by: str, 
+    user_id: int,
+    message:None,
     admin_email: str, 
     company_id: int
     ):
@@ -240,8 +247,8 @@ def create_reactivation_request(
     request = ReactivationRequest(
         user_id=user_id,
         admin_email=admin_email,
+        message=message,
         status=ReactivationStatus.pending,
-        created_at=datetime.utcnow(),
         company_id=company_id
     )
     
@@ -266,14 +273,68 @@ def create_reactivation_request(
 def get_reactivation_requests(db: Session, company_id: int):
     return db.query(ReactivationRequest).filter(ReactivationRequest.company_id == company_id).all()
 
-def update_reactivation_request(db: Session, request_id: int, status: ReactivationStatus, company_id: int):
+# ---------------- UPDATE REACTIVATION REQUEST ----------------
+def update_reactivation_request(
+    db: Session,
+    request_id: int,
+    status: ReactivationStatus,
+    company_id: int
+):
     req = db.query(ReactivationRequest).filter(
         ReactivationRequest.id == request_id,
         ReactivationRequest.company_id == company_id
     ).first()
-    if req:
-        req.status = status
-        db.commit()
-        db.refresh(req)
-        
+
+    if not req:
+        return None
+
+    # Update request status
+    req.status = status
+
+    # Get the user
+    user = db.query(User).filter(
+        User.id == req.user_id,
+        User.company_id == company_id
+    ).first()
+
+    # ---------------- APPROVED ----------------
+    if status == ReactivationStatus.approved and user:
+        user.status = UserStatus.active
+
+        create_audit_log(
+            db=db,
+            user_name=user.email,
+            action="User Reactivated",
+            related_user=user.email,
+            company_id=company_id
+        )
+
+        create_notification(
+            db=db,
+            message="Your account has been reactivated by the administrator.",
+            recipient_email=user.email,
+            company_id=company_id
+        )
+
+    # ---------------- REJECTED ----------------
+    elif status == ReactivationStatus.rejected and user:
+
+        create_audit_log(
+            db=db,
+            user_name=user.email,
+            action="Reactivation Request Rejected",
+            related_user=user.email,
+            company_id=company_id
+        )
+
+        create_notification(
+            db=db,
+            message="Your reactivation request has been rejected.",
+            recipient_email=user.email,
+            company_id=company_id
+        )
+
+    db.commit()
+    db.refresh(req)
+
     return req

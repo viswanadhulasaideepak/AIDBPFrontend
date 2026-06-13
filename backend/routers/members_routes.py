@@ -53,10 +53,10 @@ def deactivate_member(
         )
     
     crud.create_notification(
-        db,
-        f"User {user.email} was deactivated",
-        current_user["email"],
-        current_user["company_id"]
+        db=db,
+        message="Your account has been deactivated by administrator.",
+        recipient_email=user.email,
+        company_id=current_user["company_id"]
         )
     
     return user
@@ -88,5 +88,6 @@ def reactivate_member(
         current_user["email"], 
         "User Activated", 
         user.email, 
-        current_user["company_id"])
-    return {"message": "User reactivated"}
+        current_user["company_id"]
+        )
+    return user

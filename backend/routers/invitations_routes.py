@@ -6,6 +6,21 @@ import crud, schema, models
 
 router = APIRouter(prefix="/invitations", tags=["Invitations"])
 
+@router.get("/token/{token}")
+def validate_token(
+    token: str,
+    db: Session = Depends(get_db)
+):
+    invitation = db.query(models.Invitation).filter(
+        models.Invitation.token == token,
+        models.Invitation.status == models.InvitationStatus.pending
+    ).first()
+
+    if not invitation:
+        raise HTTPException(400, "Invalid invitation")
+
+    return invitation
+
 @router.post("/", response_model=schema.InvitationOut)
 def create_invitation(
     request: schema.InvitationCreate,
@@ -30,14 +45,6 @@ def create_invitation(
         request.email, 
         current_user["company_id"], 
         request.expires_at
-        )
-    
-    crud.create_audit_log(
-        db, 
-        current_user["email"], 
-        "Invitation Created", 
-        request.email, 
-        current_user["company_id"]
         )
     
     return invitation
@@ -88,7 +95,8 @@ def revoke_invitation(
     crud.revoke_invitation(
         db,
         id,
-        current_user["company_id"]
+        current_user["company_id"],
+        current_user["email"]
         )   
     
     crud.create_audit_log(

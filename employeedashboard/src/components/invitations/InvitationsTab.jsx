@@ -20,23 +20,33 @@ function InvitationsTab() {
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    await createInvitation(email, expiresAt || null);
-    setEmail("");
-    setExpiresAt("");
-    refreshInvitations();
+
+    try {
+        await createInvitation(email, expiresAt || null);
+        toast.success("Invitation created successfully!");
+        setEmail("");
+        setExpiresAt("");
+        refreshInvitations();
+    } catch (err) {
+        toast.error(err.response?.data?.detail || "Unable to create invitation");
+    }
   };
 
   const handleRevoke = async (id) => {
-    await revokeInvitation(id);
-    refreshInvitations();
+    try {
+        await revokeInvitation(id);
+        toast.success("Invitation revoked.");
+        refreshInvitations();
+    } catch (err) {
+        toast.error("Unable to revoke invitation.");
+    }
   };
 
-  const handleCopyLink = (token) => {
-    const link = `${window.location.origin}/signup?token=${token}`;
+  const handleCopyLink = (inv) => {
+    const link =`${window.location.origin}/login?invite=${inv.token}`;
     navigator.clipboard.writeText(link);
-    toast.success("Invitation link copied");
+    toast.success("Invitation link copied!");
   };
-
   return (
     <div>
       <h2>Invitations</h2>
@@ -77,7 +87,7 @@ function InvitationsTab() {
               <td>{new Date(inv.created_at).toLocaleString()}</td>
               <td>{inv.expires_at ? new Date(inv.expires_at).toLocaleDateString() : "—"}</td>
               <td>
-                <button onClick={() => handleCopyLink(inv.token)}>Copy Link</button>
+                <button onClick={() => handleCopyLink(inv)}>Copy Link</button>
                 {inv.status === "pending" && (
                   <button onClick={() => handleRevoke(inv.id)}>Revoke</button>
                 )}

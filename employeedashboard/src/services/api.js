@@ -93,23 +93,75 @@ export const loginUser = async (email, password, role) => {
 };
 
 /* ---------------- SIGNUP ---------------- */
-export const signupUser = async (email, password, role, companyName) => {
+// ---------------- NORMAL SIGNUP ----------------
+export const signupUser = async (
+  email,
+  password,
+  role,
+  companyName
+) => {
   const response = await fetch(`${API_BASE}/signup`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({
       username: email,
       email,
       password,
       role,
       company_name: companyName,
+      invite_token: inviteToken,
     }),
   });
 
   const data = await response.json();
+
   if (!response.ok) {
     throw new Error(data.detail || "Signup failed");
   }
+
+  return data;
+};
+
+// ---------------- INVITATION SIGNUP ----------------
+export const signupWithInvitation = async (
+  token,
+  username,
+  password
+) => {
+  const response = await fetch(`${API_BASE}/signup/invitation`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      token,
+      username,
+      password,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.detail || "Invitation signup failed");
+  }
+
+  return data;
+};
+
+// ---------------- VALIDATE INVITATION ----------------
+
+export const validateInvitation = async (token) => {
+  const response = await fetch(`${API_BASE}/invitation/${token}`);
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.detail || "Invalid invitation");
+  }
+
   return data;
 };
 

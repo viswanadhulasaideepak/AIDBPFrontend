@@ -1,41 +1,51 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { FaEnvelope, FaLock } from "react-icons/fa";
 import { loginUser, signupUser, resetPassword } from "../../services/api";
 import toast from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { AuthContext } from "../../auth/AuthContext";
 import "./Login.css";
 
-const SignupForm = ({ onCancel }) => {
-  const [email, setEmail] = useState("");
+const SignupForm = ({ 
+  onCancel,
+  email,
+  role,
+  companyName,
+  inviteToken
+ }) => {
+  const [emailState, setEmail] = useState(email || "");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("");
-  const [companyName, setCompanyName] = useState("");
+  const [roleState, setRole] = useState(role || "");
+  const [companyState, setCompanyName] = useState(companyName || "");
   const navigate = useNavigate();
-
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const data = await signupUser(email, password, role, companyName);
+      const data = await signupUser(emailState, password, roleState, companyState, inviteToken);
       toast.success("Signup successful!");
-      navigate("/login");
+      if (inviteToken) {
+        navigate("/login");
+      } else {
+    navigate("/login");
+}
     } catch (err) {
       toast.error(err.response?.data?.detail || "Signup failed");
     }
   };
 
   return (
-    <form className="signup-form" onSubmit={handleSubmit}>
-      <input type="email" placeholder="Email" value={email}
+    <form className="signup-form" onSubmit={handleSubmit} >
+      <input type="email" value={emailState} disabled={!!inviteToken}
         onChange={(e)=>setEmail(e.target.value)} required />
       <input type="password" placeholder="Password" value={password}
         onChange={(e)=>setPassword(e.target.value)} required />
-      <select value={role} onChange={(e)=>setRole(e.target.value)} required>
+      <select value={roleState}  disabled={Boolean(inviteToken)} onChange={(e)=>setRole(e.target.value)} required>
         <option value="">Select Role</option>
         <option value="admin">Admin</option>
         <option value="user">User</option>
       </select>
-      <select value={companyName} onChange={(e)=>setCompanyName(e.target.value)} required>
+      <select value={companyState} disabled={!!inviteToken} onChange={(e)=>setCompanyName(e.target.value)} required>
         <option value="">Select Company</option>
         <option value="Company A">Company A</option>
         <option value="Company B">Company B</option>
@@ -94,7 +104,30 @@ const Login = () => {
   const [showForgot, setShowForgot] = useState(false);
   const [companyName, setCompanyName] = useState("");
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const inviteToken = searchParams.get("invite");
+  const inviteEmail = searchParams.get("email");
+  const inviteRole = searchParams.get("role");
+  const inviteCompany = searchParams.get("company");
   const { login } = useContext(AuthContext);
+
+  useEffect(() => {
+  if (inviteToken) {
+    setShowSignup(true);
+
+    if (inviteEmail) {
+      setEmail(inviteEmail);
+    }
+
+    if (inviteRole) {
+      setRole(inviteRole);
+    }
+
+    if (inviteCompany) {
+      setCompanyName(inviteCompany);
+    }
+  }
+}, [inviteToken, inviteEmail, inviteRole, inviteCompany]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -122,7 +155,7 @@ const Login = () => {
     } catch (err) {
       toast.error(err.response?.data?.detail || "Login failed");
     }
-  };
+};
 
   return (
     <div className="login-container">
@@ -142,7 +175,8 @@ const Login = () => {
         </div>
 
         {showSignup ? (
-          <SignupForm onCancel={() => setShowSignup(false)} />
+          <SignupForm onCancel={() => setShowSignup(false)} email={email} 
+          role={role} companyName={companyName} inviteToken={inviteToken}/>
         ) : showForgot ? (
           <ForgotPasswordForm onCancel={() => setShowForgot(false)} />
         ) : (

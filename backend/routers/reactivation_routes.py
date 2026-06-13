@@ -12,6 +12,11 @@ def submit_reactivation_request(
     db: Session = Depends(get_db), 
     current_user: dict = Depends(get_current_user)
     ):
+    # Get the current user from DB
+    user = db.query(User).filter(
+        User.id == current_user["id"]
+        ).first()
+    
     request = crud.create_reactivation_request(
         db,
         user_id=current_user["id"],
@@ -20,29 +25,8 @@ def submit_reactivation_request(
         company_id=current_user["company_id"]
         )
     
-    # Get the current user from DB
-    user = db.query(User).filter(
-        User.id == current_user["id"]
-        ).first()
-    
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
-    if user.deactivated_by:
-        crud.create_notification(
-        db=db,
-        message=f"Reactivation request submitted by {current_user['email']}",
-        recipient_email=user.deactivated_by,
-        company_id=current_user["company_id"]
-        )
-    
-    crud.create_audit_log(
-        db, 
-        current_user["email"], 
-        "Reactivation Request Submitted", 
-        None,
-        current_user["company_id"]
-        )
     
     return request
 
@@ -74,15 +58,8 @@ def update_reactivation_request(
         )
     if not req:
         raise HTTPException(status_code=404, detail="Request not found")
-    
-    # If approved, reactivate user
-    if status == schema.ReactivationStatus.approved:
-        crud.reactivate_user(
-            db,
-            req.user_id,
-            current_user["company_id"]
-            )
-           
+        
+        
     action = (
         "Reactivation Approved"
         if status == schema.ReactivationStatus.approved

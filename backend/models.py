@@ -52,6 +52,8 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     role = Column(String, default="user")
     status = Column(Enum(UserStatus), default=UserStatus.active, nullable=False)
+    deactivated_by = Column(String, nullable=True) 
+    deactivated_reason = Column(String, nullable=True)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
     company = relationship("Company", back_populates="users")
 
@@ -134,6 +136,8 @@ class Invitation(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, nullable=False)
+    role = Column(String, nullable=False)
+    is_used = Column(Boolean, default=False)
     token = Column(String, unique=True, nullable=False)
     status = Column(Enum(InvitationStatus), default=InvitationStatus.pending, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -154,6 +158,10 @@ class ReactivationRequest(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     admin_email = Column(String, nullable=False)
+    message = Column(String, nullable=True)
+    reviewed_at = Column(DateTime)
+    reviewed_by = Column(String)
+    admin_comment = Column(String)
     status = Column(Enum(ReactivationStatus), default=ReactivationStatus.pending, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
