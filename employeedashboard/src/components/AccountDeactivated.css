@@ -45,3 +45,18 @@
     padding:15px;
     border-radius:10px;
 }
+
+.logout-btn{
+    margin-top: 20px;
+    padding: 10px 25px;
+    background:#dc3545;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.logout-btn:hover{
+    background: #b52a37;
+}

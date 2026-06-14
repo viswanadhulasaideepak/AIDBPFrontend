@@ -126,6 +126,293 @@ def get_attendance(db: Session, company_id: int):
     return db.query(models.Attendance).filter(
         models.Attendance.company_id == company_id
     ).all()
+    
+def get_attendance_access_request(db: Session, user_id: int):
+    return db.query(models.AttendanceAccessRequest).filter(
+        models.AttendanceAccessRequest.user_id == user_id
+    ).first()
+    
+def create_attendance_access_request(
+    db: Session,
+    user_id: int,
+    admin_email: str,
+    company_id: int
+):
+    existing = get_attendance_access_request(db, user_id)
+
+    if existing:
+        return existing
+
+    request = models.AttendanceAccessRequest(
+        user_id=user_id,
+        admin_email=admin_email,
+        company_id=company_id,
+        status=models.AttendanceAccessStatus.pending
+    )
+
+    db.add(request)
+    db.commit()
+    db.refresh(request)
+    
+    # Notify all admins of this company
+
+    user = db.query(models.User).filter(
+        models.User.id == user_id
+    ).first()
+    
+    admins = db.query(User).filter(
+        User.company_id == company_id,
+        User.role == "admin").all()
+    
+    for admin in admins:
+        create_notification(
+            db=db,
+            message=f"{user.username} ({user.email}) requested attendance access.",
+            recipient_email=admin.email,
+            company_id=company_id
+    )
+
+
+    create_audit_log(
+        db=db,
+        user_name=admin_email,
+        action="Attendance Access Request Submitted",
+        related_user=None,
+        company_id=company_id
+    )
+    
+    return request     
+
+  #------------Update Attendance_access_request-------------
+  
+def update_attendance_access_request(
+    db: Session,
+    request_id: int,
+    status: models.AttendanceAccessStatus,
+    company_id: int,
+    approved_by: str
+    ):
+    request = db.query(models.AttendanceAccessRequest).filter(
+        models.AttendanceAccessRequest.id == request_id,
+        models.AttendanceAccessRequest.company_id == company_id
+    ).first()
+
+    if not request:
+        return None
+
+    request.status = status
+    request.approved_at = datetime.utcnow()
+    request.approved_by = approved_by
+
+    user = db.query(models.User).filter(
+        models.User.id == request.user_id
+    ).first()
+
+    if isinstance(status, str):
+        status = models.AttendanceAccessStatus(status)
+
+        create_notification(
+            db=db,
+            message="Your attendance access request has been approved.",
+            recipient_email=user.email,
+            company_id=company_id
+        )
+
+        create_audit_log(
+            db=db,
+            user_name=user.email,
+            action="Attendance Access Approved",
+            related_user=user.email,
+            company_id=company_id
+        )
+
+    elif status == models.AttendanceAccessStatus.rejected:
+
+        create_notification(
+            db=db,
+            message="Your attendance access request has been rejected.",
+            recipient_email=user.email,
+            company_id=company_id
+        )
+
+        create_audit_log(
+            db=db,
+            user_name=user.email,
+            action="Attendance Access Rejected",
+            related_user=user.email,
+            company_id=company_id
+        )
+
+    db.commit()
+    db.refresh(request)
+
+    return request
+    
+
+#----------Attendance Approval--------------
+
+def is_attendance_access_approved(
+    db: Session,
+    user_id: int
+):
+   request = db.query(models.AttendanceAccessRequest).filter(
+        models.AttendanceAccessRequest.user_id == user_id,
+        models.AttendanceAccessRequest.status == models.AttendanceAccessStatus.approved
+    ).first()
+   
+   return request is not None
+
+# =====================================================
+# ATTENDANCE CHECK-IN / CHECK-OUT
+# =====================================================
+
+def calculate_working_hours(check_in: datetime, check_out: datetime):
+    """
+    Calculate total working hours between check-in and check-out.
+    Returns result in HH:MM format.
+    """
+
+    total_seconds = (check_out - check_in).total_seconds()
+
+    hours = int(total_seconds // 3600)
+    minutes = int((total_seconds % 3600) // 60)
+
+    return f"{hours:02}:{minutes:02}"
+
+
+def check_in(
+    db: Session,
+    employee_id: int,
+    company_id: int
+):
+    """
+    Employee Check-In
+    """
+
+    today = datetime.utcnow().date()
+
+    attendance = db.query(models.Attendance).filter(
+        models.Attendance.employee_id == employee_id,
+        models.Attendance.company_id == company_id,
+        models.Attendance.date >= datetime.combine(today, datetime.min.time()),
+        models.Attendance.date <= datetime.combine(today, datetime.max.time())
+    ).first()
+
+    if attendance:
+
+        if attendance.check_in:
+            return None
+
+        attendance.check_in = datetime.utcnow()
+        attendance.status = "Present"
+
+    else:
+
+        attendance = models.Attendance(
+            employee_id=employee_id,
+            company_id=company_id,
+            date=datetime.utcnow(),
+            status="Present",
+            check_in=datetime.utcnow()
+        )
+
+        db.add(attendance)
+
+    db.commit()
+    db.refresh(attendance)
+
+    return attendance
+
+
+def check_out(
+    db: Session,
+    employee_id: int,
+    company_id: int
+):
+    """
+    Employee Check-Out
+    """
+
+    today = datetime.utcnow().date()
+
+    attendance = db.query(models.Attendance).filter(
+        models.Attendance.employee_id == employee_id,
+        models.Attendance.company_id == company_id,
+        models.Attendance.date >= datetime.combine(today, datetime.min.time()),
+        models.Attendance.date <= datetime.combine(today, datetime.max.time())
+    ).first()
+
+    if not attendance:
+        return None
+
+    if attendance.check_in is None:
+        return None
+
+    if attendance.check_out:
+        return attendance
+
+    attendance.check_out = datetime.utcnow()
+
+    attendance.working_hours = calculate_working_hours(
+        attendance.check_in,
+        attendance.check_out
+    )
+
+    db.commit()
+    db.refresh(attendance)
+
+    return attendance
+
+# =====================================================
+# TODAY'S ATTENDANCE
+# =====================================================
+
+def get_today_attendance(
+    db: Session,
+    employee_id: int,
+    company_id: int
+):
+    """
+    Returns today's attendance for the employee.
+    """
+
+    today = datetime.utcnow().date()
+
+    attendance = db.query(models.Attendance).filter(
+        models.Attendance.employee_id == employee_id,
+        models.Attendance.company_id == company_id,
+        models.Attendance.date >= datetime.combine(today, datetime.min.time()),
+        models.Attendance.date <= datetime.combine(today, datetime.max.time())
+    ).first()
+
+    return attendance
+
+
+# =====================================================
+# RECENT ATTENDANCE HISTORY
+# =====================================================
+
+def get_recent_attendance(
+    db: Session,
+    employee_id: int,
+    company_id: int,
+    limit: int = 10
+):
+    """
+    Returns recent attendance history.
+    """
+
+    attendance = (
+        db.query(models.Attendance)
+        .filter(
+            models.Attendance.employee_id == employee_id,
+            models.Attendance.company_id == company_id
+        )
+        .order_by(models.Attendance.date.desc())
+        .limit(limit)
+        .all()
+    )
+    return attendance
 
 # ---------------- AUDIT LOGS ----------------
 def create_audit_log(db: Session, user_name: str, action: str, related_user: str | None, company_id: int):

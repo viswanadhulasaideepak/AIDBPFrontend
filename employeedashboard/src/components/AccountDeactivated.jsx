@@ -4,6 +4,7 @@ import {
   submitReactivationRequest,
   getMyReactivationRequest,
 } from "../services/api";
+import { useNavigate } from "react-router-dom";
 import "./AccountDeactivated.css";
 
 function AccountDeactivated({ currentUser }) {
@@ -11,6 +12,9 @@ function AccountDeactivated({ currentUser }) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+
+  // ✅ Correct
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!currentUser) {
@@ -28,7 +32,6 @@ function AccountDeactivated({ currentUser }) {
     } catch (err) {
       console.error(err);
 
-      // No request yet is okay
       if (err.response?.status !== 404) {
         toast.error("Failed to load reactivation request.");
       }
@@ -50,11 +53,23 @@ function AccountDeactivated({ currentUser }) {
       console.error(err);
 
       toast.error(
-        err.response?.data?.detail || "Unable to submit request."
+        err.response?.data?.detail ||
+          "Unable to submit reactivation request."
       );
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("role");
+    localStorage.removeItem("company_id");
+
+    toast.success("Logged out");
+
+    navigate("/login");
   };
 
   if (loading) {
@@ -75,13 +90,34 @@ function AccountDeactivated({ currentUser }) {
         </p>
 
         <p>
-          You can only access this page until the admin who deactivated your account reativates it.
+          You can submit a reactivation request below. The administrator
+          will review it.
         </p>
-        <h2>Message to Admin(optional)</h2>
-        <textarea placeholder="Please reactivate my acount.  I need access for ongoing work."
-         value={message} onChange={(e)=>setMessage(e.target.value)}/>
 
-        {request ? (
+        {!request && (
+          <>
+            <h3>Additional Details (Optional)</h3>
+
+            <textarea
+              placeholder="Example: Please reactivate my account. I need access to continue working on my assigned tasks."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              rows={5}
+            />
+
+            <button
+              className="submit-btn"
+              onClick={handleSubmit}
+              disabled={submitting}
+            >
+              {submitting
+                ? "Submitting..."
+                : "Submit Reactivation Request"}
+            </button>
+          </>
+        )}
+
+        {request && (
           <div className="status-section">
             <h3>Request Status</h3>
 
@@ -89,36 +125,38 @@ function AccountDeactivated({ currentUser }) {
               {request.status.toUpperCase()}
             </span>
 
+            {request.message && (
+              <>
+                <h4>Your Message</h4>
+                <p>{request.message}</p>
+              </>
+            )}
+
             {request.status === "pending" && (
               <p>
-                Your request has been submitted and is waiting for admin
+                Your request has been submitted and is awaiting administrator
                 approval.
               </p>
             )}
 
             {request.status === "approved" && (
               <p>
-                Your account has been reactivated. Please login again.
+                Your account has been reactivated.
+                Please logout and login again.
               </p>
             )}
 
             {request.status === "rejected" && (
               <p>
-                Your request was rejected by the administrator.
+                Your request has been rejected by the administrator.
               </p>
             )}
           </div>
-        ) : (
-          <button
-            className="submit-btn"
-            onClick={handleSubmit}
-            disabled={submitting}
-          >
-            {submitting
-              ? "Submitting..."
-              : "Submit Reactivation Request"}
-          </button>
         )}
+
+        <button className="logout-btn" onClick={handleLogout}>
+          Logout
+        </button>
       </div>
     </div>
   );

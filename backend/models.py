@@ -65,9 +65,35 @@ class Attendance(Base):
     employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
     date = Column(DateTime, default=datetime.utcnow)
     status = Column(String, nullable=False)
-
+    check_in = Column(DateTime, nullable=True)
+    check_out = Column(DateTime, nullable=True)
+    working_hours = Column(String, nullable=True)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
     company = relationship("Company", backref="attendance_records")
+    
+ #---------AttendanceAccessRequest------------   
+    
+class AttendanceAccessStatus(str, enum.Enum):
+    pending = "pending"
+    approved = "approved"
+    rejected = "rejected"
+    
+class AttendanceAccessRequest(Base):
+    __tablename__ = "attendance_access_requests"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
+    admin_email = Column(String, nullable=False)
+    status = Column(
+        Enum(AttendanceAccessStatus),
+        default=AttendanceAccessStatus.pending,
+        nullable=False
+    )
+    created_at = Column(DateTime, default=datetime.utcnow)
+    approved_at = Column(DateTime, nullable=True)
+    approved_by = Column(String, nullable=True)
+    user = relationship("User", backref="attendance_requests")            
 
 #-----------------Notifications-----------------    
 class Notification(Base):
@@ -80,7 +106,7 @@ class Notification(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
     company = relationship("Company", back_populates="notifications")
-    request_id = Column(Integer,ForeignKey("reactivation_requests.id"),nullable=True)
+    request_id = Column(Integer, nullable=True)
 
 #----------------------RoleChangeRequestModel-------------------
 class RoleChangeStatus(str, enum.Enum):

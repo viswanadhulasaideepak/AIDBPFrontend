@@ -19,13 +19,10 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 # ---------------- PASSWORD HASHING ----------------
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
-
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
-def hash_password(password: str):
+def hash_password(password: str)-> str:
     print("hash_password received:", password)
     print("Length:", len(password))
     return pwd_context.hash(password)
@@ -50,6 +47,9 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        print("========== CURRENT USER ==========")
+        print(payload)
+        print("==================================")
         email = payload.get("sub")
         role = payload.get("role")
         company_id = payload.get("company_id")

@@ -196,3 +196,71 @@ class ReactivationRequestOut(BaseModel):
 
     class Config:
         orm_mode = True
+
+class AttendanceAccessStatus(str, Enum):
+    pending = "pending"
+    approved = "approved"
+    rejected = "rejected"
+    
+class AttendanceAccessRequestCreate(BaseModel):
+    pass
+
+class AttendanceAccessRequestUpdate(BaseModel):
+    status: AttendanceAccessStatus
+    
+class AttendanceAccessRequestOut(BaseModel):
+    id: int
+    user_id: int
+    admin_email: EmailStr
+    status: AttendanceAccessStatus
+    created_at: datetime
+    approved_at: datetime | None = None
+    approved_by: str | None = None
+    company_id: int
+
+    class Config:
+        orm_mode = True        
+        
+class AttendanceAccessStatusOut(BaseModel):
+    status: AttendanceAccessStatus
+    submitted_on: datetime        
+    
+# ---------------- Attendance Check In ----------------
+
+class AttendanceCheckIn(BaseModel):
+    employee_id: int
+
+
+# ---------------- Attendance Check Out ----------------
+
+class AttendanceCheckOut(BaseModel):
+    employee_id: int
+
+
+# ---------------- Today's Attendance ----------------
+
+class AttendanceTodayOut(BaseModel):
+    employee_id: int
+    date: datetime
+    check_in: datetime | None = None
+    check_out: datetime | None = None
+    working_hours: str | None = None
+    status: str
+
+    class Config:
+        orm_mode = True
+
+
+# ---------------- Attendance History ----------------
+
+class AttendanceHistoryOut(BaseModel):
+    id: int
+    employee_id: int
+    date: datetime
+    check_in: datetime | None = None
+    check_out: datetime | None = None
+    working_hours: str | None = None
+    status: str
+
+    class Config:
+        orm_mode = True    

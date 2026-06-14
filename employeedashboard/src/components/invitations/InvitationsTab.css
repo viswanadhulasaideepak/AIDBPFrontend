@@ -164,3 +164,22 @@
 .revoke-btn:hover{
     background:#b91c1c;
 }
+
+input{
+    font-size: 20px;
+    border: 2px solid grey;
+    padding:5px;
+    gap: 5px;
+    margin:10px;
+    border-radius: 6px;
+}
+
+select{
+    font-size: 20px;
+    border: 2px inset grey;
+    padding: 5px;
+    gap:5px;
+    margin:10px;
+    border-radius: 6px;
+}
+
