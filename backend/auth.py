@@ -25,6 +25,11 @@ def hash_password(password: str) -> str:
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
+def hash_password(password: str):
+    print("hash_password received:", password)
+    print("Length:", len(password))
+    return pwd_context.hash(password)
+
 # ---------------- TOKEN CREATION ----------------
 def create_token(user_id: int, email: str, role: str, company_id: int, status: str):
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)

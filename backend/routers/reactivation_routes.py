@@ -9,6 +9,7 @@ router = APIRouter(prefix="/reactivation", tags=["Reactivation"])
 
 @router.post("/request", response_model=schema.ReactivationRequestOut)
 def submit_reactivation_request(
+    request: schema.ReactivationRequestCreate,
     db: Session = Depends(get_db), 
     current_user: dict = Depends(get_current_user)
     ):
@@ -17,17 +18,22 @@ def submit_reactivation_request(
         User.id == current_user["id"]
         ).first()
     
-    request = crud.create_reactivation_request(
-        db,
-        user_id=current_user["id"],
-        deactivated_by=user.deactivated_by,
-        admin_email=user.deactivated_by,
-        company_id=current_user["company_id"]
-        )
-    
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
+    request = crud.create_reactivation_request(
+        db=db,
+        user_id=user.id,
+        message=request.message,
+        admin_email=user.deactivated_by,
+        company_id=user.company_id
+    )
+    
+    if not request:
+        raise HTTPException(
+        status_code=400,
+        detail="A pending reactivation request already exists."
+    ) 
     return request
 
 @router.get("/", response_model=list[schema.ReactivationRequestOut])

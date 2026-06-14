@@ -246,7 +246,12 @@ def signup(user: schema.UserCreate, db: Session = Depends(get_db)):
     company = db.query(models.Company).filter_by(name=user.company_name).first()
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
-
+    
+    print("Signup Password:", user.password)
+    print("Length:", len(user.password))
+    
+    print("Signup Password:", user.password)
+    print("Length:", len(user.password))
     new_user = models.User(
         username=user.username,
         email=user.email,

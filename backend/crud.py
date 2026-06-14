@@ -89,12 +89,20 @@ def create_department(db: Session, name: str, company_id: int):
     return new_dept
 
 # ---------------- NOTIFICATIONS ----------------
-def create_notification(db: Session, message: str, recipient_email: str, company_id: int):
+def create_notification(
+    db: Session, 
+    message: str, 
+    recipient_email: str, 
+    company_id: int, 
+    request_id: int | None = None
+    ):
+    
     note = Notification(
         message=message,
         recipient_email=recipient_email,
         is_read=False,
-        company_id=company_id
+        company_id=company_id,
+        request_id=request_id
     )
     db.add(note)
     db.commit()
@@ -242,18 +250,10 @@ def reactivate_user(db: Session, user_id: int, company_id: int):
 def create_reactivation_request(
     db: Session, 
     user_id: int,
-    message:None,
+    message:str | None,
     admin_email: str, 
     company_id: int
     ):
-    
-    request = ReactivationRequest(
-        user_id=user_id,
-        admin_email=admin_email,
-        message=message,
-        status=ReactivationStatus.pending,
-        company_id=company_id
-    )
     
     existing = db.query(ReactivationRequest).filter(
         ReactivationRequest.user_id == user_id,
@@ -263,13 +263,27 @@ def create_reactivation_request(
     if existing:
         return None
     
+    request = ReactivationRequest(
+        user_id=user_id,
+        admin_email=admin_email,
+        message=message,
+        status=ReactivationStatus.pending,
+        company_id=company_id
+    ) 
     db.add(request)
     db.commit()
     db.refresh(request)
     
     create_audit_log(db, user_name=str(user_id), action="Reactivation Request Submitted",
                  related_user=None, company_id=company_id)
-    create_notification(db, f"Reactivation request submitted by user {user_id}", admin_email, company_id)
+    
+    create_notification(
+        db=db,
+        message=f"New reactivation request from {admin_email}",
+        recipient_email=admin_email, 
+        request_id=request.id,
+        company_id=company_id
+        )
 
     return request
 

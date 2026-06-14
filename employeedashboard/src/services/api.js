@@ -235,8 +235,12 @@ export const reactivateMember = async (id) =>
   (await api.put(`/members/${id}/reactivate`)).data;
 
 //----------------Reactivation-----------------
-export const submitReactivationRequest = async () =>
-  (await api.post("/reactivation/request")).data;
+export const submitReactivationRequest = async (message) =>
+(
+    await api.post("/reactivation/request", {
+        message
+    })
+).data;
 
 export const getReactivationRequests = async () =>
   (await api.get("/reactivation")).data;

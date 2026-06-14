@@ -80,6 +80,7 @@ class Notification(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
     company = relationship("Company", back_populates="notifications")
+    request_id = Column(Integer,ForeignKey("reactivation_requests.id"),nullable=True)
 
 #----------------------RoleChangeRequestModel-------------------
 class RoleChangeStatus(str, enum.Enum):

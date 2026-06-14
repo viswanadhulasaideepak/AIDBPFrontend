@@ -10,6 +10,7 @@ function AccountDeactivated({ currentUser }) {
   const [request, setRequest] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     if (!currentUser) {
@@ -40,7 +41,7 @@ function AccountDeactivated({ currentUser }) {
     try {
       setSubmitting(true);
 
-      const newRequest = await submitReactivationRequest();
+      const newRequest = await submitReactivationRequest(message);
 
       setRequest(newRequest);
 
@@ -74,12 +75,11 @@ function AccountDeactivated({ currentUser }) {
         </p>
 
         <p>
-          You currently cannot access application features.
+          You can only access this page until the admin who deactivated your account reativates it.
         </p>
-
-        <p>
-          You may submit a reactivation request below.
-        </p>
+        <h2>Message to Admin(optional)</h2>
+        <textarea placeholder="Please reactivate my acount.  I need access for ongoing work."
+         value={message} onChange={(e)=>setMessage(e.target.value)}/>
 
         {request ? (
           <div className="status-section">

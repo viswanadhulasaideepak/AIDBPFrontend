@@ -28,6 +28,23 @@ const Navbar = () => {
   loadNotifications();
 }, []);
 
+ // Mark a single notification as read
+  const markAsRead = async (id) => {
+  try {
+    await api.put(`/notifications/${id}/read`);
+
+    setNotifications((prev) =>
+      prev.map((n) =>
+        n.id === id
+          ? { ...n, is_read: true }
+          : n
+      )
+    );
+  } catch (error) {
+    console.error("Error marking notification as read:", error);
+  }
+};
+
   // Mark single notification as read
   const markAllAsRead = async () => {
   try {
