@@ -264,3 +264,45 @@ class AttendanceHistoryOut(BaseModel):
 
     class Config:
         orm_mode = True    
+        
+# ---------------- Leave Management ----------------
+
+class LeaveType(str, Enum):
+    casual = "casual"
+    sick = "sick"
+    earned = "earned"
+    unpaid = "unpaid"
+
+
+class LeaveStatus(str, Enum):
+    pending = "pending"
+    approved = "approved"
+    rejected = "rejected"
+
+
+class LeaveRequestCreate(BaseModel):
+    leave_type: LeaveType
+    start_date: datetime
+    end_date: datetime
+    reason: str
+
+
+class LeaveRequestUpdate(BaseModel):
+    status: LeaveStatus
+
+
+class LeaveRequestOut(BaseModel):
+    id: int
+    user_id: int
+    company_id: int
+    leave_type: LeaveType
+    start_date: datetime
+    end_date: datetime
+    reason: str
+    status: LeaveStatus
+    created_at: datetime
+    reviewed_at: datetime | None = None
+    reviewed_by: str | None = None
+
+    class Config:
+        orm_mode = True        

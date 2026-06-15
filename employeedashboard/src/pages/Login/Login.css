@@ -70,7 +70,7 @@ label { display: block; margin-bottom: 6px; font-weight: 600; color: #374151; }
 .signup-form {
   display: flex; flex-direction: column; gap: 15px;
   background: linear-gradient(135deg, #1e3a8a, #1e40af);
-  padding: 30px; border-radius: 12px;
+  padding: 40px; border-radius: 12px;
   box-shadow: 0 6px 18px rgba(0,0,0,0.3);
   color: #f8fafc;
 }

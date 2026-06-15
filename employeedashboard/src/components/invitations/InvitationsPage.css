@@ -17,7 +17,7 @@
 
 .invitation-header p {
     color: #6b7280;
-    margin-top: 8px;
+    margin-top: 15px;
 }
 
 .invitation-nav {
@@ -29,11 +29,11 @@
 .invitation-nav button {
     padding: 12px 22px;
     border: none;
-    border-radius: 12px;
+    border-radius: 15px;
     cursor: pointer;
-    background: white;
+    background: rgb(53, 18, 227);
     color: #374151;
-    font-size: 15px;
+    font-size: 20px;
     font-weight: 600;
     transition: .3s;
     box-shadow: 0 5px 15px rgba(0,0,0,.06);

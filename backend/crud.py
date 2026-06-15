@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from datetime import datetime
 import models
-from models import Notification, InvitationStatus, UserStatus, ReactivationStatus
+from models import Notification, InvitationStatus, UserStatus, ReactivationStatus,LeaveRequest,LeaveStatus,LeaveType
 import uuid
 from models import Invitation, User, ReactivationRequest
 
@@ -94,15 +94,17 @@ def create_notification(
     message: str, 
     recipient_email: str, 
     company_id: int, 
-    request_id: int | None = None
+    request_id: int | None = None,
+    type: str = "general"
     ):
     
     note = Notification(
         message=message,
         recipient_email=recipient_email,
-        is_read=False,
         company_id=company_id,
-        request_id=request_id
+        request_id=request_id,
+        type=type,
+        is_read=False
     )
     db.add(note)
     db.commit()
@@ -154,6 +156,14 @@ def create_attendance_access_request(
     db.commit()
     db.refresh(request)
     
+    create_audit_log(
+    db=db,
+    user_name=user.email,
+    action="Attendance Access Requested",
+    related_user=None,
+    company_id=company_id
+)
+    
     # Notify all admins of this company
 
     user = db.query(models.User).filter(
@@ -172,7 +182,6 @@ def create_attendance_access_request(
             company_id=company_id
     )
 
-
     create_audit_log(
         db=db,
         user_name=admin_email,
@@ -183,15 +192,17 @@ def create_attendance_access_request(
     
     return request     
 
-  #------------Update Attendance_access_request-------------
-  
 def update_attendance_access_request(
     db: Session,
     request_id: int,
     status: models.AttendanceAccessStatus,
     company_id: int,
     approved_by: str
-    ):
+):
+    # Convert string to enum if needed
+    if isinstance(status, str):
+        status = models.AttendanceAccessStatus(status)
+
     request = db.query(models.AttendanceAccessRequest).filter(
         models.AttendanceAccessRequest.id == request_id,
         models.AttendanceAccessRequest.company_id == company_id
@@ -203,30 +214,54 @@ def update_attendance_access_request(
     request.status = status
     request.approved_at = datetime.utcnow()
     request.approved_by = approved_by
+    
+    admins = db.query(models.User).filter(
+    models.User.company_id == company_id,
+    models.User.role == "admin"
+    ).all()
 
     user = db.query(models.User).filter(
         models.User.id == request.user_id
     ).first()
 
-    if isinstance(status, str):
-        status = models.AttendanceAccessStatus(status)
+    # ---------------- APPROVED ----------------
+    if status == models.AttendanceAccessStatus.approved:
+        
+        create_audit_log(
+            db=db,
+            user_name=approved_by,
+            action="Attendance Access Approved",
+            related_user=user.email,
+            company_id=company_id
+            )
 
         create_notification(
             db=db,
             message="Your attendance access request has been approved.",
             recipient_email=user.email,
             company_id=company_id
-        )
+            )
+        
+        for admin in admins:
+            create_notification(
+            db=db,
+            message=f"{user.username} attendance request approved.",
+            recipient_email=admin.email,
+            company_id=company_id,
+            type="attendance"
+            )
 
+
+    # ---------------- REJECTED ----------------
+    elif status == models.AttendanceAccessStatus.rejected:
+        
         create_audit_log(
             db=db,
-            user_name=user.email,
-            action="Attendance Access Approved",
+            user_name=approved_by,
+            action="Attendance Access Rejected",
             related_user=user.email,
             company_id=company_id
-        )
-
-    elif status == models.AttendanceAccessStatus.rejected:
+            )
 
         create_notification(
             db=db,
@@ -234,23 +269,22 @@ def update_attendance_access_request(
             recipient_email=user.email,
             company_id=company_id
         )
-
-        create_audit_log(
-            db=db,
-            user_name=user.email,
-            action="Attendance Access Rejected",
-            related_user=user.email,
-            company_id=company_id
-        )
+        
+        for admin in admins:
+            create_notification(
+                db=db,
+                message=f"{user.username} attendance request rejected.",
+                recipient_email=admin.email,
+                company_id=company_id,
+                type="attendance"
+                )
 
     db.commit()
     db.refresh(request)
 
     return request
     
-
 #----------Attendance Approval--------------
-
 def is_attendance_access_approved(
     db: Session,
     user_id: int
@@ -262,10 +296,7 @@ def is_attendance_access_approved(
    
    return request is not None
 
-# =====================================================
-# ATTENDANCE CHECK-IN / CHECK-OUT
-# =====================================================
-
+# ----------ATTENDANCE CHECK-IN / CHECK-OUT--------------
 def calculate_working_hours(check_in: datetime, check_out: datetime):
     """
     Calculate total working hours between check-in and check-out.
@@ -273,22 +304,15 @@ def calculate_working_hours(check_in: datetime, check_out: datetime):
     """
 
     total_seconds = (check_out - check_in).total_seconds()
-
     hours = int(total_seconds // 3600)
     minutes = int((total_seconds % 3600) // 60)
 
     return f"{hours:02}:{minutes:02}"
 
-
-def check_in(
-    db: Session,
-    employee_id: int,
-    company_id: int
-):
+def check_in(db: Session, employee_id: int, company_id: int):
     """
     Employee Check-In
     """
-
     today = datetime.utcnow().date()
 
     attendance = db.query(models.Attendance).filter(
@@ -299,7 +323,6 @@ def check_in(
     ).first()
 
     if attendance:
-
         if attendance.check_in:
             return None
 
@@ -307,7 +330,6 @@ def check_in(
         attendance.status = "Present"
 
     else:
-
         attendance = models.Attendance(
             employee_id=employee_id,
             company_id=company_id,
@@ -317,24 +339,29 @@ def check_in(
         )
 
         db.add(attendance)
+        db.commit()
+        db.refresh(attendance)
+        
+        employee = db.query(models.Employee).filter(
+            models.Employee.id == employee_id
+            ).first()
+        
+        create_audit_log(
+            db=db,
+            user_name=employee.email,
+            action="Check-In",
+            related_user=None,
+            company_id=company_id
+            )
+              
+        return attendance
 
-    db.commit()
-    db.refresh(attendance)
 
-    return attendance
-
-
-def check_out(
-    db: Session,
-    employee_id: int,
-    company_id: int
-):
+def check_out(db: Session, employee_id: int, company_id: int):
     """
     Employee Check-Out
     """
-
     today = datetime.utcnow().date()
-
     attendance = db.query(models.Attendance).filter(
         models.Attendance.employee_id == employee_id,
         models.Attendance.company_id == company_id,
@@ -360,13 +387,21 @@ def check_out(
 
     db.commit()
     db.refresh(attendance)
+    
+    employee = db.query(models.Employee).filter(
+    models.Employee.id == employee_id).first()
+    
+    create_audit_log(
+        db=db,
+        user_name=employee.email,
+        action="Check-Out",
+        related_user=None,
+        company_id=company_id
+        )
 
     return attendance
 
-# =====================================================
-# TODAY'S ATTENDANCE
-# =====================================================
-
+# --------TODAY'S ATTENDANCE-------------
 def get_today_attendance(
     db: Session,
     employee_id: int,
@@ -387,11 +422,7 @@ def get_today_attendance(
 
     return attendance
 
-
-# =====================================================
-# RECENT ATTENDANCE HISTORY
-# =====================================================
-
+# ----------RECENT ATTENDANCE HISTORY-------------------
 def get_recent_attendance(
     db: Session,
     employee_id: int,
@@ -414,6 +445,137 @@ def get_recent_attendance(
     )
     return attendance
 
+#------------ LEAVE MANAGEMENT----------------
+def create_leave_request(
+    db: Session,
+    user_id: int,
+    company_id: int,
+    leave_type: str,
+    start_date: datetime,
+    end_date: datetime,
+    reason: str
+):
+
+    leave = LeaveRequest(
+        user_id=user_id,
+        company_id=company_id,
+        leave_type=LeaveType(leave_type),
+        start_date=start_date,
+        end_date=end_date,
+        reason=reason,
+        status=LeaveStatus.pending
+    )
+
+    db.add(leave)
+    db.commit()
+    db.refresh(leave)
+
+    # Notify all admins
+    admins = db.query(User).filter(
+        User.company_id == company_id,
+        User.role == "admin"
+    ).all()
+
+    user = db.query(User).filter(
+        User.id == user_id
+    ).first()
+
+    for admin in admins:
+
+        create_notification(
+            db=db,
+            recipient_email=admin.email,
+            company_id=company_id,
+            message=(
+                f"Leave request from "
+                f"{user.username} ({user.email}) "
+                f"submitted on "
+                f"{leave.created_at.strftime('%Y-%m-%d %H:%M')}"
+            )
+        )
+
+    create_audit_log(
+        db=db,
+        user_name=user.email,
+        action="Leave Request Submitted",
+        related_user=None,
+        company_id=company_id
+    )
+
+    return leave
+
+def get_my_leave_requests(
+    db: Session,
+    user_id: int
+):
+
+    return db.query(
+        LeaveRequest
+    ).filter(
+        LeaveRequest.user_id == user_id
+    ).order_by(
+        LeaveRequest.created_at.desc()
+    ).all()
+    
+def get_company_leave_requests(
+    db: Session,
+    company_id: int
+):
+
+    return db.query(
+        LeaveRequest
+    ).filter(
+        LeaveRequest.company_id == company_id
+    ).order_by(
+        LeaveRequest.created_at.desc()
+    ).all()
+    
+def update_leave_request(
+    db: Session,
+    request_id: int,
+    status: str,
+    company_id: int,
+    reviewed_by: str
+):
+
+    request = db.query(LeaveRequest).filter(
+        LeaveRequest.id == request_id,
+        LeaveRequest.company_id == company_id
+    ).first()
+
+    if request is None:
+        return None
+
+    request.status = LeaveStatus(status)
+    request.reviewed_at = datetime.utcnow()
+    request.reviewed_by = reviewed_by
+    
+    db.commit()
+    db.refresh(request)
+
+    user = db.query(User).filter(
+        User.id == request.user_id
+    ).first()
+
+    create_notification(
+        db=db,
+        recipient_email=user.email,
+        company_id=company_id,
+        message=f"Your leave request has been {status}.",
+        request_id=leave.id,
+        type="leave"
+    )
+
+    create_audit_log(
+        db=db,
+        user_name=reviewed_by,
+        action=f"Leave Request {status.capitalize()}",
+        related_user=user.email,
+        company_id=company_id
+    )
+
+    return request
+        
 # ---------------- AUDIT LOGS ----------------
 def create_audit_log(db: Session, user_name: str, action: str, related_user: str | None, company_id: int):
     log = models.AuditLog(

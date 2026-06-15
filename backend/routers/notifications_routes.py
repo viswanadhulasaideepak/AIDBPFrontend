@@ -59,35 +59,6 @@ def mark_notification_as_read(
 
     return {"message": "Notification marked as read"}
 
-# ---------------- CREATE NOTIFICATION (UTILITY) ----------------
-def create_notification(
-    db: Session,
-    message: str,
-    recipient_email: str,
-    company_id: int
-):
-    note = models.Notification(
-        message=message,
-        recipient_email=recipient_email,
-        is_read=False,
-        company_id=company_id
-    )
-    db.add(note)
-    db.commit()
-    db.refresh(note)
-
-    # Audit log entry
-    audit = AuditLog(
-        user_name="system",
-        action="Notification Created (Utility)",
-        related_user=recipient_email,
-        company_id=company_id
-    )
-    db.add(audit)
-    db.commit()
-
-    return note
-
 # ---------------- ADD NOTIFICATION (API) ----------------
 class NotificationCreate(BaseModel):
     message: str

@@ -51,10 +51,6 @@ export const fetchDepartments = async () =>
 export const addDepartment = async (department) =>
   (await api.post("/departments", department)).data;
 
-// Attendance (FIXED to use /report)
-//export const fetchAttendance = async () =>
- // (await api.get("/attendance/report")).data;
-
 // Attendance records (array)
 export const fetchAttendanceRecords = async () =>
   (await api.get("/attendance")).data;
@@ -70,6 +66,44 @@ export const fetchNotifications = async () =>
 // Audit Logs
 export const fetchAuditLogs = async () =>
   (await api.get("/audit-logs")).data;
+
+export const getAttendanceAccessStatus = async () =>
+  (await api.get("/attendance/access-status")).data;
+
+export const updateAttendanceAccessRequest = async (id, status) =>
+  (
+    await api.put(`/attendance/access-request/${id}`, {
+      status,
+    })
+  ).data;
+
+export const checkIn = async () =>
+  (await api.post("/attendance/check-in")).data;
+
+export const checkOut = async () =>
+  (await api.post("/attendance/check-out")).data;
+
+export const getTodayAttendance = async () =>
+  (await api.get("/attendance/today")).data;
+
+export const getAttendanceHistory = async () =>
+  (await api.get("/attendance/history")).data;
+
+export const submitLeaveRequest = async (leave) =>
+  (await api.post("/leave/request", leave)).data;
+
+export const getMyLeaves = async () =>
+  (await api.get("/leave/my")).data;
+
+export const getLeaveRequests = async () =>
+  (await api.get("/leave")).data;
+
+export const updateLeaveRequest = async (id, status) =>
+  (
+    await api.put(`/leave/${id}`, {
+      status,
+    })
+  ).data;
 
 /* ---------------- LOGIN ---------------- */
 export const loginUser = async (email, password, role) => {

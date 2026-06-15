@@ -57,44 +57,45 @@ const Dashboard = () => {
 useEffect(() => {
   const loadAttendance = async () => {
     try {
-      const data = await fetchAttendanceReport(); // 
-      if (data && data.dates) {
+      const data = await fetchAttendanceReport();
+      if (data?.dates) {
         setAttendanceData({
           labels: data.dates,
           datasets: [
             {
-              label: "Present",
-              data: data.present || [],
-              borderColor: "#4caf50",
-              backgroundColor: "rgba(76, 175, 80, 0.2)",
-              fill: true,
-              tension: 0.3,
-            },
-            {
-              label: "On Leave",
-              data: data.leave || [],
-              borderColor: "#ff9800",
-              backgroundColor: "rgba(255, 152, 0, 0.2)",
-              fill: true,
-              tension: 0.3,
-            },
-            {
-              label: "Absent",
-              data: data.absent || [],
-              borderColor: "#f44336",
-              backgroundColor: "rgba(244, 67, 54, 0.2)",
-              fill: true,
-              tension: 0.3,
-            },
-          ],
+                    label: "Present",
+                    data: data.present || [],
+                    borderColor: "#4caf50",
+                    backgroundColor: "rgba(76,175,80,.2)",
+                    fill: true
+                },
+                {
+                    label: "Leave",
+                    data: data.leave || [],
+                    borderColor: "#ff9800",
+                    backgroundColor: "rgba(255,152,0,.2)",
+                    fill: true
+                },
+                {
+                    label: "Absent",
+                    data: data.absent || [],
+                    borderColor: "#f44336",
+                    backgroundColor: "rgba(244,67,54,.2)",
+                    fill: true
+                }
+            ]
         });
-      } else {
-        setAttendanceData({ labels: [], datasets: [] });
-      }
-      console.log("ATTENDANCE REPORT API:", data);
-    } catch {
-      toast.error("Failed to load attendance analytics");
     }
+} catch (err) {
+    if (err.response?.status === 403) {
+        setAttendanceData({
+            labels: [],
+            datasets: []
+        });
+    } else {
+        toast.error("Failed to load attendance analytics");
+    }
+}
   };
   loadAttendance();
 }, []);

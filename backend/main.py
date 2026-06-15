@@ -14,8 +14,7 @@ from routers.role_requests_routes import router as role_requests_router
 from routers import (
     employees_routes, departments_routes, attendance_routes, dashboard_routes,
     notifications_routes, auditlogs_routes, invitations_routes,  members_routes, 
-    reactivation_routes
-)
+    reactivation_routes, leave_routes)
 
 app = FastAPI()
 # ---------------- CORS ----------------
@@ -40,6 +39,7 @@ app.include_router(analytics_router)
 app.include_router(invitations_routes.router)
 app.include_router(members_routes.router)
 app.include_router(reactivation_routes.router)
+app.include_router(leave_routes.router)
 
 
 

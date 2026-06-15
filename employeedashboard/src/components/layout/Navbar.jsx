@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { ThemeContext } from "../../context/ThemeContext";
-import api from "../../services/api";
+import api, { updateAttendanceAccessRequest, updateLeaveRequest} from "../../services/api";
 import "./Navbar.css";
 
 const Navbar = () => {
@@ -61,6 +61,59 @@ const Navbar = () => {
     console.error("Error marking all notifications as read:", error);
   }
 };
+  const approveAttendance = async (requestId) => {
+  try {
+    await updateAttendanceAccessRequest(
+      requestId,
+      "approved"
+    );
+    toast.success("Attendance Access Approved");
+    const response = await api.get("/notifications");
+    setNotifications(response.data);
+  } catch (err) {
+    toast.error("Approval failed");
+  }
+};
+
+const rejectAttendance = async (requestId) => {
+  try {
+    await updateAttendanceAccessRequest(
+      requestId,
+      "rejected"
+    );
+    toast.success("Attendance Access Rejected");
+    const response = await api.get("/notifications");
+    setNotifications(response.data);
+  } catch (err) {
+    toast.error("Request failed");
+  }
+};
+const approveLeave = async (requestId) => {
+    try {
+        await updateLeaveRequest(
+            requestId,
+            "approved"
+        );
+        toast.success("Leave Approved");
+        const response = await api.get("/notifications");
+        setNotifications(response.data);
+    } catch {
+        toast.error("Failed");
+    }
+};
+const rejectLeave = async (requestId) => {
+    try {
+        await updateLeaveRequest(
+            requestId,
+            "rejected"
+        );
+        toast.success("Leave Rejected");
+        const response = await api.get("/notifications");
+        setNotifications(response.data);
+    } catch {
+        toast.error("Failed");
+    }
+};
 
   // Mark all as read
  /* const markAllAsRead = async () => {
@@ -95,7 +148,6 @@ const Navbar = () => {
               </span>
             )}
         </div>
-
         {showDropdown && (
           <div className="notification-dropdown">
             {notifications.length === 0 ? (
@@ -106,24 +158,38 @@ const Navbar = () => {
                   ✔️ Mark All as Read
                 </button>
                 {notifications.map((n) => (
-                  <p
-                    key={n.id}
-                    className={n.is_read ? "read" : "unread"}
-                    onClick={() => markAsRead(n.id)}
-                  >
-                    {n.message}
-                  </p>
-                ))}
+                  <div key={n.id} className={n.is_read ? "read" : "unread"}>
+                    <p>{n.message}</p>
+                    {n.type === "attendance_access" && (
+                      <div className="notification-actions">
+                        <button onClick={() => approveAttendance(n.request_id)}>
+                          Approve
+                        </button>
+                        <button onClick={() => rejectAttendance(n.request_id)}>
+                          Reject
+                        </button>
+                      </div>)}
+                {n.type === "leave_request" && (
+                  <div className="notification-actions">
+                    <button onClick={() => approveLeave(n.request_id)}>
+                      Approve
+                    </button>
+                    <button onClick={() => rejectLeave(n.request_id)}>
+                      Reject
+                    </button>
+                  </div>)}
+                    <button onClick={() => markAsRead(n.id)}>
+                     Mark Read
+                    </button>
+                  </div>))}
               </>
             )}
           </div>
         )}
-
         {/* 🌙 Theme Toggle */}
         <button className="theme-toggle" onClick={toggleTheme}>
           {theme === "dark" ? "☀️" : "🌙"}
         </button>
-
         {/* 👤 User Info */}
         <div className="user-info">
           <span className="user-name">{userName}</span>

@@ -93,7 +93,37 @@ class AttendanceAccessRequest(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     approved_at = Column(DateTime, nullable=True)
     approved_by = Column(String, nullable=True)
-    user = relationship("User", backref="attendance_requests")            
+    user = relationship("User", backref="attendance_requests")   
+    
+# ---------------- Leave Management ----------------
+
+class LeaveType(str, enum.Enum):
+    casual = "casual"
+    sick = "sick"
+    earned = "earned"
+    unpaid = "unpaid"
+
+class LeaveStatus(str, enum.Enum):
+    pending = "pending"
+    approved = "approved"
+    rejected = "rejected"
+
+class LeaveRequest(Base):
+    __tablename__ = "leave_requests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
+    leave_type = Column( Enum(LeaveType), nullable=False)
+    start_date = Column(DateTime, nullable=False)
+    end_date = Column(DateTime, nullable=False)
+    reason = Column(String, nullable=False)
+    status = Column( Enum(LeaveStatus), default=LeaveStatus.pending, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    reviewed_at = Column(DateTime)
+    reviewed_by = Column(String)
+    user = relationship("User", backref="leave_requests")
+    company = relationship("Company", back_populates="leave_requests")             
 
 #-----------------Notifications-----------------    
 class Notification(Base):
@@ -107,6 +137,7 @@ class Notification(Base):
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
     company = relationship("Company", back_populates="notifications")
     request_id = Column(Integer, nullable=True)
+    type = Column(String, default="general")
 
 #----------------------RoleChangeRequestModel-------------------
 class RoleChangeStatus(str, enum.Enum):
@@ -139,6 +170,7 @@ class Company(Base):
     notifications = relationship("Notification", back_populates="company")
     employees = relationship("Employee", back_populates="company")
     users = relationship("User", back_populates="company")
+    leave_requests = relationship("LeaveRequest", back_populates="company")
 
 #--------------------AuditLog--------------------
 class AuditLog(Base):
@@ -170,7 +202,6 @@ class Invitation(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     expires_at = Column(DateTime, nullable=True)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
-
     company = relationship("Company", back_populates="invitations")
 
 # ---------------- Reactivation Request ----------------
@@ -192,5 +223,4 @@ class ReactivationRequest(Base):
     status = Column(Enum(ReactivationStatus), default=ReactivationStatus.pending, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
-    
     user = relationship("User", backref="reactivation_requests")

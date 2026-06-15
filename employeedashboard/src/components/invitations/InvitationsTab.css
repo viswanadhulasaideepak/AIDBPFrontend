@@ -27,7 +27,7 @@
 .summary-card h2{
     margin-top:10px;
     color:#2563eb;
-    font-size:32px;
+    font-size:40px;
 }
 
 /* ---------- Form ---------- */
@@ -92,8 +92,10 @@
 
 .invitation-table{
     width:100%;
+    display:flex;
     border-collapse:collapse;
     background:white;
+    flex-direction: column-reverse;
     border-radius:15px;
     overflow:hidden;
     box-shadow:0 10px 25px rgba(0,0,0,.08);
