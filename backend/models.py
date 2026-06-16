@@ -137,7 +137,7 @@ class Notification(Base):
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
     company = relationship("Company", back_populates="notifications")
     request_id = Column(Integer, nullable=True)
-    type = Column(String, default="general")
+    type = Column(String, nullable=True)
 
 #----------------------RoleChangeRequestModel-------------------
 class RoleChangeStatus(str, enum.Enum):

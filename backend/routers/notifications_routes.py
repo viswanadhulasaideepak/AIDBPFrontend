@@ -18,17 +18,41 @@ def get_notifications(
         Notification.company_id == current_user["company_id"]
     ).order_by(Notification.created_at.desc()).all()
 
-    return [
-        {
-            "id": n.id,
-            "message": n.message,
-            "recipient_email": n.recipient_email,
-            "is_read": n.is_read,
-            "created_at": n.created_at,
-            "company_id": n.company_id
-        }
-        for n in notes
-    ]
+    result = []
+    
+    for n in notes:
+        
+        item = {
+        "id": n.id,
+        "message": n.message,
+        "recipient_email": n.recipient_email,
+        "is_read": n.is_read,
+        "created_at": n.created_at,
+        "company_id": n.company_id,
+        "type": n.type,
+        "request_id": n.request_id
+    }
+
+    if n.type == "attendance" and n.request_id:
+        
+        req = db.query(models.AttendanceAccessRequest).filter(
+            models.AttendanceAccessRequest.id == n.request_id
+        ).first()
+        
+        if req:
+            user = db.query(models.User).filter(
+                models.User.id == req.user_id
+            ).first()
+            
+            if user:
+                item["user_name"] = user.username
+                item["user_email"] = user.email
+                item["request_timestamp"] = req.created_at
+                item["status"] = req.status
+                
+        result.append(item)
+                
+    return result
 
 # ---------------- MARK AS READ ----------------
 @router.put("/{id}/read")
@@ -44,6 +68,9 @@ def mark_notification_as_read(
     if not note:
         raise HTTPException(status_code=404, detail="Notification not found")
 
+    if note.is_read:
+        return {"message": "Already read"}
+    
     note.is_read = True
     db.commit()
 

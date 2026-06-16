@@ -67,12 +67,14 @@ export const fetchNotifications = async () =>
 export const fetchAuditLogs = async () =>
   (await api.get("/audit-logs")).data;
 
-export const getAttendanceAccessStatus = async () =>
-  (await api.get("/attendance/access-status")).data;
+export const getAttendanceAccessStatus = async () => {
+    const response = await api.get("/attendance/access-status");
+    return response.data;
+};
 
 export const updateAttendanceAccessRequest = async (id, status) =>
   (
-    await api.put(`/attendance/access-request/${id}`, {
+    await api.put(`/attendance/access-request/${id}?status=${status}`, {
       status,
     })
   ).data;
@@ -104,6 +106,9 @@ export const updateLeaveRequest = async (id, status) =>
       status,
     })
   ).data;
+
+export const getAttendanceAccessRequests = async () =>
+  (await api.get("/attendance/access-requests")).data;  
 
 /* ---------------- LOGIN ---------------- */
 export const loginUser = async (email, password, role) => {

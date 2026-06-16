@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
+import toast from "react-hot-toast";
 import { ThemeContext } from "../../context/ThemeContext";
 import api, { updateAttendanceAccessRequest, updateLeaveRequest} from "../../services/api";
 import "./Navbar.css";
@@ -114,18 +115,6 @@ const rejectLeave = async (requestId) => {
         toast.error("Failed");
     }
 };
-
-  // Mark all as read
- /* const markAllAsRead = async () => {
-    await Promise.all(
-      notifications.map((n) =>
-        fetch(`http://127.0.0.1:8000/notifications/${n.id}/read`, {
-          method: "PUT",
-        })
-      )
-    );
-    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-  };*/
 
   return (
     <div className="navbar">
