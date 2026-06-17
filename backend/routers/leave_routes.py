@@ -44,7 +44,7 @@ def submit_leave_request(
         message=f"{current_user['email']} submitted a leave request.",
         recipient_email=admin.email,
         company_id=current_user["company_id"],
-        request_id=leave.id,
+        request_id=request.id,
         type="leave"
     )
 
@@ -118,6 +118,15 @@ def update_leave_request(
             status_code=404,
             detail="Leave request not found."
         )
+        
+    crud.create_notification(
+        db=db,
+        message=f"Your leave request has been {leave.status.value}.",
+        recipient_email=request.user.email,   # notify the employee
+        company_id=current_user["company_id"],
+        request_id=request.id,
+        type="leave"
+    )    
 
     return {
         "message": f"Leave request {leave.status.value}.",

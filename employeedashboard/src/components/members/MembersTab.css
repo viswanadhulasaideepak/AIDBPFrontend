@@ -1,72 +1,141 @@
-.members-container{
-    padding:30px;
+/* =========================
+   MAIN CONTAINER
+========================= */
+.members-container {
+  padding: 25px;
+  background: #f4f6f9;
+  min-height: 100vh;
+  font-family: "Inter", "Segoe UI", sans-serif;
 }
 
-.members-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:20px;
+.members-container h2 {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #1f2937;
 }
 
-.search-member{
-    width:300px;
-    padding:12px;
-    border-radius:10px;
-    border:1px solid #d1d5db;
+/* =========================
+   TABLE WRAPPER
+========================= */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  border: 1px solid #eef0f3;
 }
 
-.members-table{
-    width:100%;
-    border-collapse:collapse;
-    background:white;
-    border-radius:15px;
-    overflow:hidden;
-    box-shadow:0 8px 20px rgba(0,0,0,.08);
+/* =========================
+   TABLE HEADER
+========================= */
+thead {
+  background: #3466d2;
+  color: white;
 }
 
-.members-table th{
-    background:#1e293b;
-    color:white;
-    padding:18px;
+th {
+  text-align: left;
+  padding: 14px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.members-table td{
-    padding:16px;
+/* =========================
+   TABLE BODY
+========================= */
+td {
+  padding: 14px;
+  font-size: 14px;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
 }
 
-.members-table tr:hover{
-    background:#eff6ff;
+tr:hover {
+  background: #f9fafb;
+  transition: 0.2s ease;
 }
 
-.active-badge{
-    background:#22c55e;
-    color:white;
-    padding:6px 15px;
-    border-radius:20px;
+/* =========================
+   STATUS BADGES
+========================= */
+td:nth-child(4) {
+  font-weight: 600;
+  text-transform: capitalize;
 }
 
-.deactive-badge{
-    background:#ef4444;
-    color:white;
-    padding:6px 15px;
-    border-radius:20px;
+/* Active status */
+td:nth-child(4):contains("active") {
+  color: #16a34a;
 }
 
-.deactivate-btn{
-    background:#dc2626;
-    color:white;
-    border:none;
-    padding:9px 18px;
-    border-radius:8px;
-    cursor:pointer;
+/* Inactive status */
+td:nth-child(4):contains("inactive") {
+  color: #dc2626;
 }
 
-.activate-btn{
-    background:#16a34a;
-    color:white;
-    border:none;
-    padding:9px 18px;
-    border-radius:8px;
-    cursor:pointer;
+/* =========================
+   ACTION BUTTONS
+========================= */
+button {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+/* Deactivate */
+button {
+  background: #dc2626;
+  color: rgb(14, 13, 13);
+}
+
+button:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+}
+
+/* Reactivate button override */
+button:has(+ button),
+button:only-child {
+  background: #16a34a;
+  color: white;
+}
+
+button:has(+ button):hover,
+button:only-child:hover {
+  background: #15803d;
+}
+
+/* =========================
+   PAGE HEADING WRAPPER
+========================= */
+.members-container h2 {
+  margin-bottom: 20px;
+}
+
+/* =========================
+   RESPONSIVE DESIGN
+========================= */
+@media (max-width: 768px) {
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  td, th {
+    padding: 12px;
+  }
+
+  button {
+    width: 100%;
+    margin-bottom: 5px;
+  }
 }

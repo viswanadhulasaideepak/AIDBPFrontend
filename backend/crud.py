@@ -11,9 +11,9 @@ def get_employees(db: Session, company_id: int):
         models.Employee.company_id == company_id
     ).all()
 
-def get_employee_by_id(db: Session, user_id: int, company_id: int):
+def get_employee_by_id(db: Session,id: int, company_id: int):
     return db.query(models.Employee).filter(
-        models.Employee.user_id == user_id,
+        models.Employee.id == id,
         models.Employee.company_id == company_id
     ).first()
 
@@ -314,9 +314,10 @@ def update_attendance_access_request(
     db.commit()
     print("Approved Successfully")
     db.refresh(request)
+    print("After Commit:", request.status)
+    
 
     return request
-    
 #----------Attendance Approval--------------
 def is_attendance_access_approved(
     db: Session,
@@ -353,6 +354,8 @@ def check_in(db: Session, employee_id: int, company_id: int):
         models.Attendance.date >= datetime.combine(today, datetime.min.time()),
         models.Attendance.date <= datetime.combine(today, datetime.max.time())
     ).first()
+    
+    print("DB PATH:", db.bind.url.database)
 
     print("Attendance Found:", attendance)
 
@@ -529,14 +532,16 @@ def create_leave_request(
                 f"{user.username} ({user.email}) "
                 f"submitted on "
                 f"{leave.created_at.strftime('%Y-%m-%d %H:%M')}"
-            )
+            ),
+            request_id=leave.id,
+            type="leave"
         )
 
     create_audit_log(
         db=db,
         user_name=user.email,
         action="Leave Request Submitted",
-        related_user=None,
+        related_user=user.email,
         company_id=company_id
     )
 
@@ -559,7 +564,8 @@ def get_company_leave_requests(
     return db.query( LeaveRequest).filter( 
         LeaveRequest.company_id == company_id).order_by(
         LeaveRequest.created_at.desc()).all()
-    
+        
+#------update leave requests-----------    
 def update_leave_request(
     db: Session,
     request_id: int,

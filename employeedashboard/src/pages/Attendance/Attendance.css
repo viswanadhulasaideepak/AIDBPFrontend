@@ -1,82 +1,200 @@
+/* GLOBAL CONTAINER*/
 .attendance-container {
-  padding: 30px;
-  background: #f5f7fa;
-  min-height: 100vh;
-}
-
-.attendance-title {
-  font-size: 1.8rem;
-  font-weight: 600;
-  margin-bottom: 20px;
-  color: #222;
-}
-
-.attendance-card {
-  background: #fff;
   padding: 25px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  background: #f4f6f9;
+  min-height: 100vh;
+  font-family: "Inter", "Segoe UI", sans-serif;
 }
 
-.attendance-table {
+.attendance-container h2 {
+  margin-bottom: 20px;
+  font-size: 26px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+/*CARD STYLE */
+   CARD STYLE
+.attendance-card,
+.leave-card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  border: 1px solid #eef0f3;
+}
+
+.attendance-card h3,
+.leave-card h3 {
+  margin-bottom: 15px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* TABLE STYLING */
+.attendance-table,
+.leave-table {
   width: 100%;
   border-collapse: collapse;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+.attendance-table thead,
+.leave-table thead {
+  background: #3c71e4;
+  color: white;
 }
 
 .attendance-table th,
-.attendance-table td {
-  padding: 12px 15px;
+.leave-table th {
   text-align: left;
-  border-bottom: 1px solid #ddd;
+  padding: 12px;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
-.attendance-table th {
-  background-color: #2196f3;
-  color: #fff;
+.attendance-table td,
+.leave-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 14px;
+  color: #01050d;
+}
+
+.attendance-table tr:hover,
+.leave-table tr:hover {
+  background: #f9fafb;
+}
+
+/* BUTTONS */
+button {
+  padding: 8px 14px;
+  margin: 4px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
   font-weight: 600;
+  transition: all 0.2s ease-in-out;
 }
 
-.attendance-table tr:hover {
-  background-color: #f1f1f1;
+/* Primary buttons */
+button:hover {
+  transform: translateY(-1px);
 }
 
-.error-text {
-  color: red;
-  font-weight: 500;
+/* Approve */
+button:nth-child(1) {
+  background: #16a34a;
+  color: white;
 }
 
+/* Reject */
+button:nth-child(2) {
+  background: #f2f2f6;
+  color: white;
+}
+
+/* Check-in/out */
+.attendance-actions button {
+  background: #2563eb;
+  color: white;
+}
+
+.attendance-actions button:hover {
+  background: #1d4ed8;
+}
+
+/* Download buttons */
 .download-actions {
   display: flex;
-  gap: 12px;              /* space between buttons */
-  margin-top: 20px;
+  gap: 10px;
 }
 
 .download-actions button {
+  background: #4b77d7;
+  color: white;
   display: flex;
   align-items: center;
-  gap: 8px;               /* space between icon and text */
-  background: #2196f3;
-  color: #fff;
-  padding: 10px 18px;
-  border: none;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease, transform 0.1s ease;
+  gap: 6px;
 }
 
 .download-actions button:hover {
-  background: #1976d2;
-  transform: translateY(-2px);
+  background: #000;
 }
 
-.download-actions button:active {
-  background: #1565c0;
-  transform: translateY(0);
-}
-
-.download-actions {
+/* ATTENDANCE ACTIONS */
+.attendance-actions {
   display: flex;
-  gap: 12px;
-  margin-top: 20px;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+/* PENDING / STATUS BOX */
+.attendance-pending {
+  background: #fff7ed;
+  border-left: 5px solid #f59e0b;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+}
+
+.attendance-pending h3 {
+  margin-bottom: 6px;
+  color: #92400e;
+}
+
+/* LEAVE FORM */
+.leave-form {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.leave-form select,
+.leave-form input,
+.leave-form textarea {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  outline: none;
+}
+
+.leave-form textarea {
+  min-height: 80px;
+  resize: none;
+}
+
+.leave-form button {
+  background: #2563eb;
+  color: white;
+  width: fit-content;
+}
+
+/*  RESPONSIVE DESIGN */
+
+@media (max-width: 768px) {
+  .attendance-container {
+    padding: 15px;
+  }
+
+  .attendance-table,
+  .leave-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .attendance-actions {
+    flex-direction: column;
+  }
+
+  button {
+    width: 100%;
+  }
 }

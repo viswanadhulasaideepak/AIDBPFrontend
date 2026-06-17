@@ -102,6 +102,7 @@ def get_pending_requests(
     )
 
     return requests    
+
 # ---------------- APPROVE / REJECT ATTENDANCE ACCESS ----------------
 @router.put("/access-request/{request_id}")
 def update_attendance_access(
@@ -130,6 +131,9 @@ def update_attendance_access(
         company_id=current_user["company_id"],
         approved_by=current_user["email"]
     )
+    print("========== ADMIN CLICKED APPROVE ==========")
+    print("Request ID:", request_id)
+    print("Status:", status)
 
     if request is None:
         raise HTTPException(
@@ -282,10 +286,13 @@ def today(
             "working_hours": None
         }
 
-    return attendance
-
+    return {
+    "id": attendance.id,
+    "check_in": attendance.check_in,
+    "check_out": attendance.check_out,
+    "working_hours": attendance.working_hours
+}
 # ---------------- HISTORY ----------------
-
 @router.get("/history")
 def history(
     db: Session = Depends(get_db),

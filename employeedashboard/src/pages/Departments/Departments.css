@@ -1,99 +1,120 @@
+/* =========================
+   MAIN CONTAINER
+========================= */
 .departments-container {
-  padding: 30px;
-  background: #f5f7fa;
+  padding: 25px;
+  background: #f4f6f9;
   min-height: 100vh;
+  font-family: "Inter", "Segoe UI", sans-serif;
 }
 
 .departments-title {
-  font-size: 1.8rem;
-  font-weight: 600;
+  font-size: 26px;
+  font-weight: 700;
   margin-bottom: 20px;
-  color: #222;
+  color: #1f2937;
 }
 
+/* =========================
+   CARD WRAPPER
+========================= */
 .departments-card {
-  background: #fff;
-  padding: 25px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  border: 1px solid #eef0f3;
+  overflow: hidden;
 }
 
+/* =========================
+   TABLE STYLING
+========================= */
 .departments-table {
   width: 100%;
   border-collapse: collapse;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
-.departments-table th,
-.departments-table td {
-  padding: 12px 15px;
-  text-align: left;
-  border-bottom: 1px solid #ddd;
+.departments-table thead {
+  background: #3d6fdb;
+  color: white;
 }
 
 .departments-table th {
-  background-color: #2196f3;
-  color: #fff;
-  font-weight: 600;
-}
-
-.departments-table tr:hover {
-  background-color: #f1f1f1;
-}
-
-.error-text {
-  color: red;
-  font-weight: 500;
-}
-.departments-container {
-  padding: 30px;
-  background: #f5f7fa;
-  min-height: 100vh;
-}
-
-/* Page title */
-.departments-title {
-  font-size: 2rem;        /* bigger title */
-  font-weight: 700;       /* bolder */
-  margin-bottom: 25px;
-  color: #1e293b;         /* dark slate */
-}
-
-/* Card wrapper */
-.departments-card {
-  background: #fff;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-/* Table styling */
-.departments-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 1.1rem;      /* larger text */
-}
-
-.departments-table th,
-.departments-table td {
-  padding: 14px 18px;     /* more breathing space */
   text-align: left;
+  padding: 14px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.departments-table td {
+  padding: 14px;
+  font-size: 14px;
+  color: #374151;
   border-bottom: 1px solid #e5e7eb;
 }
 
-.departments-table th {
-  background-color: #2563eb; /* natural blue */
-  color: #fff;
+/* Row hover effect */
+.departments-table tbody tr:hover {
+  background: #f9fafb;
+  transition: 0.2s ease;
+}
+
+/* =========================
+   BADGE STYLE (optional future use)
+========================= */
+.departments-table td:nth-child(3) {
   font-weight: 600;
-  font-size: 1.2rem;          /* bigger header text */
+  color: #2563eb;
 }
 
-.departments-table tr:hover {
-  background-color: #f1f5f9;  /* subtle hover */
-}
-
-/* Error text */
+/* =========================
+   ERROR TEXT
+========================= */
 .error-text {
-  color: #dc2626;        /* natural red tone */
+  color: #dc2626;
   font-weight: 600;
-  font-size: 1.1rem;
+  padding: 10px;
+  background: #fee2e2;
+  border-left: 4px solid #dc2626;
+  border-radius: 6px;
+}
+
+/* =========================
+   EMPTY STATE
+========================= */
+.departments-container p {
+  font-size: 15px;
+  color: #6b7280;
+  padding: 10px;
+}
+
+/* =========================
+   SKELETON OVERRIDE (optional)
+========================= */
+.react-loading-skeleton {
+  border-radius: 8px;
+}
+
+/* =========================
+   RESPONSIVE DESIGN
+========================= */
+@media (max-width: 768px) {
+  .departments-container {
+    padding: 15px;
+  }
+
+  .departments-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .departments-table th,
+  .departments-table td {
+    padding: 12px;
+  }
 }

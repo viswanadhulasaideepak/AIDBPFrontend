@@ -197,23 +197,6 @@ def update_employee(
     db.commit()
     db.refresh(emp)
 
-# Attendance record for status change
-    attendance_status = "present"
-    if emp.status.lower() == "active":
-        attendance_status = "present"
-    elif emp.status.lower() == "onleave":
-        attendance_status = "leave"
-    elif emp.status.lower() == "inactive":
-        attendance_status = "absent"
-
-    attendance = Attendance(
-        employee_id=emp.id,
-        date=datetime.utcnow(),
-        status=attendance_status,
-        company_id=emp.company_id
-        )
-    db.add(attendance)
-
 # Audit log
     audit = AuditLog(
         user_name=current_user["email"],

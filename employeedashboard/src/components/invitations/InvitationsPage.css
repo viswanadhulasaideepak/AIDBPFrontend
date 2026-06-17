@@ -1,51 +1,102 @@
-.invitation-page {
-    padding: 30px;
-    background: #f4f7fb;
-    min-height: 100vh;
+/* =========================
+   MAIN PAGE CONTAINER
+========================= */
+.invitations-page {
+  padding: 25px;
+  background: #f4f6f9;
+  min-height: 100vh;
+  font-family: "Inter", "Segoe UI", sans-serif;
 }
 
-.invitation-header {
-    margin-bottom: 25px;
+/* Page Title */
+.invitations-page h1 {
+  font-size: 26px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 20px;
 }
 
-.invitation-header h1 {
-    margin: 0;
-    color: #1f2937;
-    font-size: 30px;
-    font-weight: 700;
+/* =========================
+   NAVIGATION TABS
+========================= */
+nav {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
-.invitation-header p {
-    color: #6b7280;
-    margin-top: 15px;
+/* Tab Buttons */
+nav button {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  background: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  color: #374151;
 }
 
-.invitation-nav {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 30px;
+/* Hover effect */
+nav button:hover {
+  background: #f3f4f6;
+  transform: translateY(-1px);
 }
 
-.invitation-nav button {
-    padding: 12px 22px;
-    border: none;
-    border-radius: 15px;
-    cursor: pointer;
-    background: rgb(53, 18, 227);
-    color: #374151;
-    font-size: 20px;
-    font-weight: 600;
-    transition: .3s;
-    box-shadow: 0 5px 15px rgba(0,0,0,.06);
+/* Active tab (we will add class via JS if needed later) */
+nav button.active,
+nav button:focus {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.2);
 }
 
-.invitation-nav button:hover{
-    background:#2563eb;
-    color:white;
-    transform:translateY(-2px);
+/* =========================
+   TAB CONTENT WRAPPER
+========================= */
+.invitations-page > div {
+  animation: fadeIn 0.25s ease-in-out;
 }
 
-.invitation-nav button.active{
-    background:#2563eb;
-    color:white;
+/* Smooth fade transition */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================
+   DASHBOARD CARD LOOK (if used inside tabs)
+========================= */
+.card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  border: 1px solid #eef0f3;
+}
+
+/* =========================
+   RESPONSIVE DESIGN
+========================= */
+@media (max-width: 768px) {
+  nav {
+    flex-direction: column;
+  }
+
+  nav button {
+    width: 100%;
+  }
+
+  .invitations-page {
+    padding: 15px;
+  }
 }

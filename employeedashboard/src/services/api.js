@@ -91,24 +91,31 @@ export const getTodayAttendance = async () =>
 export const getAttendanceHistory = async () =>
   (await api.get("/attendance/history")).data;
 
-export const submitLeaveRequest = async (leave) =>
-  (await api.post("/leave/request", leave)).data;
-
-export const getMyLeaves = async () =>
-  (await api.get("/leave/my")).data;
-
-export const getLeaveRequests = async () =>
-  (await api.get("/leave")).data;
-
-export const updateLeaveRequest = async (id, status) =>
-  (
-    await api.put(`/leave/${id}`, {
-      status,
-    })
-  ).data;
-
 export const getAttendanceAccessRequests = async () =>
   (await api.get("/attendance/access-requests")).data;  
+
+
+// Submit a new leave request
+export const submitLeaveRequest = async (leaveForm) =>
+  (await api.post("/leave/request", {
+    leave_type: leaveForm.leave_type,
+    start_date: leaveForm.start_date,
+    end_date: leaveForm.end_date,
+    reason: leaveForm.reason,
+  })).data;
+
+// Get current user's leave requests
+export const getMyLeaveRequests = async () =>
+  (await api.get("/leave/my")).data;
+
+// Get all company leave requests (admin only)
+export const getCompanyLeaveRequests = async () =>
+  (await api.get("/leave/company")).data;
+
+// Approve/Reject a leave request (admin only)
+export const updateLeaveRequest = async (id, status) =>
+  (await api.put(`/leave/${id}`, { status })).data;
+
 
 /* ---------------- LOGIN ---------------- */
 export const loginUser = async (email, password, role) => {
