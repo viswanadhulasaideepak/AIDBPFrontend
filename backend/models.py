@@ -19,6 +19,19 @@ class Department(Base):
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
     company = relationship("Company", back_populates="departments")
     employees = relationship("Employee", back_populates="department_rel")
+    
+#------------DepartmentTransfer-----------------    
+class DepartmentTransfer(Base):
+    __tablename__ = "department_transfers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer,ForeignKey("employees.id"), nullable=False)
+    old_department_id = Column(Integer,ForeignKey("departments.id"), nullable=False)
+    new_department_id = Column(Integer,ForeignKey("departments.id"), nullable=False)
+    transferred_by = Column(String, nullable=False)
+    transferred_at = Column(DateTime,default=datetime.utcnow)
+    company_id = Column(Integer,ForeignKey("companies.id"),nullable=False)    
+    reason = Column(String, nullable=True)
 
 #-------------EmployeeModel-----------
 class Employee(Base):
@@ -182,7 +195,8 @@ class AuditLog(Base):
     related_user = Column(String, nullable=True)
     timestamp = Column(DateTime, default=datetime.utcnow)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
-    performed_by = Column(String)
+    target_employee_id = Column(Integer, ForeignKey("employees.id"))
+    #performed_by = Column(String)
 
 # ---------------- Invitation Status ----------------
 class InvitationStatus(str, enum.Enum):

@@ -4,15 +4,9 @@ import models
 import crud
 from auth import get_current_user
 from database import get_db
-from schema import (
-    LeaveRequestCreate,
-    LeaveRequestUpdate
-)
+from schema import (LeaveRequestCreate, LeaveRequestUpdate)
 
-router = APIRouter(
-    prefix="/leave",
-    tags=["Leave Management"]
-)
+router = APIRouter( prefix="/leave",tags=["Leave Management"])
 
 # USER SUBMIT LEAVE REQUEST
 
@@ -118,15 +112,6 @@ def update_leave_request(
             status_code=404,
             detail="Leave request not found."
         )
-        
-    crud.create_notification(
-        db=db,
-        message=f"Your leave request has been {leave.status.value}.",
-        recipient_email=request.user.email,   # notify the employee
-        company_id=current_user["company_id"],
-        request_id=request.id,
-        type="leave"
-    )    
 
     return {
         "message": f"Leave request {leave.status.value}.",

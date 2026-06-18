@@ -1,7 +1,17 @@
 import sqlite3
+
 conn = sqlite3.connect("employees.db")
-cur = conn.cursor()
-cur.execute("SELECT id, employee_id, date, check_in, check_out FROM attendance")
-print(cur.fetchall())
+cursor = conn.cursor()
+
+cursor.execute("""
+SELECT *
+FROM attendance_access_requests
+WHERE id = 10;
+""")
+
+rows = cursor.fetchall()
+
+for row in rows:
+    print(row)
+
 conn.close()
-exit()

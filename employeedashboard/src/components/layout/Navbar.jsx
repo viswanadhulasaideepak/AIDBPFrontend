@@ -14,26 +14,33 @@ const Navbar = () => {
   const userName = storedUser?.fullName || "Admin User";
   const initials = userName.charAt(0).toUpperCase();
 
-  // Fetch notifications safely
-  useEffect(() => {
-  const loadNotifications = async () => {
-    try {
-      const response = await api.get("/notifications/");
-      setNotifications(response.data || []);
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-      setNotifications([]);
-    }
-  };
+  // Fetch notifications
+const loadNotifications = async () => {
+  try {
+    const response = await api.get("/notifications/");
+    setNotifications(response.data || []);
+  } catch (error) {
+    console.error("Error fetching notifications:", error);
+    setNotifications([]);
+  }
+};
 
+useEffect(() => {
+  // Initial load
   loadNotifications();
+
+  // Refresh every 3 seconds
+  const interval = setInterval(() => {
+    loadNotifications();
+  }, 3000);
+
+  return () => clearInterval(interval);
 }, []);
 
  // Mark a single notification as read
   const markAsRead = async (id) => {
   try {
     await api.put(`/notifications/${id}/read`);
-
     setNotifications((prev) =>
       prev.map((n) =>
         n.id === id
@@ -64,13 +71,9 @@ const Navbar = () => {
 };
   const approveAttendance = async (requestId) => {
   try {
-    await updateAttendanceAccessRequest(
-      requestId,
-      "approved"
-    );
-    toast.success("Attendance Access Approved");
-    const response = await api.get("/notifications");
-    setNotifications(response.data);
+    await updateAttendanceAccessRequest(requestId, "approved");
+    toast.success("Attendance Approved");
+    await loadNotifications();
   } catch (err) {
     toast.error("Approval failed");
   }
@@ -78,39 +81,30 @@ const Navbar = () => {
 
 const rejectAttendance = async (requestId) => {
   try {
-    await updateAttendanceAccessRequest(
-      requestId,
-      "rejected"
-    );
+    await updateAttendanceAccessRequest(requestId,"rejected");
     toast.success("Attendance Access Rejected");
     const response = await api.get("/notifications");
-    setNotifications(response.data);
+    await loadNotifications();
   } catch (err) {
     toast.error("Request failed");
   }
 };
 const approveLeave = async (requestId) => {
     try {
-        await updateLeaveRequest(
-            requestId,
-            "approved"
-        );
+        await updateLeaveRequest(requestId,"approved");
         toast.success("Leave Approved");
         const response = await api.get("/notifications");
-        setNotifications(response.data);
+        await loadNotifications();
     } catch {
         toast.error("Failed");
     }
 };
 const rejectLeave = async (requestId) => {
     try {
-        await updateLeaveRequest(
-            requestId,
-            "rejected"
-        );
+        await updateLeaveRequest(requestId,"rejected");
         toast.success("Leave Rejected");
         const response = await api.get("/notifications");
-        setNotifications(response.data);
+        await loadNotifications();
     } catch {
         toast.error("Failed");
     }
@@ -149,16 +143,20 @@ const rejectLeave = async (requestId) => {
                 {notifications.map((n) => (
                   <div key={n.id} className={n.is_read ? "read" : "unread"}>
                     <p>{n.message}</p>
-                    {n.type === "attendance_access" && (
+                    {storedUser?.role === "admin" &&
+                    n.type === "attendance" && !n.is_read && (
                       <div className="notification-actions">
-                        <button onClick={() => approveAttendance(n.request_id)}>
-                          Approve
-                        </button>
-                        <button onClick={() => rejectAttendance(n.request_id)}>
-                          Reject
-                        </button>
-                      </div>)}
-                {n.type === "leave_request" && (
+                      <button className="approve-btn"
+                      onClick={() => approveAttendance(n.request_id)}>
+                        ✓ Approve
+                      </button>
+                     <button className="reject-btn"
+                     onClick={() => rejectAttendance(n.request_id)}>
+                      ✗ Reject
+                     </button>
+                     </div>)}
+                {storedUser?.role === "admin" &&
+                n.type === "leave" && (
                   <div className="notification-actions">
                     <button onClick={() => approveLeave(n.request_id)}>
                       Approve

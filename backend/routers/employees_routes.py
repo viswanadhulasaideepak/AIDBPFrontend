@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-import crud
+import crud, models
 from database import get_db
 from auth import get_current_user
 from models import Department, AuditLog, Attendance
 from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel
+from schema import DepartmentTransferRequest
 
 router = APIRouter(prefix="/employees", tags=["Employees"])
 
@@ -126,6 +127,17 @@ def add_employee(
     db.add(audit)
     db.commit()
     
+    # After creating new_emp and audit log
+    crud.create_notification(
+    db=db,
+    message=f"New employee {new_emp.name} ({new_emp.email}) was added.",
+    recipient_email=current_user["email"],   # or notify admins
+    company_id=current_user["company_id"],
+    request_id=new_emp.id,
+    type="employee"
+)
+
+    
     return {
             "id": new_emp.id,
             "name": new_emp.name,
@@ -206,6 +218,16 @@ def update_employee(
         )
     db.add(audit)
     db.commit()
+    
+    crud.create_notification(
+    db=db,
+    message=f"Employee {emp.name} ({emp.email}) was updated.",
+    recipient_email=current_user["email"],   # or notify admins
+    company_id=current_user["company_id"],
+    request_id=emp.id,
+    type="employee"
+)
+
         
     return {
             "id": emp.id,
@@ -253,4 +275,73 @@ def delete_employee(
     db.delete(emp)
     db.commit()
     
+    crud.create_notification(
+    db=db,
+    message=f"Employee {emp.name} ({emp.email}) was deleted.",
+    recipient_email=current_user["email"],   # or notify admins
+    company_id=current_user["company_id"],
+    request_id=emp.id,
+    type="employee"
+)
+
+    
     return {"message": "Employee deleted successfully"} 
+
+#--------transfer department-------------
+@router.put("/{employee_id}/transfer")
+def transfer_department(
+    employee_id: int,
+    transfer: DepartmentTransferRequest,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    # ---------------- AUTH ----------------
+    if current_user["role"] != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Only admins can transfer employees."
+        )
+
+    # ---------------- GET EMPLOYEE ----------------
+    employee = crud.get_employee(
+        db,
+        employee_id,
+        current_user["company_id"]
+    )
+
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+
+    # ---------------- VALIDATE DEPARTMENT ----------------
+    department = db.query(models.Department).filter(
+        models.Department.id == transfer.new_department_id,
+        models.Department.company_id == current_user["company_id"]
+    ).first()
+
+    if not department:
+        raise HTTPException(status_code=404, detail="Department not found")
+
+    # ---------------- CALL CRUD ----------------
+    try:
+        crud.transfer_employee_department(
+            db=db,
+            employee=employee,
+            new_department_id=transfer.new_department_id,
+            performed_by=current_user["id"],
+            company_id=current_user["company_id"],
+            reason=transfer.reason
+        )
+
+        db.commit()
+        db.refresh(employee)
+
+        return {
+            "message": "Employee transferred successfully",
+            "employee_id": employee.id,
+            "old_department": employee.department_id,
+            "new_department": transfer.new_department_id
+        }
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))

@@ -2,7 +2,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 import os
 
-DATABASE_URL = "sqlite:///./employees.db"
+#DATABASE_URL = "sqlite:///./employees.db"
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./employees.db")
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -15,5 +16,7 @@ def get_db():
     finally:
         db.close()
         
-print("DB FILE:", os.path.abspath("employees.db"))
+#print("DB FILE:", os.path.abspath("employees.db"))
+if os.getenv("DEBUG"):
+    print("DB FILE:", os.path.abspath("employees.db"))
         

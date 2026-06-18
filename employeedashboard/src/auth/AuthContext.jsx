@@ -12,6 +12,12 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  useEffect(() => {
+    if (user && user.status !== "active") {
+      logout();
+    }
+  }, [user]);
+
   const login = (data) => {
     const userData = {
       id: data.id,
@@ -21,13 +27,16 @@ export const AuthProvider = ({ children }) => {
       company_id: data.company_id,
       status: data.status,
     };
+
     setUser(userData);
     localStorage.setItem("user", JSON.stringify(userData));
+    localStorage.setItem("token", data.token);
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem("user");
+    localStorage.removeItem("token");
   };
 
   return (
@@ -36,3 +45,6 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
+// 
+export const useAuth = () => React.useContext(AuthContext);

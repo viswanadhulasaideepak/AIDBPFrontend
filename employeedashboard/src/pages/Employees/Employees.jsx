@@ -2,11 +2,15 @@ import React, { useEffect, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import toast from "react-hot-toast";
-import { fetchEmployees } from "../../services/api";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import AddEmployeeForm from "./AddEmployeeForm";
 import EditEmployeeForm from "./EditEmployeeForm";
-import { getEmployees, addEmployee, updateEmployee, deleteEmployee } from "../../services/api";
+import {
+  fetchEmployees,
+  updateEmployee,
+  deleteEmployee,
+} from "../../services/api";
+
 import "./Employees.css";
 
 const Employees = () => {
@@ -14,310 +18,228 @@ const Employees = () => {
   const [filteredEmployees, setFilteredEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
   const [searchTerm, setSearchTerm] = useState("");
-  const [showAddForm, setShowAddForm] = useState(false);
   const [departmentFilter, setDepartmentFilter] = useState("All");
+
+  const [showAddForm, setShowAddForm] = useState(false);
   const [editEmployee, setEditEmployee] = useState(null);
 
-  //  Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [employeesPerPage, setEmployeesPerPage] = useState(5); // default 5
+  const [employeesPerPage, setEmployeesPerPage] = useState(5);
 
-  //  Helper to generate random dates
-  const randomDate = () => {
-    const start = new Date(2023, 0, 1);
-    const end = new Date();
-    const date = new Date(
-      start.getTime() + Math.random() * (end.getTime() - start.getTime())
-    );
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
-  //  Load employees from backend
+  /* ---------------- FETCH EMPLOYEES ---------------- */
   useEffect(() => {
     const loadEmployees = async () => {
       try {
         const data = await fetchEmployees();
 
-        // Assign random joined_date if missing
-        const employeesWithDates = data.map(emp => ({
+        const formatted = data.map((emp) => ({
           ...emp,
-          joined_date: emp.joined_date || randomDate()
+          joined_date: emp.joined_date || null,
         }));
 
-        setEmployees(employeesWithDates);
-        setFilteredEmployees(employeesWithDates);
-        toast.success("Employees loaded successfully!");
+        setEmployees(formatted);
+        setFilteredEmployees(formatted);
       } catch (err) {
-        const message = err.response?.data?.detail || err.message;
-        setError(message);
+        console.error(err);
+        setError("Failed to load employees");
         toast.error("Failed to load employees");
       } finally {
         setLoading(false);
       }
     };
+
     loadEmployees();
   }, []);
 
-  //  Build dynamic department list
-  const uniqueDepartments = [
-    "All",
-    ...new Set(employees.map(emp => emp.department_name).filter(Boolean))
-  ];
-
-  //  Search + Filter logic
+  /* ---------------- SEARCH + FILTER ---------------- */
   useEffect(() => {
     const term = searchTerm.toLowerCase();
 
-    const results = employees.filter((emp) => {
+    const filtered = employees.filter((emp) => {
       const matchesSearch =
-        emp.name.toLowerCase().includes(term) ||
-        emp.email.toLowerCase().includes(term) ||
-        (emp.role && emp.role.toLowerCase().includes(term));
+        emp.name?.toLowerCase().includes(term) ||
+        emp.email?.toLowerCase().includes(term) ||
+        emp.role?.toLowerCase().includes(term);
 
-      const matchesDepartment =
+      const matchesDept =
         departmentFilter === "All" ||
-        (emp.department_name &&
-          emp.department_name.toLowerCase() === departmentFilter.toLowerCase());
+        emp.department_name === departmentFilter;
 
-      return matchesSearch && matchesDepartment;
+      return matchesSearch && matchesDept;
     });
 
-    setFilteredEmployees(results);
-    setCurrentPage(1); // reset to first page when filters change
+    setFilteredEmployees(filtered);
+    setCurrentPage(1);
   }, [searchTerm, departmentFilter, employees]);
 
-const handleStatusChange = async (id, newStatus) => {
-  try {
-    console.log("STATUS FUNCTION CALLED");
-    const user = JSON.parse(localStorage.getItem("user"));
-    const token = user?.token;
+  /* ---------------- STATUS UPDATE ---------------- */
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      const emp = employees.find((e) => e.id === id);
 
-    // Find full employee object
-    const emp = employees.find(e => e.id === id);
-
-    // Ensure joined_date is formatted correctly
-    const joinedDate =
-      emp.joined_date && emp.joined_date.length > 10
-        ? emp.joined_date.slice(0, 10)
-        : emp.joined_date;
-
-    const response = await fetch(`http://127.0.0.1:8000/employees/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
+      const payload = {
         name: emp.name,
         email: emp.email,
-        role: emp.role, //  will reflect dropdown selection
-        department_name: emp.department_name, // backend expects name, not id
-        joined_date: joinedDate,
+        role: emp.role,
+        department_name: emp.department_name,
+        joined_date: emp.joined_date?.slice(0, 10),
         status: newStatus,
-      }),
-    });
+      };
 
-    const data = await response.json();
-    console.log("Response Status:", response.status);
+      await updateEmployee(id, payload);
 
-    if (!response.ok) {
-      toast.error(data.detail || "Failed to update status");
-      return;
+      const updated = employees.map((e) =>
+        e.id === id ? { ...e, status: newStatus } : e
+      );
+
+      setEmployees(updated);
+      setFilteredEmployees(updated);
+
+      toast.success("Status updated");
+    } catch (err) {
+      console.error(err);
+      toast.error("Status update failed");
     }
-
-    // Update local state
-    setEmployees(prev =>
-      prev.map(e => (e.id === id ? { ...e, status: newStatus } : e))
-    );
-    setFilteredEmployees(prev =>
-      prev.map(e => (e.id === id ? { ...e, status: newStatus } : e))
-    );
-
-    // Notification API
-    try {
-      await fetch("http://127.0.0.1:8000/notifications", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          message: `Employee ${emp.name} status changed to ${newStatus}`,
-          recipient_email: emp.email,
-        }),
-      });
-    } catch (notificationError) {
-      console.log("Notification error:", notificationError);
-    }
-
-    toast.success(`Employee status updated to ${newStatus}`);
-  } catch (err) {
-    console.error("Error updating status:", err);
-    toast.error("Error updating status");
-  }
-};
-
-  // ------ Add Employee----
-  const handleAddEmployee = (newEmp) => {
-    const updatedList = [...employees, { ...newEmp, joined_date: newEmp.joined_date || randomDate() }];
-    setEmployees(updatedList);
-    setFilteredEmployees(updatedList);
-    toast.success("Employee added successfully!");
   };
-// ----Delete Employee------
-const handleDeleteEmployee = async (id) => {
-  try {
-    const user = JSON.parse(localStorage.getItem("user"));
-    const token = user?.token;
 
-    const response = await fetch(`http://127.0.0.1:8000/employees/${id}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, // ✅ include token
-      },
-    });
+  /* ---------------- DELETE EMPLOYEE ---------------- */
+  const handleDeleteEmployee = async (id) => {
+    try {
+      await deleteEmployee(id);
 
-    const data = await response.json();
+      const updated = employees.filter((e) => e.id !== id);
 
-    if (!response.ok) {
-      toast.error(data.detail || "Failed to delete employee");
-      return;
+      setEmployees(updated);
+      setFilteredEmployees(updated);
+
+      toast.success("Employee deleted");
+    } catch (err) {
+      console.error(err);
+      toast.error("Delete failed");
     }
+  };
 
-    const updatedList = employees.filter(emp => emp.id !== id);
-    setEmployees(updatedList);
-    setFilteredEmployees(updatedList);
+  /* ---------------- ADD EMPLOYEE ---------------- */
+  const handleAddEmployee = (newEmp) => {
+    const updated = [...employees, newEmp];
+    setEmployees(updated);
+    setFilteredEmployees(updated);
+    toast.success("Employee added");
+  };
 
-    toast.success("Employee deleted successfully!");
-  } catch (error) {
-    console.error("Error deleting employee:", error);
-    toast.error("Unable to connect to backend");
-  }
-};
+  /* ---------------- EDIT EMPLOYEE ---------------- */
+  const handleEditEmployee = async (updatedEmp) => {
+    try {
+      const payload = {
+        name: updatedEmp.name,
+        email: updatedEmp.email,
+        role: updatedEmp.role,
+        department_name: updatedEmp.department_name,
+        joined_date: updatedEmp.joined_date?.slice(0, 10),
+        status: updatedEmp.status,
+      };
 
-// Edit Employee
-const handleEditEmployee = async (updatedEmp) => {
-  try {
-    const user = JSON.parse(localStorage.getItem("user"));
-    const token = user?.token;
+      await updateEmployee(updatedEmp.id, payload);
 
-    // Ensure joined_date is formatted correctly
-    const joinedDate =
-      updatedEmp.joined_date && updatedEmp.joined_date.length > 10
-        ? updatedEmp.joined_date.slice(0, 10)
-        : updatedEmp.joined_date;
+      const updated = employees.map((e) =>
+        e.id === updatedEmp.id ? updatedEmp : e
+      );
 
-    const response = await fetch(
-      `http://127.0.0.1:8000/employees/${updatedEmp.id}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          name: updatedEmp.name,
-          email: updatedEmp.email,
-          role: updatedEmp.role,
-          department_name: updatedEmp.department_name,
-          joined_date: joinedDate,
-          status: updatedEmp.status, //  include status
-        }),
-      }
-    );
+      setEmployees(updated);
+      setFilteredEmployees(updated);
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      toast.error(data.detail || "Failed to update employee");
-      return;
+      toast.success("Employee updated");
+      setEditEmployee(null);
+    } catch (err) {
+      console.error(err);
+      toast.error("Update failed");
     }
+  };
 
-    // Update local state immediately
-    const updatedList = employees.map((emp) =>
-      emp.id === updatedEmp.id ? { ...emp, ...updatedEmp } : emp
-    );
+  /* ---------------- PAGINATION ---------------- */
+  const indexOfLast = currentPage * employeesPerPage;
+  const indexOfFirst = indexOfLast - employeesPerPage;
+  const currentEmployees = filteredEmployees.slice(
+    indexOfFirst,
+    indexOfLast
+  );
 
-    setEmployees(updatedList);
-    setFilteredEmployees(updatedList);
+  const totalPages = Math.ceil(
+    filteredEmployees.length / employeesPerPage
+  );
 
-    toast.success("Employee updated successfully!");
-    setEditEmployee(null); // close modal
-  } catch (error) {
-    console.error("Error updating employee:", error);
-    toast.error("Unable to connect to backend");
-  }
-};
+  const uniqueDepartments = [
+    "All",
+    ...new Set(employees.map((e) => e.department_name).filter(Boolean)),
+  ];
 
-  //  Pagination calculations
-  const indexOfLastEmployee = currentPage * employeesPerPage;
-  const indexOfFirstEmployee = indexOfLastEmployee - employeesPerPage;
-  const currentEmployees = filteredEmployees.slice(indexOfFirstEmployee, indexOfLastEmployee);
-  const totalPages = Math.ceil(filteredEmployees.length / employeesPerPage);
+  if (loading)
+    return <Skeleton count={6} height={40} />;
 
-  if (loading) return <Skeleton count={6} height={40} />;
-  if (error) return <p className="error-text">{error}</p>;
+  if (error)
+    return <p className="error-text">{error}</p>;
 
   return (
     <DashboardLayout>
       <div className="employees-container">
+
+        {/* HEADER */}
         <div className="employees-header">
-          <h2 className="employees-title">Employees</h2>
-          <p className="employees-subtitle">
-            Manage your team members, search, and filter by department.
-          </p>
+          <h2>Employees</h2>
+          <p>Manage employees efficiently</p>
         </div>
 
-        {/* Search and Filter Controls */}
+        {/* CONTROLS */}
         <div className="employees-actions">
+
           <input
             type="text"
-            placeholder="Search employees..."
+            placeholder="Search..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="search-bar"
           />
+
           <select
             value={departmentFilter}
             onChange={(e) => setDepartmentFilter(e.target.value)}
-            className="filter-dropdown"
           >
-            {uniqueDepartments.map((dept) => (
-              <option key={dept} value={dept}>
-                {dept}
+            {uniqueDepartments.map((d, i) => (
+              <option key={i} value={d}>
+                {d}
               </option>
             ))}
           </select>
-          <button className="add-btn" onClick={() => setShowAddForm(true)}>
+
+          <button onClick={() => setShowAddForm(true)}>
             + Add Employee
           </button>
-          <select value={employeesPerPage} onChange={(e) => { 
-            setEmployeesPerPage(Number(e.target.value));
-            setCurrentPage(1); // reset to first page when size changes
+
+          <select
+            value={employeesPerPage}
+            onChange={(e) => {
+              setEmployeesPerPage(Number(e.target.value));
+              setCurrentPage(1);
             }}
-            className="page-size-dropdown">
-              <option value={5}>5 per page</option>
-              <option value={10}>10 per page</option>
-              <option value={20}>20 per page</option>
-              </select>
+          >
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+          </select>
 
         </div>
 
-        {/*  Employee Table */}
+        {/* TABLE */}
         <div className="employees-card">
+
           {currentEmployees.length === 0 ? (
-            <p className="no-results">No employees match your search or filter.</p>
+            <p>No employees found</p>
           ) : (
-            <table className="employees-table">
+            <table>
               <thead>
                 <tr>
-                  <th>Employee</th>
+                  <th>Name</th>
                   <th>Role</th>
                   <th>Department</th>
                   <th>Status</th>
@@ -325,82 +247,107 @@ const handleEditEmployee = async (updatedEmp) => {
                   <th>Actions</th>
                 </tr>
               </thead>
+
               <tbody>
                 {currentEmployees.map((emp) => (
                   <tr key={emp.id}>
-                    <td className="employee-cell">
-                      <div className="avatar">
-                        {emp.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <div className="emp-name">{emp.name}</div>
-                        <div className="emp-email">{emp.email}</div>
-                      </div>
-                    </td>
-                    <td>{emp.role || "N/A"}</td>
-                    <td>{emp.department_name || "N/A"}</td>
+
                     <td>
-                      <select className={`status-select ${emp.status}`}
-                      value={emp.status}
-                      onChange={(e) => handleStatusChange(emp.id, e.target.value)}>
+                      <b>{emp.name}</b>
+                      <div>{emp.email}</div>
+                    </td>
+
+                    <td>{emp.role}</td>
+
+                    <td>{emp.department_name}</td>
+
+                    <td>
+                      <select
+                        value={emp.status}
+                        onChange={(e) =>
+                          handleStatusChange(emp.id, e.target.value)
+                        }
+                      >
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
                         <option value="onleave">On Leave</option>
-                        </select>
-                        </td>
-
-
-                    <td>{emp.joined_date}</td>
-                    <td>
-                      <button className="action-btn edit" onClick={() => setEditEmployee(emp)}>Edit</button>
-                      <button className="action-btn delete" onClick={() => handleDeleteEmployee(emp.id)}>Delete</button>
-                    
+                      </select>
                     </td>
+
+                    <td>
+                      {emp.joined_date
+                        ? new Date(emp.joined_date).toLocaleDateString()
+                        : "N/A"}
+                    </td>
+
+                    <td>
+                      <button onClick={() => setEditEmployee(emp)}>
+                        Edit
+                      </button>
+
+                      <button onClick={() => handleDeleteEmployee(emp.id)}>
+                        Delete
+                      </button>
+                    </td>
+
                   </tr>
                 ))}
               </tbody>
             </table>
           )}
 
-          {/*  Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="pagination">
-              <button onClick={() => 
-              setCurrentPage(prev => Math.max(prev - 1, 1))}
-              className="page-btn" disabled={currentPage === 1}>
-                Previous
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => (
-                  <button key={i + 1} onClick={() => setCurrentPage(i + 1)}
-                  className={`page-btn ${currentPage === i + 1 ? "active" : ""}`}>
-                    {i + 1}
-                  </button>
-                ))}
-              <button onClick={() => 
-              setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              className="page-btn" disabled={currentPage === totalPages}>
-                Next
-                </button>
-                </div>
-              )}
-              </div>
-              </div>
+        </div>
 
-      {/*  Add Employee Modal */}
-      {showAddForm && (
-        <AddEmployeeForm
-          onAdd={handleAddEmployee}
-          onClose={() => setShowAddForm(false)}
-        />
-      )}
-      {/*  Edit Employee Modal */}
-      {editEmployee && (
-        <EditEmployeeForm
-        employee={editEmployee}
-        onSave={handleEditEmployee}
-        onClose={() => setEditEmployee(null)}/>
+        {/* PAGINATION */}
+        <div className="pagination">
+          <button
+            disabled={currentPage === 1}
+            onClick={() =>
+              setCurrentPage((p) => Math.max(p - 1, 1))
+            }
+          >
+            Prev
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => (
+            <button
+              key={i}
+              className={currentPage === i + 1 ? "active" : ""}
+              onClick={() => setCurrentPage(i + 1)}
+            >
+              {i + 1}
+            </button>
+          ))}
+
+          <button
+            disabled={currentPage === totalPages}
+            onClick={() =>
+              setCurrentPage((p) =>
+                Math.min(p + 1, totalPages)
+              )
+            }
+          >
+            Next
+          </button>
+        </div>
+
+        {/* MODALS */}
+        {showAddForm && (
+          <AddEmployeeForm
+            onAdd={handleAddEmployee}
+            onClose={() => setShowAddForm(false)}
+          />
         )}
 
+        {editEmployee && (
+          <EditEmployeeForm
+            employee={editEmployee}
+            onSave={handleEditEmployee}
+            onClose={() => setEditEmployee(null)}
+          />
+        )}
+
+      </div>
     </DashboardLayout>
   );
 };

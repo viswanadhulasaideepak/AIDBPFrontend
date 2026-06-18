@@ -85,6 +85,7 @@ def add_attendance(
         "company_id": record.company_id
     }
     
+#-------Pending Request----------------    
 @router.get("/access-requests")
 def get_pending_requests(
     db: Session = Depends(get_db),
@@ -102,7 +103,6 @@ def get_pending_requests(
     )
 
     return requests    
-
 # ---------------- APPROVE / REJECT ATTENDANCE ACCESS ----------------
 @router.put("/access-request/{request_id}")
 def update_attendance_access(

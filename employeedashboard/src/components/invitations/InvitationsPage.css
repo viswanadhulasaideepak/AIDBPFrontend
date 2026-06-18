@@ -49,7 +49,7 @@ nav button:hover {
 nav button.active,
 nav button:focus {
   background: #2563eb;
-  color: white;
+  color: rgb(16, 15, 15);
   border-color: #2563eb;
   box-shadow: 0 6px 16px rgba(37, 99, 235, 0.2);
 }

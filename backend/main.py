@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import datetime
+from database import get_db
 import schema, models, crud, database
 from models import Invitation, InvitationStatus
 from auth import verify_password, create_token, hash_password
@@ -14,14 +15,14 @@ from routers.role_requests_routes import router as role_requests_router
 from routers import (
     employees_routes, departments_routes, attendance_routes, dashboard_routes,
     notifications_routes, auditlogs_routes, invitations_routes,  members_routes, 
-    reactivation_routes, leave_routes)
+    reactivation_routes, leave_routes, department_transfer)
 
 app = FastAPI()
 # ---------------- CORS ----------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
-                    #"http://localhost:8000", "http://127.0.0.1:8000"],
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000",
+                    "http://localhost:8000", "http://127.0.0.1:8000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -40,7 +41,7 @@ app.include_router(invitations_routes.router)
 app.include_router(members_routes.router)
 app.include_router(reactivation_routes.router)
 app.include_router(leave_routes.router)
-
+app.include_router(department_transfer.router)
 
 
 # ---------------- FAKE API ----------------
@@ -58,12 +59,12 @@ def read_fake_employees():
 # ---------------- DB SETUP ----------------
 models.Base.metadata.create_all(bind=database.engine)
 
-def get_db():
+'''def get_db():
     db = database.SessionLocal()
     try:
         yield db
     finally:
-        db.close()
+        db.close()'''
 
 # ---------------- SEED FUNCTION ----------------
 import random

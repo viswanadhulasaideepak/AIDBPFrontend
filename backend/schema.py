@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr, ConfigDict
 from enum import Enum
 from datetime import datetime
+from typing import Optional
 
 model_config = ConfigDict(from_attributes=True)
 
@@ -119,6 +120,11 @@ class DepartmentOut(BaseModel):
 
     class Config:
         orm_mode = True
+        
+class DepartmentTransferRequest(BaseModel):
+    employee_id: int
+    new_department_id: int
+    reason: Optional[str] = None        
 
 class DashboardStatsOut(BaseModel):
     total_employees: int
@@ -128,6 +134,9 @@ class DashboardStatsOut(BaseModel):
     role_distribution: list[dict]
     status_overview: list[dict]
     pending_requests: int
+    
+    class Config:
+        orm_mode = True
 
 # ---------------- Invitation Status ----------------
 class InvitationStatus(str, Enum):

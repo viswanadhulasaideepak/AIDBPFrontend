@@ -16,6 +16,12 @@ def get_employee_by_id(db: Session,id: int, company_id: int):
         models.Employee.id == id,
         models.Employee.company_id == company_id
     ).first()
+    
+def get_employee(db: Session, employee_id: int, company_id: int):
+    return db.query(models.Employee).filter(
+        models.Employee.id == employee_id,
+        models.Employee.company_id == company_id
+    ).first()    
 
 def create_employee(
     db: Session,
@@ -133,6 +139,65 @@ def create_department(db: Session, name: str, company_id: int):
     db.refresh(new_dept)
     return new_dept
 
+#---------------Transfer Departments------------
+def transfer_employee_department(
+    db: Session,
+    employee,
+    new_department_id: int,
+    performed_by: int,
+    company_id: int,
+    reason: str | None = None
+):
+    old_department_id = employee.department_id
+
+    if old_department_id == new_department_id:
+        raise Exception("Employee already in this department")
+
+    #  Update employee
+    employee.department_id = new_department_id
+
+    #  Save transfer history
+    transfer = models.DepartmentTransfer(
+        employee_id=employee.id,
+        old_department_id=old_department_id,
+        new_department_id=new_department_id,
+        transferred_by=performed_by,
+        company_id=company_id,
+        reason=reason,
+        transferred_at=datetime.utcnow()
+    )
+    db.add(transfer)
+    
+    
+
+    #  Audit log (MATCH YOUR STYLE)
+    create_audit_log(
+        db=db,
+        user_name=str(performed_by),
+        action="Department Transfer",
+        related_user=employee.email if hasattr(employee, "email") else str(employee.id),
+        company_id=company_id
+    )
+
+    # ---------------- GET USER EMAIL ----------------
+    user = db.query(models.User).filter(
+    models.User.id == employee.user_id
+    ).first()
+
+    recipient_email = user.email if user else None 
+
+# ---------------- NOTIFICATION ----------------
+    if recipient_email:
+        create_notification(
+        db=db,
+        message="Your department has been updated by admin",
+        recipient_email=employee.email,
+        company_id=company_id,
+        type="employee"
+    )
+
+    return employee
+
 # ---------------- NOTIFICATIONS ----------------
 def create_notification(
     db: Session, 
@@ -216,6 +281,24 @@ def create_attendance_access_request(
     print("After Commit")
     db.refresh(request)
     print("Request ID:", request.id)
+    
+    # Notify all admins about the new attendance request
+    admins = db.query(models.User).filter(
+        models.User.company_id == company_id,
+        models.User.role == "admin").all()
+
+    user = db.query(models.User).filter(
+        models.User.id == user_id).first()
+
+    for admin in admins:
+        create_notification(
+            db=db,
+            message=f"{user.username} requested attendance access.",
+            recipient_email=admin.email,
+            company_id=company_id,
+            request_id=request.id,
+            type="attendance"
+            )
 
     return request     
 
@@ -271,6 +354,7 @@ def update_attendance_access_request(
             db=db,
             message="Your attendance access request has been approved.",
             recipient_email=user.email,
+            request_id=request.id,
             company_id=company_id
             )
         
@@ -280,6 +364,7 @@ def update_attendance_access_request(
             message=f"{user.username} attendance request approved.",
             recipient_email=admin.email,
             company_id=company_id,
+            request_id=request.id,
             type="attendance"
             )
 
@@ -299,6 +384,7 @@ def update_attendance_access_request(
             db=db,
             message="Your attendance access request has been rejected.",
             recipient_email=user.email,
+            request_id=request.id,
             company_id=company_id
         )
         
@@ -308,6 +394,7 @@ def update_attendance_access_request(
                 message=f"{user.username} attendance request rejected.",
                 recipient_email=admin.email,
                 company_id=company_id,
+                request_id=request.id,
                 type="attendance"
                 )
 

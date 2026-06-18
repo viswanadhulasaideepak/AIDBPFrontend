@@ -14,9 +14,15 @@ def get_notifications(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    notes = db.query(Notification).filter(
-        Notification.company_id == current_user["company_id"]
-    ).order_by(Notification.created_at.desc()).all()
+    notes = (
+    db.query(Notification)
+    .filter(
+        Notification.company_id == current_user["company_id"],
+        Notification.recipient_email == current_user["email"]
+    )
+    .order_by(Notification.created_at.desc())
+    .all()
+)
 
     result = []
     
@@ -31,25 +37,25 @@ def get_notifications(
         "company_id": n.company_id,
         "type": n.type,
         "request_id": n.request_id
-    }
+        }
 
-    if n.type == "attendance" and n.request_id:
-        
-        req = db.query(models.AttendanceAccessRequest).filter(
-            models.AttendanceAccessRequest.id == n.request_id
-        ).first()
-        
-        if req:
-            user = db.query(models.User).filter(
-                models.User.id == req.user_id
-            ).first()
+        if n.type == "attendance" and n.request_id:
             
-            if user:
-                item["user_name"] = user.username
-                item["user_email"] = user.email
-                item["request_timestamp"] = req.created_at
-                item["status"] = req.status
-                
+            req = db.query(models.AttendanceAccessRequest).filter(
+                models.AttendanceAccessRequest.id == n.request_id
+                ).first()
+        
+            if req:
+                user = db.query(models.User).filter(
+                    models.User.id == req.user_id
+                    ).first()
+            
+                if user:
+                    item["user_name"] = user.username
+                    item["user_email"] = user.email
+                    item["request_timestamp"] = req.created_at
+                    item["status"] = req.status
+                    
         result.append(item)
                 
     return result

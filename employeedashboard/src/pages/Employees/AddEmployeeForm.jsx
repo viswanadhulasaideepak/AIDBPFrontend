@@ -35,7 +35,7 @@ const AddEmployeeForm = ({ onAdd, onClose }) => {
       email: email.trim(),
       role,
       department_name: departmentName.trim(),
-      joined_date: joinedDate, // ✅ use selected date
+      joined_date: joinedDate, 
       status,
     };
 
