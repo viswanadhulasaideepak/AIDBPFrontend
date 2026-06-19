@@ -118,3 +118,45 @@
     padding: 12px;
   }
 }
+
+.departments-card {
+  margin-bottom: 20px;
+}
+
+.departments-table th,
+.departments-table td {
+  text-align: left;
+  padding: 10px;
+}
+
+.departments-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+}
+
+.refresh-btn{
+    padding:10px 18px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    background:#2563eb;
+    color:white;
+    font-weight:600;
+}
+
+.refresh-btn:hover{
+    opacity:.9;
+}
+
+.employee-count-badge{
+    display:inline-block;
+    min-width:36px;
+    padding:4px 10px;
+    border-radius:20px;
+    background:#e8f1ff;
+    color:#2563eb;
+    text-align:center;
+    font-weight:600;
+}

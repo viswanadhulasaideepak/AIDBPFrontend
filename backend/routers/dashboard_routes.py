@@ -1,94 +1,162 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-import crud, database
+
+import crud
+import database
+
 from auth import get_current_user
-from models import Employee, RoleChangeRequest, RoleChangeStatus, StatusEnum
+from models import (
+    Employee,
+    RoleChangeRequest,
+    RoleChangeStatus,
+    StatusEnum,
+)
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
+
 
 @router.get("/stats")
 def get_dashboard_stats(
     db: Session = Depends(database.get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
-    # Authorization check
+    # ---------------- Authorization ----------------
     if current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Not authorized")
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized"
+        )
 
     company_id = current_user.get("company_id")
+
     if not company_id:
-        raise HTTPException(status_code=401, detail="Company not found in token")
+        raise HTTPException(
+            status_code=401,
+            detail="Company not found in token"
+        )
 
-    # Employees scoped by company
+    # ---------------- Employees ----------------
     employees = crud.get_employees(db, company_id)
-    total_employees = len(employees)
-    active_employees = len([e for e in employees if e.status == StatusEnum.active])
 
-    # Departments scoped by company
+    total_employees = len(employees)
+
+    active_employees = sum(
+        1
+        for emp in employees
+        if emp.status == StatusEnum.active
+    )
+
+    # ---------------- Departments ----------------
     departments = crud.get_departments(db, company_id)
     total_departments = len(departments)
 
-    # Attendance scoped by company
-    records = crud.get_attendance(db, company_id)
-    report = {}
-    for rec in records:
-        date_str = rec.date.strftime("%Y-%m-%d")
-        if date_str not in report:
-            report[date_str] = {"present": 0, "leave": 0, "absent": 0}
-        if rec.status in report[date_str]:
-            report[date_str][rec.status] += 1
+    # ---------------- Attendance ----------------
+    attendance_records = crud.get_attendance(db, company_id)
 
-    total_days = len(report.keys())
-    total_possible = total_employees * total_days
-    total_present = sum([report[d]["present"] for d in report])
-    attendance_percentage = round(
-        (total_present / total_possible) * 100
-    ) if total_possible > 0 else 0
+    attendance_by_date = {}
 
-    # ---------------- Extra Analytics ----------------
-    # Employee Role Distribution
+    for record in attendance_records:
+
+        date = record.date.strftime("%Y-%m-%d")
+
+        if date not in attendance_by_date:
+            attendance_by_date[date] = {
+                "present": 0,
+                "leave": 0,
+                "absent": 0,
+            }
+
+        if record.status in attendance_by_date[date]:
+            attendance_by_date[date][record.status] += 1
+
+    total_days = len(attendance_by_date)
+
+    total_possible = total_days * total_employees
+
+    total_present = sum(
+        day["present"]
+        for day in attendance_by_date.values()
+    )
+
+    attendance_percentage = (
+        round((total_present / total_possible) * 100)
+        if total_possible > 0
+        else 0
+    )
+
+    # ---------------- Role Distribution ----------------
     role_distribution = (
-        db.query(Employee.role, func.count(Employee.id))
+        db.query(
+            Employee.role,
+            func.count(Employee.id)
+        )
         .filter(Employee.company_id == company_id)
         .group_by(Employee.role)
         .all()
     )
-    role_data = [{"role": r, "count": c} for r, c in role_distribution]
 
-    # Employee Status Overview
+    role_data = [
+        {
+            "role": role,
+            "count": count,
+        }
+        for role, count in role_distribution
+    ]
 
-    active_count = db.query(Employee).filter(
-        Employee.company_id == company_id,
-        Employee.status == StatusEnum.active
-        ).count()
+    # ---------------- Employee Status Overview ----------------
+    status_distribution = (
+        db.query(
+            Employee.status,
+            func.count(Employee.id)
+        )
+        .filter(Employee.company_id == company_id)
+        .group_by(Employee.status)
+        .all()
+    )
 
-    inactive_count = db.query(Employee).filter(
-        Employee.company_id == company_id,
-        Employee.status == StatusEnum.inactive
-        ).count()
-    
-    leave_count = db.query(Employee).filter(
-        Employee.company_id == company_id,
-        Employee.status == StatusEnum.onleave
-        ).count()
+    status_map = {
+        "active": 0,
+        "inactive": 0,
+        "onleave": 0,
+    }
+
+    for status, count in status_distribution:
+
+        key = (
+            status.value
+            if hasattr(status, "value")
+            else str(status)
+        )
+
+        status_map[key] = count
 
     status_data = [
-        {"status": "active", "count": active_count},
-        {"status": "inactive", "count": inactive_count},
-        {"status": "onleave", "count": leave_count},
-        ]
-    
-    # Pending Role Requests
+        {
+            "status": "active",
+            "count": status_map["active"],
+        },
+        {
+            "status": "inactive",
+            "count": status_map["inactive"],
+        },
+        {
+            "status": "onleave",
+            "count": status_map["onleave"],
+        },
+    ]
+
+    # ---------------- Pending Role Requests ----------------
     pending_requests = (
         db.query(RoleChangeRequest)
         .filter(
             RoleChangeRequest.company_id == company_id,
-            RoleChangeRequest.status == RoleChangeStatus.pending
+            RoleChangeRequest.status == RoleChangeStatus.pending,
         )
         .count()
     )
 
+    # ---------------- Response ----------------
     return {
         "total_employees": total_employees,
         "active_employees": active_employees,

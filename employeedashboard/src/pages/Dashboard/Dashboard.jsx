@@ -22,17 +22,6 @@ const Dashboard = () => {
   });
   const [employees, setEmployees] = useState([]);
   const [stats, setStats] = useState(null);
-  const [analytics, setAnalytics] = useState({
-  totalEmployees: 0,
-  activeEmployees: 0,
-  totalDepartments: 0,
-  pendingRequests: 0,
-  byDepartment: [],
-  byRole: [],
-  byStatus: []
-});
-
-
   const { user } = useContext(AuthContext);
 
   // Load departments
@@ -44,7 +33,7 @@ const Dashboard = () => {
           name: d.name || d.department,
           employee_count: Number(d.employee_count || d.count || 0),
         }));
-        console.log("DEPARTMENTS API:", data);
+       // console.log("DEPARTMENTS API:", data);
         setDepartments(validData);
       } catch {
         toast.error("Failed to load departments");
@@ -106,7 +95,7 @@ useEffect(() => {
     const loadEmployees = async () => {
       try {
         const data = await fetchEmployees();
-        console.log("EMPLOYEES API:", data);
+       // console.log("EMPLOYEES API:", data);
         setEmployees(data);
       } catch {
         toast.error("Failed to load employees");
@@ -284,7 +273,7 @@ useEffect(() => {
             <div className="emp-info">
               <strong>{emp.name}</strong>
               <span>{emp.role}</span>
-              <small>{emp.joined_date}</small>
+              <small>{new Date(emp.joined_date).toLocaleDateString()}</small>
             </div>
           </li>
         ))}

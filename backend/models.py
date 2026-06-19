@@ -25,13 +25,26 @@ class DepartmentTransfer(Base):
     __tablename__ = "department_transfers"
 
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer,ForeignKey("employees.id"), nullable=False)
-    old_department_id = Column(Integer,ForeignKey("departments.id"), nullable=False)
-    new_department_id = Column(Integer,ForeignKey("departments.id"), nullable=False)
+    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
+    old_department_id = Column(Integer, ForeignKey("departments.id"), nullable=False)
+    new_department_id = Column(Integer, ForeignKey("departments.id"), nullable=False)
     transferred_by = Column(String, nullable=False)
-    transferred_at = Column(DateTime,default=datetime.utcnow)
-    company_id = Column(Integer,ForeignKey("companies.id"),nullable=False)    
+    transferred_at = Column(DateTime, default=datetime.utcnow)
+    company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
     reason = Column(String, nullable=True)
+    # Relationships
+    employee = relationship("Employee")
+    old_department = relationship(
+        "Department",
+        foreign_keys=[old_department_id]
+    )
+
+    new_department = relationship(
+        "Department",
+        foreign_keys=[new_department_id]
+    )
+
+    company = relationship("Company")
 
 #-------------EmployeeModel-----------
 class Employee(Base):
@@ -196,7 +209,7 @@ class AuditLog(Base):
     timestamp = Column(DateTime, default=datetime.utcnow)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
     target_employee_id = Column(Integer, ForeignKey("employees.id"))
-    #performed_by = Column(String)
+    performed_by = Column(String)
 
 # ---------------- Invitation Status ----------------
 class InvitationStatus(str, enum.Enum):

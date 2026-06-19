@@ -5,11 +5,7 @@ import toast from "react-hot-toast";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import AddEmployeeForm from "./AddEmployeeForm";
 import EditEmployeeForm from "./EditEmployeeForm";
-import {
-  fetchEmployees,
-  updateEmployee,
-  deleteEmployee,
-} from "../../services/api";
+import {fetchEmployees,fetchDepartments,transferDepartment,updateEmployee,deleteEmployee} from "../../services/api";
 
 import "./Employees.css";
 
@@ -24,6 +20,13 @@ const Employees = () => {
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [editEmployee, setEditEmployee] = useState(null);
+
+  // Department Transfer
+  const [departments, setDepartments] = useState([]);
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [transferReason, setTransferReason] = useState("");
 
   const [currentPage, setCurrentPage] = useState(1);
   const [employeesPerPage, setEmployeesPerPage] = useState(5);
@@ -51,6 +54,20 @@ const Employees = () => {
     };
 
     loadEmployees();
+  }, []);
+
+  /* ---------------- FETCH DEPARTMENTS ---------------- */
+  useEffect(() => {
+    const loadDepartments = async () => {
+      try {
+        const data = await fetchDepartments();
+        setDepartments(data);
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to load departments");
+      }
+    };
+    loadDepartments();
   }, []);
 
   /* ---------------- SEARCH + FILTER ---------------- */
@@ -155,6 +172,35 @@ const Employees = () => {
     } catch (err) {
       console.error(err);
       toast.error("Update failed");
+    }
+  };
+
+  /* ---------------- TRANSFER DEPARTMENT ---------------- */
+  const handleTransferDepartment = async () => {
+    try {
+      if (!selectedDepartment) {
+        toast.error("Please select a department");
+        return;
+      }
+      await transferDepartment(
+        selectedEmployee.id,
+        Number(selectedDepartment),
+        transferReason
+      );
+      // Refresh employee list
+      const data = await fetchEmployees();
+      setEmployees(data);
+      setFilteredEmployees(data);
+      toast.success("Department transferred successfully");
+      setShowTransferModal(false);
+      setSelectedEmployee(null);
+      setSelectedDepartment("");
+      setTransferReason("");
+    } catch (err) {
+      console.error(err);
+      toast.error(
+        err.response?.data?.detail || "Department transfer failed"
+      );
     }
   };
 
@@ -266,8 +312,7 @@ const Employees = () => {
                         value={emp.status}
                         onChange={(e) =>
                           handleStatusChange(emp.id, e.target.value)
-                        }
-                      >
+                        }>
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
                         <option value="onleave">On Leave</option>
@@ -285,8 +330,17 @@ const Employees = () => {
                         Edit
                       </button>
 
+                      <button onClick={() => {
+                        setSelectedEmployee(emp);
+                        setSelectedDepartment("");
+                        setTransferReason("");
+                        setShowTransferModal(true);
+                      }}>
+                       Transfer
+                      </button>
+
                       <button onClick={() => handleDeleteEmployee(emp.id)}>
-                        Delete
+                       Delete
                       </button>
                     </td>
 
@@ -346,6 +400,51 @@ const Employees = () => {
             onClose={() => setEditEmployee(null)}
           />
         )}
+        {/* ---------------- TRANSFER DEPARTMENT MODAL ---------------- */}
+
+        {showTransferModal && (
+          <div className="modal-overlay">
+            <div className="modal">
+
+              <h3>Transfer Department</h3>
+              <p>
+              <strong>Employee:</strong> {selectedEmployee?.name}
+              </p>
+              <label>New Department</label>
+              
+              <select value={selectedDepartment}
+              onChange={(e) =>setSelectedDepartment(e.target.value)}>
+                
+              <option value="">Select Department</option>
+              {departments.filter((dept) =>
+              dept.name !== selectedEmployee?.department_name
+            )
+            .map((dept) => (
+            <option key={dept.id} value={dept.id}>
+              {dept.name}
+            </option>))}
+              </select>
+              <label>Reason (Optional)</label>
+              <textarea rows="3" value={transferReason}
+              onChange={(e) => setTransferReason(e.target.value)}/>
+
+          <div className="modal-buttons">
+            <button onClick={handleTransferDepartment}>
+             Transfer
+            </button>
+
+           <button onClick={() => {
+             setShowTransferModal(false);
+             setSelectedEmployee(null);
+            }}>
+            Cancel
+           </button>
+
+          </div>
+
+    </div>
+  </div>
+)}
 
       </div>
     </DashboardLayout>

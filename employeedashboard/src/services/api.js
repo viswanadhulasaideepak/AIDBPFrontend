@@ -44,12 +44,39 @@ export const addEmployee = async (employee) =>
 export const updateEmployeeStatus = async (id, employee) =>
   (await api.put(`/employees/${id}`, employee)).data;
 
+// Update employee
+export const updateEmployee = async (id, employee) =>
+  (await api.put(`/employees/${id}`, employee)).data;
+
+// Delete employee
+export const deleteEmployee = async (id) =>
+  (await api.delete(`/employees/${id}`)).data;
+
 // Departments
 export const fetchDepartments = async () =>
   (await api.get("/departments")).data;
 
 export const addDepartment = async (department) =>
   (await api.post("/departments", department)).data;
+
+// ---------------- Department Transfer ----------------
+
+// Transfer an employee to another department
+export const transferDepartment = async (
+  employeeId,
+  newDepartmentId,
+  reason = ""
+) =>
+  (
+    await api.put(`/employees/${employeeId}/transfer`, {
+      new_department_id: newDepartmentId,
+      reason,
+    })
+  ).data;
+
+// Get department transfer history
+export const fetchDepartmentTransferHistory = async () =>
+  (await api.get("/departments/transfer-history")).data;
 
 // Attendance records (array)
 export const fetchAttendanceRecords = async () =>

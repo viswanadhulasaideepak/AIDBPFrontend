@@ -1,13 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 import crud, models
+import traceback
 from database import get_db
 from auth import get_current_user
 from models import Department, AuditLog, Attendance
 from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel
-from schema import DepartmentTransferRequest
+from schema import (DepartmentTransferRequest,DepartmentTransferResponse)
 
 router = APIRouter(prefix="/employees", tags=["Employees"])
 
@@ -287,7 +288,8 @@ def delete_employee(
     
     return {"message": "Employee deleted successfully"} 
 
-#--------transfer department-------------
+# ---------------- Transfer Department ----------------
+
 @router.put("/{employee_id}/transfer")
 def transfer_department(
     employee_id: int,
@@ -295,7 +297,8 @@ def transfer_department(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    # ---------------- AUTH ----------------
+    print("DATABASE PATH:", db.bind.url.database)
+    # ---------------- AUTHORIZATION ----------------
     if current_user["role"] != "admin":
         raise HTTPException(
             status_code=403,
@@ -303,31 +306,25 @@ def transfer_department(
         )
 
     # ---------------- GET EMPLOYEE ----------------
-    employee = crud.get_employee(
-        db,
-        employee_id,
-        current_user["company_id"]
+    employee = crud.get_employee_by_id(
+        db=db,
+        id=employee_id,
+        company_id=current_user["company_id"]
     )
 
     if not employee:
-        raise HTTPException(status_code=404, detail="Employee not found")
-
-    # ---------------- VALIDATE DEPARTMENT ----------------
-    department = db.query(models.Department).filter(
-        models.Department.id == transfer.new_department_id,
-        models.Department.company_id == current_user["company_id"]
-    ).first()
-
-    if not department:
-        raise HTTPException(status_code=404, detail="Department not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Employee not found."
+        )
 
     # ---------------- CALL CRUD ----------------
     try:
-        crud.transfer_employee_department(
+        result = crud.transfer_employee_department(
             db=db,
             employee=employee,
             new_department_id=transfer.new_department_id,
-            performed_by=current_user["id"],
+            performed_by=current_user["email"],
             company_id=current_user["company_id"],
             reason=transfer.reason
         )
@@ -335,13 +332,9 @@ def transfer_department(
         db.commit()
         db.refresh(employee)
 
-        return {
-            "message": "Employee transferred successfully",
-            "employee_id": employee.id,
-            "old_department": employee.department_id,
-            "new_department": transfer.new_department_id
-        }
+        return result
 
     except Exception as e:
         db.rollback()
+        traceback.print_exc()   # <-- prints full error in terminal
         raise HTTPException(status_code=400, detail=str(e))

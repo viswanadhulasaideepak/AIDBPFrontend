@@ -25,10 +25,13 @@ class EmployeeBase(BaseModel):
 
 class EmployeeCreate(EmployeeBase):
     company_id: int
-    
-    #class Config:
-    #    orm_mode = True
+     
+class EmployeeOut(EmployeeBase):
+    id: int
+    company_id: int
 
+    class Config:
+        orm_mode = True
 
 class EmployeeUpdate(BaseModel):
     name: str | None = None
@@ -65,15 +68,6 @@ class RoleChangeRequestOut(BaseModel):
     class Config:
         orm_mode = True
 
-class EmployeeCreate(EmployeeBase):
-    company_id: int   # ensure employees are tied to a company
-
-class EmployeeOut(EmployeeBase):
-    id: int
-    company_id: int
-
-    class Config:
-        orm_mode = True
 
 class NotificationOut(BaseModel):
     id: int
@@ -122,9 +116,27 @@ class DepartmentOut(BaseModel):
         orm_mode = True
         
 class DepartmentTransferRequest(BaseModel):
-    employee_id: int
     new_department_id: int
     reason: Optional[str] = None        
+        
+class DepartmentTransferResponse(BaseModel):
+    message: str
+    employee_id: int
+    old_department: str
+    new_department: str
+    transferred_at: datetime        
+    
+class DepartmentTransferHistoryOut(BaseModel):
+    id: int
+    employee_id: int
+    old_department: str
+    new_department: str
+    transferred_by: str
+    reason: str | None = None
+    transferred_at: datetime
+
+    class Config:
+        orm_mode = True    
 
 class DashboardStatsOut(BaseModel):
     total_employees: int

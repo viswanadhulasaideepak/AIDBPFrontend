@@ -139,64 +139,70 @@ def create_department(db: Session, name: str, company_id: int):
     db.refresh(new_dept)
     return new_dept
 
-#---------------Transfer Departments------------
+# ---------------- Department Transfer ----------------
+
 def transfer_employee_department(
     db: Session,
     employee,
     new_department_id: int,
-    performed_by: int,
+    performed_by: str,
     company_id: int,
     reason: str | None = None
 ):
-    old_department_id = employee.department_id
 
-    if old_department_id == new_department_id:
-        raise Exception("Employee already in this department")
+    old_department = db.query(models.Department).filter(
+        models.Department.id == employee.department_id
+    ).first()
 
-    #  Update employee
-    employee.department_id = new_department_id
+    new_department = db.query(models.Department).filter(
+        models.Department.id == new_department_id,
+        models.Department.company_id == company_id
+    ).first()
 
-    #  Save transfer history
+    if not new_department:
+        raise Exception("Department not found.")
+
+    if employee.department_id == new_department_id:
+        raise Exception("Employee is already in this department.")
+
     transfer = models.DepartmentTransfer(
         employee_id=employee.id,
-        old_department_id=old_department_id,
+        old_department_id=employee.department_id,
         new_department_id=new_department_id,
         transferred_by=performed_by,
         company_id=company_id,
-        reason=reason,
-        transferred_at=datetime.utcnow()
+        reason=reason
     )
-    db.add(transfer)
-    
-    
 
-    #  Audit log (MATCH YOUR STYLE)
+    db.add(transfer)
+
+    employee.department_id = new_department_id
+
+    db.flush()
+
+    create_notification(
+        db=db,
+        message=f"Your department has been changed from '{old_department.name}' to '{new_department.name}'.",
+        recipient_email=employee.email,
+        company_id=company_id,
+        request_id=employee.id,
+        type="department_transfer"
+    )
+
     create_audit_log(
         db=db,
-        user_name=str(performed_by),
-        action="Department Transfer",
-        related_user=employee.email if hasattr(employee, "email") else str(employee.id),
+        user_name=performed_by,
+        action=f"Department transferred from '{old_department.name}' to '{new_department.name}'",
+        related_user=employee.email,
         company_id=company_id
     )
 
-    # ---------------- GET USER EMAIL ----------------
-    user = db.query(models.User).filter(
-    models.User.id == employee.user_id
-    ).first()
-
-    recipient_email = user.email if user else None 
-
-# ---------------- NOTIFICATION ----------------
-    if recipient_email:
-        create_notification(
-        db=db,
-        message="Your department has been updated by admin",
-        recipient_email=employee.email,
-        company_id=company_id,
-        type="employee"
-    )
-
-    return employee
+    return {
+        "message": "Department transferred successfully.",
+        "employee_id": employee.id,
+        "old_department": old_department.name,
+        "new_department": new_department.name
+    }
 
 # ---------------- NOTIFICATIONS ----------------
 def create_notification(
