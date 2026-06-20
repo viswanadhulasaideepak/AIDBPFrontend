@@ -88,6 +88,13 @@ class AuditLogOut(BaseModel):
     timestamp: datetime
     company_id: int
 
+    ip_address: str | None = None
+    browser: str | None = None
+    is_new_device: bool = False
+    is_new_ip: bool = False
+    details: str | None = None
+    performed_by: str | None = None
+
     class Config:
         orm_mode = True
 
@@ -189,6 +196,47 @@ class UserOut(BaseModel):
 
     class Config:
         orm_mode = True
+        
+class UserActivityOut(BaseModel):
+    user_id: int
+    company_id: int
+
+    last_login: datetime | None = None
+    last_logout: datetime | None = None
+
+    browser: str | None = None
+    ip_address: str | None = None
+
+    class Config:
+        orm_mode = True    
+        
+class UserActivityAdminOut(BaseModel):
+    username: str
+    email: str
+
+    last_login: datetime | None = None
+    last_logout: datetime | None = None
+
+    browser: str | None = None
+    ip_address: str | None = None
+
+    class Config:
+        orm_mode = True         
+        
+class ActivityHistoryOut(BaseModel):
+    user_name: str
+    action: str
+    related_user: str | None = None
+    timestamp: datetime
+    performed_by: str | None = None
+    browser: str | None = None
+    ip_address: str | None = None
+    is_new_device: bool = False
+    is_new_ip: bool = False
+    details: str | None = None
+
+    class Config:
+        orm_mode = True           
         
 class InvitationSignupRequest(BaseModel):
     token: str

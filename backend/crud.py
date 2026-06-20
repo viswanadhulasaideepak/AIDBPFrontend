@@ -4,6 +4,7 @@ import models
 from models import Notification, InvitationStatus, UserStatus, ReactivationStatus,LeaveRequest,LeaveStatus,LeaveType
 import uuid
 from models import Invitation, User, ReactivationRequest
+from hashlib import sha256
 
 # ---------------- EMPLOYEES ----------------
 def get_employees(db: Session, company_id: int):
@@ -686,7 +687,7 @@ def update_leave_request(
     request.reviewed_at = datetime.utcnow()
     request.reviewed_by = reviewed_by
     
-    # ✅ Mark the admin notification as read
+    # Mark the admin notification as read
     db.query(Notification).filter(
         Notification.request_id == request.id,
         Notification.type == "leave",
@@ -721,17 +722,219 @@ def update_leave_request(
     return request
         
 # ---------------- AUDIT LOGS ----------------
-def create_audit_log(db: Session, user_name: str, action: str, related_user: str | None, company_id: int):
+def create_audit_log(
+    db: Session,
+    user_name: str,
+    action: str,
+    related_user: str | None,
+    company_id: int,
+    ip_address: str | None = None,
+    browser: str | None = None,
+    is_new_device: bool = False,
+    is_new_ip: bool = False,
+    details: str | None = None,
+    performed_by: str | None = None,
+):
     log = models.AuditLog(
         user_name=user_name,
         action=action,
         related_user=related_user,
-        company_id=company_id
+        company_id=company_id,
+        ip_address=ip_address,
+        browser=browser,
+        is_new_device=is_new_device,
+        is_new_ip=is_new_ip,
+        details=details,
+        performed_by=performed_by,
     )
+
     db.add(log)
     db.commit()
     db.refresh(log)
+
     return log
+
+#-----------------Record User Login-------------------
+
+def record_user_login(
+    db: Session,
+    user: models.User,
+    ip_address: str,
+    browser: str,
+):
+
+    device_hash = sha256(browser.encode()).hexdigest()
+
+    activity = db.query(models.UserActivity).filter(
+        models.UserActivity.user_id == user.id
+    ).first()
+
+    new_device = False
+    new_ip = False
+
+    if activity:
+
+        if activity.device_hash != device_hash:
+            new_device = True
+
+        if activity.ip_address != ip_address:
+            new_ip = True
+
+        activity.last_login = datetime.utcnow()
+        activity.browser = browser
+        activity.ip_address = ip_address
+        activity.device_hash = device_hash
+        activity.last_activity = datetime.utcnow()
+        activity.login_count += 1
+        activity.is_online = True
+
+    else:
+        activity = models.UserActivity(
+            user_id=user.id,
+            company_id=user.company_id,
+            last_login=datetime.utcnow(),
+            last_logout=None,
+            last_activity=datetime.utcnow(),
+            login_count=1,
+            is_online=True,
+            browser=browser,
+            ip_address=ip_address,
+            device_hash=device_hash
+            )
+
+        db.add(activity)
+        new_device = True
+        new_ip = True
+
+    db.commit()
+
+    # Audit log (already correct, just reused)
+    create_audit_log(
+        db=db,
+        user_name=user.email,
+        action="User Login",
+        related_user=user.email,
+        company_id=user.company_id,
+        ip_address=ip_address,
+        browser=browser,
+        is_new_device=new_device,
+        is_new_ip=new_ip,
+        details="User logged in."
+    )
+ #--------------Record User LogOut---------------------   
+def record_user_logout(
+    db: Session,
+    user: models.User,
+    ip_address: str,
+    browser: str
+):
+
+    activity = db.query(models.UserActivity).filter(
+        models.UserActivity.user_id == user.id
+    ).first()
+
+    if activity:
+        activity.last_logout = datetime.utcnow()
+        activity.last_activity = datetime.utcnow()
+        activity.is_online = False
+        activity.browser = browser
+        activity.ip_address = ip_address
+        
+    db.commit()
+
+    create_audit_log(
+        db=db,
+        user_name=user.email,
+        action="User Logout",
+        related_user=user.email,
+        company_id=user.company_id,
+        ip_address=ip_address,
+        browser=browser,
+        details="User logged out."
+    )    
+    
+    #-----------Company User Activity---------------
+def get_company_user_activity(
+    db: Session,
+    company_id: int
+):
+
+    results = (
+        db.query(models.UserActivity, models.User)
+        .join(models.User, models.User.id == models.UserActivity.user_id)
+        .filter(models.User.company_id == company_id)
+        .all()
+    )
+
+    response = []
+
+    for activity, user in results:
+        response.append({
+            "username": user.username,
+            "email": user.email,
+            "last_login": activity.last_login,
+            "last_logout": activity.last_logout,
+            "browser": activity.browser,
+            "ip_address": activity.ip_address,
+        })
+
+    return response
+
+#-------------Activity History-------------------
+
+def get_activity_history(
+    db: Session,
+    company_id: int
+):
+
+    logs = db.query(models.AuditLog).filter(
+        models.AuditLog.company_id == company_id
+    ).order_by(models.AuditLog.timestamp.desc()).all()
+
+    response = []
+
+    for log in logs:
+        response.append({
+            "user_name": log.user_name,
+            "action": log.action,
+            "timestamp": log.timestamp,
+            "browser": log.browser,
+            "ip_address": log.ip_address,
+            "is_new_device": log.is_new_device,
+            "is_new_ip": log.is_new_ip,
+            "details": log.details
+        })
+
+    return response
+#----------------User Self Activity-----------------
+def get_user_activity(
+    db: Session,
+    user_id: int,
+    company_id: int
+):
+
+    activity = db.query(models.UserActivity).filter(
+        models.UserActivity.user_id == user_id,
+        models.UserActivity.company_id == company_id
+    ).first()
+
+    return activity
+    
+    #------------Company User Activity History---------------
+    
+def get_user_activity_history(
+    db: Session,
+    company_id: int
+):
+
+    return (
+        db.query(models.AuditLog)
+        .filter(
+            models.AuditLog.company_id == company_id
+        )
+        .order_by(models.AuditLog.timestamp.desc())
+        .all()
+    )    
 
 def get_audit_logs(db: Session, company_id: int):
     return db.query(models.AuditLog).filter(

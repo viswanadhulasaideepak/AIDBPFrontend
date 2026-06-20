@@ -1,0 +1,282 @@
+.activity-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f4f6fb;
+}
+
+.activity-container {
+  flex: 1;
+  padding: 30px;
+  overflow-y: auto;
+}
+
+/* Header */
+
+.activity-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.activity-header h1 {
+  margin: 0;
+  font-size: 30px;
+  color: #222;
+}
+
+.activity-header p {
+  margin-top: 8px;
+  color: #666;
+}
+
+/* Refresh Button */
+
+.refresh-btn {
+  border: none;
+  padding: 12px 22px;
+  border-radius: 8px;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+  transition: .3s;
+  font-weight: 600;
+}
+
+.refresh-btn:hover {
+  background: #1d4ed8;
+}
+
+/* Summary Cards */
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.summary-card {
+  background: white;
+  border-radius: 14px;
+  padding: 25px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.08);
+  transition: .3s;
+}
+
+.summary-card:hover {
+  transform: translateY(-4px);
+}
+
+.summary-card h2 {
+  margin: 0;
+  font-size: 34px;
+  color: #2563eb;
+}
+
+.summary-card span {
+  display: block;
+  margin-top: 8px;
+  color: #666;
+  font-size: 15px;
+}
+
+/* Toolbar */
+
+.activity-toolbar {
+  margin-bottom: 25px;
+}
+
+.activity-toolbar input {
+  width: 100%;
+  max-width: 420px;
+  padding: 12px 15px;
+  border-radius: 10px;
+  border: 1px solid #d8d8d8;
+  outline: none;
+  font-size: 15px;
+}
+
+.activity-toolbar input:focus {
+  border-color: #2563eb;
+}
+
+/* Tables */
+
+.activity-table,
+.history-section {
+  background: white;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(0,0,0,.08);
+  margin-bottom: 30px;
+}
+
+.activity-table table,
+.history-section table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.activity-table th,
+.activity-table td,
+.history-section th,
+.history-section td {
+  padding: 16px;
+  border-bottom: 1px solid #ececec;
+  text-align: left;
+}
+
+.activity-table th,
+.history-section th {
+  background: #2563eb;
+  color: white;
+  font-weight: 600;
+}
+
+.activity-table tbody tr:hover,
+.history-section tbody tr:hover {
+  background: #f8fbff;
+}
+
+/* Badges */
+
+.badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.success {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.new-device {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.new-ip {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+/* Loading */
+
+.loading {
+  padding: 40px;
+  text-align: center;
+  font-size: 18px;
+}
+
+/* History */
+
+.history-section h2 {
+  margin: 20px;
+  color: #333;
+}
+
+/* Responsive */
+
+@media(max-width:1100px){
+
+.activity-table,
+.history-section{
+overflow-x:auto;
+}
+
+.activity-table table,
+.history-section table{
+min-width:1000px;
+}
+
+}
+
+@media(max-width:768px){
+
+.activity-container{
+padding:20px;
+}
+
+.activity-header{
+flex-direction:column;
+align-items:flex-start;
+gap:15px;
+}
+
+.summary-cards{
+grid-template-columns:1fr;
+}
+
+.activity-toolbar input{
+max-width:100%;
+}
+
+}
+
+/* Scrollbar */
+
+.activity-container::-webkit-scrollbar{
+width:8px;
+}
+
+.activity-container::-webkit-scrollbar-thumb{
+background:#c7c7c7;
+border-radius:20px;
+}
+
+/* Dark Mode */
+
+body.dark .activity-layout{
+background:#111827;
+}
+
+body.dark .activity-container{
+background:#111827;
+}
+
+body.dark .summary-card,
+body.dark .activity-table,
+body.dark .history-section{
+background:#1f2937;
+color:white;
+}
+
+body.dark .summary-card span{
+color:#cbd5e1;
+}
+
+body.dark .activity-header h1{
+color:white;
+}
+
+body.dark .activity-header p{
+color:#cbd5e1;
+}
+
+body.dark .activity-toolbar input{
+background:#374151;
+color:white;
+border:1px solid #4b5563;
+}
+
+body.dark .activity-table td,
+body.dark .history-section td{
+border-color:#374151;
+}
+
+body.dark .activity-table tbody tr:hover,
+body.dark .history-section tbody tr:hover{
+background:#273549;
+}
+
+body.dark .loading{
+color:white;
+}
+
+body.dark .history-section h2{
+color:white;
+}

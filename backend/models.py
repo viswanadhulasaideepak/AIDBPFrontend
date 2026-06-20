@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Enum, ForeignKey, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, Enum, ForeignKey, DateTime, Boolean, Text
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime
@@ -82,7 +82,37 @@ class User(Base):
     deactivated_reason = Column(String, nullable=True)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
     company = relationship("Company", back_populates="users")
+    activity = relationship("UserActivity", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
+#---------------New User Model Activity-------------
+
+class UserActivity(Base):
+    __tablename__ = "user_activity"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+
+    company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
+
+    last_login = Column(DateTime, nullable=True)
+    last_logout = Column(DateTime, nullable=True)
+    last_activity = Column(DateTime)
+    
+    login_count = Column(Integer, default=0)
+    is_online = Column(Boolean, default=False)
+
+
+    browser = Column(String(255), nullable=True)
+    ip_address = Column(String(100), nullable=True)
+
+    device_hash = Column(String(64), nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = relationship("User", back_populates="activity")
+    company = relationship("Company", back_populates="activities")
+    
 #------------------AttendanceModel------------------    
 class Attendance(Base):
     __tablename__ = "attendance"
@@ -197,6 +227,7 @@ class Company(Base):
     employees = relationship("Employee", back_populates="company")
     users = relationship("User", back_populates="company")
     leave_requests = relationship("LeaveRequest", back_populates="company")
+    activities = relationship("UserActivity", back_populates="company")
 
 #--------------------AuditLog--------------------
 class AuditLog(Base):
@@ -207,10 +238,16 @@ class AuditLog(Base):
     action = Column(String, nullable=False)
     related_user = Column(String, nullable=True)
     timestamp = Column(DateTime, default=datetime.utcnow)
-    company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
+    company_id = Column(Integer, ForeignKey("companies.id"), nullable=False, index=True)
     target_employee_id = Column(Integer, ForeignKey("employees.id"))
+    target_employee = relationship("Employee")
+    company = relationship("Company", backref="audit_logs")
     performed_by = Column(String)
-
+    ip_address = Column(String(100), nullable=True)
+    browser = Column(String(255), nullable=True)
+    is_new_device = Column(Boolean, default=False)
+    is_new_ip = Column(Boolean, default=False)
+    details = Column(Text, nullable=True)
 # ---------------- Invitation Status ----------------
 class InvitationStatus(str, enum.Enum):
     pending = "pending"

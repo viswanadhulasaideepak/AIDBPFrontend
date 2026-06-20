@@ -10,6 +10,7 @@ import { AuthContext } from "../auth/AuthContext";
 import AuditLogs from "../pages/AuditLogs/AuditLogs";
 import InvitationsPage from "../components/invitations/InvitationsPage";
 import AccountDeactivated from "../components/AccountDeactivated";
+import Activity from "../pages/Activity/Activity";
 
 const Logout = () => {
   const { logout } = useContext(AuthContext);
@@ -71,6 +72,11 @@ const AppRoutes = () => {
         path="/audit-logs"
         element={user?.role === "admin" ? <AuditLogs /> : <Navigate to="/dashboard" />}
       />
+
+      <Route
+       path="/activity" 
+       element={user?.role === "admin" ? <Activity /> : <Navigate to="/dashboard" />}
+       />
 
       {/* Catch-all */}
       <Route

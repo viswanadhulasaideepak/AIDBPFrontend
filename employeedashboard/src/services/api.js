@@ -102,6 +102,16 @@ export const markAllNotificationsRead = async () =>
 export const fetchAuditLogs = async () =>
   (await api.get("/audit-logs")).data;
 
+// ---------------- Activity ----------------
+
+// Current user activity (last login/logout, browser, IP, etc.)
+export const fetchUserActivity = async () =>
+  (await api.get("/activity/users")).data;
+
+// Complete activity history (audit logs)
+export const fetchActivityHistory = async () =>
+  (await api.get("/activity/history")).data;
+
 export const getAttendanceAccessStatus = async () => {
     const response = await api.get("/attendance/access-status");
     return response.data;

@@ -1,5 +1,5 @@
 import requests
-from fastapi import FastAPI, HTTPException, Depends, Form
+from fastapi import FastAPI, HTTPException, Depends, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -9,13 +9,13 @@ from datetime import datetime
 from database import get_db
 import schema, models, crud, database
 from models import Invitation, InvitationStatus
-from auth import verify_password, create_token, hash_password
+from auth import verify_password, create_token, hash_password, get_client_info, get_current_user
 from routers.analytics_routes import router as analytics_router
 from routers.role_requests_routes import router as role_requests_router
 from routers import (
     employees_routes, departments_routes, attendance_routes, dashboard_routes,
     notifications_routes, auditlogs_routes, invitations_routes,  members_routes, 
-    reactivation_routes, leave_routes)
+    reactivation_routes, leave_routes, activity_routes)
 
 app = FastAPI()
 # ---------------- CORS ----------------
@@ -41,6 +41,7 @@ app.include_router(invitations_routes.router)
 app.include_router(members_routes.router)
 app.include_router(reactivation_routes.router)
 app.include_router(leave_routes.router)
+app.include_router(activity_routes.router)
 
 
 # ---------------- FAKE API ----------------
@@ -182,9 +183,9 @@ class TokenResponse(BaseModel):
 
 @app.post("/login", response_model=TokenResponse)
 def login(
+    request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
-    #role: str = Form(...)
 ):
     user = db.query(models.User).filter(
         or_(
@@ -195,6 +196,15 @@ def login(
 
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    ip_address, browser = get_client_info(request)
+    
+    crud.record_user_login(
+        db=db,
+        user=user,
+        ip_address=ip_address,
+        browser= browser
+    )
 
     token = create_token(
         user.id,
@@ -204,16 +214,6 @@ def login(
         user.status.value
         )
 
-    audit = models.AuditLog(
-        user_name=user.email,
-        action="User Login",
-        related_user=user.email,
-        company_id=user.company_id,
-        performed_by=user.email
-    )
-    db.add(audit)
-    db.commit()
-
     return {
         "token": token,
         "id": user.id,
@@ -222,6 +222,38 @@ def login(
         "company_id": user.company_id,
         "status": user.status.value
     }
+    
+ #----------------Logout--------------------
+ 
+@app.post("/logout")
+def logout(
+    request: Request,
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+
+    user = db.query(models.User).filter(
+        models.User.id == current_user["id"]
+    ).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    ip_address, browser = get_client_info(request)
+
+    crud.record_user_logout(
+        db=db,
+        user=user,
+        ip_address=ip_address,
+        browser=browser
+    )
+
+    return {
+        "message": "Logged out successfully."
+    }    
     
 class InvitationSignupRequest(BaseModel):
     token: str

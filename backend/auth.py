@@ -5,6 +5,7 @@ from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
+from fastapi import Request
 
 from models import User
 
@@ -78,3 +79,15 @@ def verify_user_identity(db: Session, email: str, password: str) -> User:
     if not verify_password(password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Wrong password")
     return user
+
+def get_client_info(request: Request):
+    forwarded = request.headers.get("X-Forwarded-For")
+
+    if forwarded:
+        ip_address = forwarded.split(",")[0].strip()
+    else:
+        ip_address = request.client.host
+
+    browser = request.headers.get("User-Agent", "Unknown Browser")
+
+    return ip_address, browser
