@@ -106,6 +106,7 @@ def update_leave_request(
         company_id=current_user["company_id"],
         reviewed_by=current_user["email"]
     )
+    
 
     if request is None:
         raise HTTPException(

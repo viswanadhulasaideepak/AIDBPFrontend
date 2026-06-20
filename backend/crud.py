@@ -336,6 +336,13 @@ def update_attendance_access_request(
     request.approved_at = datetime.utcnow()
     request.approved_by = approved_by
     
+    # Mark the admin notification as read
+    db.query(models.Notification).filter(
+        models.Notification.request_id == request.id,
+        models.Notification.type == "attendance",
+        models.Notification.recipient_email == approved_by
+        ).update({"is_read": True})
+    
     admins = db.query(models.User).filter(
     models.User.company_id == company_id,
     models.User.role == "admin"
@@ -678,6 +685,14 @@ def update_leave_request(
     request.status = LeaveStatus(status)
     request.reviewed_at = datetime.utcnow()
     request.reviewed_by = reviewed_by
+    
+    # ✅ Mark the admin notification as read
+    db.query(Notification).filter(
+        Notification.request_id == request.id,
+        Notification.type == "leave",
+        Notification.recipient_email == reviewed_by,
+        Notification.is_read == False
+    ).update({"is_read": True})
     
     db.commit()
     db.refresh(request)

@@ -1,6 +1,7 @@
 /* =========================
    MAIN CONTAINER
 ========================= */
+
 .departments-container {
   padding: 25px;
   background: #f4f6f9;
@@ -11,25 +12,80 @@
 .departments-title {
   font-size: 26px;
   font-weight: 700;
-  margin-bottom: 20px;
   color: #1f2937;
 }
 
 /* =========================
-   CARD WRAPPER
+   PAGE HEADER
 ========================= */
+
+.departments-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 22px;
+}
+
+.departments-header p {
+  color: #6b7280;
+  margin-top: 4px;
+  margin-bottom: 0;
+}
+
+/* =========================
+   CARD
+========================= */
+
 .departments-card {
   background: #ffffff;
   border-radius: 14px;
   padding: 20px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  margin-bottom: 25px;
   border: 1px solid #eef0f3;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
   overflow: hidden;
 }
 
 /* =========================
-   TABLE STYLING
+   CARD HEADER
 ========================= */
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.table-header h3 {
+  margin: 0;
+  font-size: 20px;
+  color: #1f2937;
+}
+
+/* =========================
+   REFRESH BUTTON
+========================= */
+
+.refresh-btn {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 8px;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.3s;
+}
+
+.refresh-btn:hover {
+  background: #1d4ed8;
+}
+
+/* =========================
+   TABLE
+========================= */
+
 .departments-table {
   width: 100%;
   border-collapse: collapse;
@@ -57,23 +113,62 @@
   border-bottom: 1px solid #e5e7eb;
 }
 
-/* Row hover effect */
 .departments-table tbody tr:hover {
   background: #f9fafb;
   transition: 0.2s ease;
 }
 
 /* =========================
-   BADGE STYLE (optional future use)
+   EMPLOYEE COUNT BADGE
 ========================= */
-.departments-table td:nth-child(3) {
+
+.employee-count-badge {
+  display: inline-block;
+  min-width: 34px;
+  padding: 5px 10px;
+  text-align: center;
+  border-radius: 20px;
+  background: #e0f2fe;
+  color: #0369a1;
   font-weight: 600;
-  color: #2563eb;
 }
 
 /* =========================
-   ERROR TEXT
+   TRANSFER HISTORY
 ========================= */
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.history-table thead {
+  background: #1e40af;
+  color: white;
+}
+
+.history-table th,
+.history-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+.history-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.empty-history {
+  padding: 35px;
+  text-align: center;
+  color: #777;
+  font-size: 15px;
+}
+
+/* =========================
+   ERROR
+========================= */
+
 .error-text {
   color: #dc2626;
   font-weight: 600;
@@ -84,79 +179,48 @@
 }
 
 /* =========================
-   EMPTY STATE
+   EMPTY TEXT
 ========================= */
+
 .departments-container p {
   font-size: 15px;
   color: #6b7280;
-  padding: 10px;
 }
 
 /* =========================
-   SKELETON OVERRIDE (optional)
+   SKELETON
 ========================= */
+
 .react-loading-skeleton {
   border-radius: 8px;
 }
 
 /* =========================
-   RESPONSIVE DESIGN
+   RESPONSIVE
 ========================= */
+
 @media (max-width: 768px) {
+
   .departments-container {
     padding: 15px;
   }
 
-  .departments-table {
+  .departments-header,
+  .table-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .refresh-btn {
+    width: 100%;
+  }
+
+  .departments-table,
+  .history-table {
     display: block;
     overflow-x: auto;
     white-space: nowrap;
   }
 
-  .departments-table th,
-  .departments-table td {
-    padding: 12px;
-  }
-}
-
-.departments-card {
-  margin-bottom: 20px;
-}
-
-.departments-table th,
-.departments-table td {
-  text-align: left;
-  padding: 10px;
-}
-
-.departments-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:20px;
-}
-
-.refresh-btn{
-    padding:10px 18px;
-    border:none;
-    border-radius:8px;
-    cursor:pointer;
-    background:#2563eb;
-    color:white;
-    font-weight:600;
-}
-
-.refresh-btn:hover{
-    opacity:.9;
-}
-
-.employee-count-badge{
-    display:inline-block;
-    min-width:36px;
-    padding:4px 10px;
-    border-radius:20px;
-    background:#e8f1ff;
-    color:#2563eb;
-    text-align:center;
-    font-weight:600;
 }

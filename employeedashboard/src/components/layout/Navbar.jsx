@@ -41,15 +41,12 @@ useEffect(() => {
   const markAsRead = async (id) => {
   try {
     await api.put(`/notifications/${id}/read`);
-    setNotifications((prev) =>
-      prev.map((n) =>
-        n.id === id
-          ? { ...n, is_read: true }
-          : n
-      )
-    );
+    toast.success("Notification marked as read");
+
+    await loadNotifications();
   } catch (error) {
-    console.error("Error marking notification as read:", error);
+    console.error(error);
+    toast.error("Unable to mark notification");
   }
 };
 
@@ -57,57 +54,74 @@ useEffect(() => {
   const markAllAsRead = async () => {
   try {
     await Promise.all(
-      notifications.map((n) =>
-        api.put(`/notifications/${n.id}/read`)
-      )
+      notifications
+        .filter((n) => !n.is_read)
+        .map((n) => api.put(`/notifications/${n.id}/read`))
     );
 
-    setNotifications((prev) =>
-      prev.map((n) => ({ ...n, is_read: true }))
-    );
+    toast.success("All notifications marked as read");
+
+    await loadNotifications();
   } catch (error) {
-    console.error("Error marking all notifications as read:", error);
+    console.error(error);
+    toast.error("Failed");
   }
 };
+
+//----Approve Attendance--------------
   const approveAttendance = async (requestId) => {
   try {
     await updateAttendanceAccessRequest(requestId, "approved");
+
     toast.success("Attendance Approved");
+
     await loadNotifications();
   } catch (err) {
+    console.error(err);
     toast.error("Approval failed");
   }
 };
 
-const rejectAttendance = async (requestId) => {
+// --Reject Attendance------------
+  const rejectAttendance = async (requestId) => {
   try {
-    await updateAttendanceAccessRequest(requestId,"rejected");
-    toast.success("Attendance Access Rejected");
-    const response = await api.get("/notifications");
+    await updateAttendanceAccessRequest(requestId, "rejected");
+
+    toast.success("Attendance Rejected");
+
     await loadNotifications();
   } catch (err) {
+    console.error(err);
     toast.error("Request failed");
   }
 };
-const approveLeave = async (requestId) => {
-    try {
-        await updateLeaveRequest(requestId,"approved");
-        toast.success("Leave Approved");
-        const response = await api.get("/notifications");
-        await loadNotifications();
-    } catch {
-        toast.error("Failed");
-    }
+
+  //----Approve Leave----------------
+  const approveLeave = async (requestId) => {
+  try {
+    await updateLeaveRequest(requestId, "approved");
+
+    toast.success("Leave Approved");
+
+    await loadNotifications();
+  } catch (err) {
+    console.error(err);
+    toast.error("Approval failed");
+  }
 };
-const rejectLeave = async (requestId) => {
-    try {
-        await updateLeaveRequest(requestId,"rejected");
-        toast.success("Leave Rejected");
-        const response = await api.get("/notifications");
-        await loadNotifications();
-    } catch {
-        toast.error("Failed");
-    }
+
+//--------Reject Leave----------------
+  const rejectLeave = async (requestId) => {
+  try {
+    await updateLeaveRequest(requestId, "rejected");
+
+    toast.success("Leave Rejected");
+
+    await loadNotifications();
+  } catch (err) {
+    console.error(err);
+    toast.error("Rejection failed");
+  }
 };
 
   return (
@@ -155,8 +169,8 @@ const rejectLeave = async (requestId) => {
                       ✗ Reject
                      </button>
                      </div>)}
-                {storedUser?.role === "admin" &&
-                n.type === "leave" && (
+                {storedUser?.role === "admin" && n.type === "leave" &&
+                !n.is_read && (
                   <div className="notification-actions">
                     <button onClick={() => approveLeave(n.request_id)}>
                       Approve

@@ -338,3 +338,53 @@ def transfer_department(
         db.rollback()
         traceback.print_exc()   # <-- prints full error in terminal
         raise HTTPException(status_code=400, detail=str(e))
+    
+    # ---------------- DEPARTMENT TRANSFER HISTORY ----------------
+
+@router.get("/transfer/history")
+def get_department_transfer_history(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    if current_user["role"] != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Only admins can view transfer history."
+        )
+
+    transfers = (
+        db.query(models.DepartmentTransfer)
+        .filter(
+            models.DepartmentTransfer.company_id == current_user["company_id"]
+        )
+        .order_by(models.DepartmentTransfer.transferred_at.desc())
+        .all()
+    )
+
+    history = []
+
+    for transfer in transfers:
+
+        employee = db.query(models.Employee).filter(
+            models.Employee.id == transfer.employee_id
+        ).first()
+
+        old_department = db.query(models.Department).filter(
+            models.Department.id == transfer.old_department_id
+        ).first()
+
+        new_department = db.query(models.Department).filter(
+            models.Department.id == transfer.new_department_id
+        ).first()
+
+        history.append({
+            "id": transfer.id,
+            "employee": employee.name if employee else "-",
+            "old_department": old_department.name if old_department else "-",
+            "new_department": new_department.name if new_department else "-",
+            "transferred_by": transfer.transferred_by,
+            "reason": transfer.reason,
+            "transferred_at": transfer.transferred_at
+        })
+
+    return history

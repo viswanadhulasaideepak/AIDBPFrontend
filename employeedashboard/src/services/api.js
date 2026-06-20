@@ -90,6 +90,14 @@ export const fetchAttendanceReport = async () =>
 export const fetchNotifications = async () =>
   (await api.get("/notifications")).data;
 
+// Mark one notification as read
+export const markNotificationRead = async (id) =>
+  (await api.put(`/notifications/${id}/read`)).data;
+
+// Mark all notifications as read
+export const markAllNotificationsRead = async () =>
+  (await api.put("/notifications/read-all")).data;
+
 // Audit Logs
 export const fetchAuditLogs = async () =>
   (await api.get("/audit-logs")).data;

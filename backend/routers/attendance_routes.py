@@ -112,12 +112,14 @@ def update_attendance_access(
     current_user: dict = Depends(get_current_user)
 ):
 
+    # Only admins can approve/reject
     if current_user["role"] != "admin":
         raise HTTPException(
             status_code=403,
             detail="Only admin can approve attendance requests."
         )
 
+    # Validate status
     if status not in ["approved", "rejected"]:
         raise HTTPException(
             status_code=400,
@@ -131,9 +133,6 @@ def update_attendance_access(
         company_id=current_user["company_id"],
         approved_by=current_user["email"]
     )
-    print("========== ADMIN CLICKED APPROVE ==========")
-    print("Request ID:", request_id)
-    print("Status:", status)
 
     if request is None:
         raise HTTPException(
@@ -141,9 +140,20 @@ def update_attendance_access(
             detail="Attendance request not found."
         )
 
+    print("========== ATTENDANCE REQUEST UPDATED ==========")
+    print("Request ID :", request_id)
+    print("Status     :", status)
+    print("Approved By:", current_user["email"])
+
     return {
-        "message": f"Attendance request {status}.",
-        "request": request
+        "success": True,
+        "message": f"Attendance request {status} successfully.",
+        "request": {
+            "id": request.id,
+            "status": request.status.value,
+            "approved_by": request.approved_by,
+            "approved_at": request.approved_at
+        }
     }        
     
 # ---------------- CHECK IN ----------------

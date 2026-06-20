@@ -67,18 +67,29 @@ def mark_notification_as_read(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
+    print("========== MARK READ ==========")
+    print("MARK READ CLICKED")
+    print("Notification ID:", id)
+    
     note = db.query(Notification).filter(
-        Notification.id == id,
-        Notification.company_id == current_user["company_id"]
+    Notification.id == id,
+    Notification.company_id == current_user["company_id"]
     ).first()
+    
+    print("FOUND",note)
     if not note:
         raise HTTPException(status_code=404, detail="Notification not found")
 
     if note.is_read:
         return {"message": "Already read"}
     
+    print("Before:", note.is_read)
     note.is_read = True
+
     db.commit()
+ 
+    print("After:", note.is_read)
+    db.refresh(note)
 
     # Audit log entry
     audit = AuditLog(
@@ -130,4 +141,24 @@ def add_notification(
         "is_read": note.is_read,
         "created_at": note.created_at,
         "company_id": note.company_id
+    }
+    
+@router.put("/read-all")
+def mark_all_notifications_as_read(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    notifications = db.query(Notification).filter(
+        Notification.company_id == current_user["company_id"],
+        Notification.recipient_email == current_user["email"],
+        Notification.is_read == False
+    ).all()
+
+    for note in notifications:
+        note.is_read = True
+
+    db.commit()
+
+    return {
+        "message": "All notifications marked as read."
     }
