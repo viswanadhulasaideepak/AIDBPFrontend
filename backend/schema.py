@@ -375,3 +375,31 @@ class LeaveRequestOut(BaseModel):
 
     class Config:
         orm_mode = True        
+        
+# Data Export Center
+
+class ExportFormat(str, Enum):
+    csv = "csv"
+    excel = "excel"
+    pdf = "pdf"
+
+
+class ExportDataType(str, Enum):
+    employees = "employees"
+    attendance = "attendance"
+    leave_requests = "leave_requests"
+    audit_logs = "audit_logs"
+    notifications = "notifications"
+    analytics = "analytics"
+
+
+class ExportHistoryOut(BaseModel):
+    id: int
+    exported_by: str
+    data_type: ExportDataType
+    export_format: ExportFormat
+    exported_at: datetime
+    company_id: int
+
+    class Config:
+        orm_mode = True        

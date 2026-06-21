@@ -342,4 +342,40 @@ export const updateReactivationRequest = async (id, status) =>
 export const getMyReactivationRequest = async () =>
   (await api.get("/reactivation/my-request")).data;
 
+/* ---------------- DATA EXPORT CENTER ---------------- */
+
+// Download any export
+export const downloadExport = async (dataType, format) => {
+  const response = await api.get(
+    `/exports/${dataType}/${format}`,
+    {
+      responseType: "blob",
+    }
+  );
+
+  const blob = new Blob([response.data]);
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  let extension = format;
+
+  if (format === "excel") {
+    extension = "xlsx";
+  }
+
+  link.setAttribute(
+    "download",
+    `${dataType}.${extension}`
+  );
+
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+};
+
+// Export History
+export const fetchExportHistory = async () =>
+  (await api.get("/exports/history")).data;
+
 export default api;

@@ -5,6 +5,7 @@ from models import Notification, InvitationStatus, UserStatus, ReactivationStatu
 import uuid
 from models import Invitation, User, ReactivationRequest
 from hashlib import sha256
+from models import ExportHistory
 
 # ---------------- EMPLOYEES ----------------
 def get_employees(db: Session, company_id: int):
@@ -1173,3 +1174,125 @@ def update_reactivation_request(
     db.refresh(req)
 
     return req
+
+#----------------- DATA EXPORT CENTER--------------------------
+
+def log_export(
+    db: Session,
+    exported_by: str,
+    data_type: str,
+    export_format: str,
+    company_id: int,
+):
+    """
+    Stores every successful export.
+    """
+
+    export = ExportHistory(
+        exported_by=exported_by,
+        data_type=data_type,
+        export_format=export_format,
+        company_id=company_id,
+    )
+
+    db.add(export)
+    db.commit()
+    db.refresh(export)
+
+    return export
+
+
+def get_export_history(
+    db: Session,
+    company_id: int,
+):
+    """
+    Returns export history for the current company only.
+    """
+
+    return (
+        db.query(ExportHistory)
+        .filter(
+            ExportHistory.company_id == company_id
+        )
+        .order_by(
+            ExportHistory.exported_at.desc()
+        )
+        .all()
+    )
+    
+# ----------------Export Employees ----------------
+
+def get_export_employees(
+    db: Session,
+    company_id: int
+):
+    return (
+        db.query(models.Employee)
+        .filter(
+            models.Employee.company_id == company_id
+        )
+        .all()
+    )
+
+
+# ----------------Export Attendance ----------------
+
+def get_export_attendance(
+    db: Session,
+    company_id: int
+):
+    return (
+        db.query(models.Attendance)
+        .filter(
+            models.Attendance.company_id == company_id
+        )
+        .all()
+    )
+
+
+# ----------------Export Leave Requests ----------------
+
+def get_export_leave_requests(
+    db: Session,
+    company_id: int
+):
+    return (
+        db.query(models.LeaveRequest)
+        .filter(
+            models.LeaveRequest.company_id == company_id
+        )
+        .all()
+    )
+
+
+# ----------------Export Audit Logs ----------------
+
+def get_export_audit_logs(
+    db: Session,
+    company_id: int
+):
+    return (
+        db.query(models.AuditLog)
+        .filter(
+            models.AuditLog.company_id == company_id
+        )
+        .order_by(models.AuditLog.timestamp.desc())
+        .all()
+    )
+
+
+# ----------------Export Notifications ----------------
+
+def get_export_notifications(
+    db: Session,
+    company_id: int
+):
+    return (
+        db.query(models.Notification)
+        .filter(
+            models.Notification.company_id == company_id
+        )
+        .order_by(models.Notification.created_at.desc())
+        .all()
+    )    

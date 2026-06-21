@@ -1,0 +1,117 @@
+.export-container {
+  padding: 30px;
+  background: #f5f7fb;
+  min-height: 100vh;
+}
+
+.export-container h1 {
+  margin-bottom: 25px;
+  color: #222;
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.export-card {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 25px;
+}
+
+.section {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 25px;
+  box-shadow: 0 3px 12px rgba(0,0,0,.08);
+}
+
+.section h2 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.section label {
+  display: block;
+  margin-top: 15px;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.section select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #d8d8d8;
+  border-radius: 6px;
+  font-size: 15px;
+  outline: none;
+}
+
+.section select:focus {
+  border-color: #2563eb;
+}
+
+.section button {
+  width: 100%;
+  margin-top: 25px;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  background: #2563eb;
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: .25s;
+}
+
+.section button:hover {
+  background: #1d4ed8;
+}
+
+.section button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.history-section {
+  overflow-x: auto;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.history-table thead {
+  background: #2563eb;
+  color: white;
+}
+
+.history-table th {
+  padding: 14px;
+  text-align: left;
+}
+
+.history-table td {
+  padding: 12px;
+  border-bottom: 1px solid #ececec;
+}
+
+.history-table tbody tr:hover {
+  background: #f4f8ff;
+}
+
+.history-table tbody tr:nth-child(even) {
+  background: #fafafa;
+}
+
+.history-table tbody tr:nth-child(even):hover {
+  background: #f4f8ff;
+}
+
+@media (max-width: 900px) {
+
+  .export-card {
+    grid-template-columns: 1fr;
+  }
+
+}

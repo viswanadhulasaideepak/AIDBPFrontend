@@ -228,6 +228,7 @@ class Company(Base):
     users = relationship("User", back_populates="company")
     leave_requests = relationship("LeaveRequest", back_populates="company")
     activities = relationship("UserActivity", back_populates="company")
+    export_history = relationship("ExportHistory", back_populates="company",cascade="all, delete-orphan")
 
 #--------------------AuditLog--------------------
 class AuditLog(Base):
@@ -288,3 +289,28 @@ class ReactivationRequest(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
     user = relationship("User", backref="reactivation_requests")
+
+# -------------------Export History-----------------------
+
+class ExportHistory(Base):
+    __tablename__ = "export_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    exported_by = Column(String, nullable=False)
+
+    data_type = Column(String, nullable=False)
+    export_format = Column(String, nullable=False)
+
+    exported_at = Column(DateTime, default=datetime.utcnow)
+
+    company_id = Column(
+        Integer,
+        ForeignKey("companies.id"),
+        nullable=False
+    )
+
+    company = relationship(
+        "Company",
+        back_populates="export_history"
+    )

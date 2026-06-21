@@ -19,6 +19,7 @@ const Sidebar = () => {
     { id: "attendance", label: "📅 Attendance", path: "/attendance", roles: ["admin", "user"] },
     { id: "auditlogs", label: "📜 Audit Logs", path: "/audit-logs", roles: ["admin"] },
     { id: "activity", label: "🟢 User Activity", path: "/activity", roles: ["admin"] },
+    { id: "dataexport", label: "📤 Data Export Center", path: "/data-export", roles: ["admin"]},
 
 
     { id: "invitations", label: "📩 Invitations", path: "/invitations", roles: ["admin"] },
