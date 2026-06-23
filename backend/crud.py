@@ -445,7 +445,7 @@ def calculate_working_hours(check_in: datetime, check_out: datetime):
 
     return f"{hours:02}:{minutes:02}"
 
-#-----------Check In---------------
+#---------------------Check In----------------------
 def check_in(db: Session, employee_id: int, company_id: int):
 
     today = datetime.utcnow().date()
@@ -544,7 +544,7 @@ def check_out(db: Session, employee_id: int, company_id: int):
 
     return attendance
 
-# --------TODAY'S ATTENDANCE-------------
+# --------------------TODAY'S ATTENDANCE---------------
 def get_today_attendance(
     db: Session,
     employee_id: int,
@@ -565,7 +565,7 @@ def get_today_attendance(
 
     return attendance
 
-# ----------RECENT ATTENDANCE HISTORY-------------------
+# -----------------RECENT ATTENDANCE HISTORY-------------------
 def get_recent_attendance(
     db: Session,
     employee_id: int,
@@ -667,7 +667,7 @@ def get_company_leave_requests(
         LeaveRequest.company_id == company_id).order_by(
         LeaveRequest.created_at.desc()).all()
         
-#------update leave requests-----------    
+#----------------update leave requests----------------
 def update_leave_request(
     db: Session,
     request_id: int,
@@ -765,7 +765,6 @@ def record_user_login(
 ):
 
     device_hash = sha256(browser.encode()).hexdigest()
-
     activity = db.query(models.UserActivity).filter(
         models.UserActivity.user_id == user.id
     ).first()
@@ -829,6 +828,7 @@ def record_user_logout(
     ip_address: str,
     browser: str
 ):
+    print("LOGOUT CALLED FOR:", user.email)
 
     activity = db.query(models.UserActivity).filter(
         models.UserActivity.user_id == user.id
@@ -840,6 +840,9 @@ def record_user_logout(
         activity.is_online = False
         activity.browser = browser
         activity.ip_address = ip_address
+        
+        print("LAST LOGOUT SAVED:", activity.last_logout)
+
         
     db.commit()
 

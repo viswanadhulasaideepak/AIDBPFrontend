@@ -104,9 +104,7 @@ const Employees = () => {
         joined_date: emp.joined_date?.slice(0, 10),
         status: newStatus,
       };
-
       await updateEmployee(id, payload);
-
       const updated = employees.map((e) =>
         e.id === id ? { ...e, status: newStatus } : e
       );
@@ -125,12 +123,9 @@ const Employees = () => {
   const handleDeleteEmployee = async (id) => {
     try {
       await deleteEmployee(id);
-
       const updated = employees.filter((e) => e.id !== id);
-
       setEmployees(updated);
       setFilteredEmployees(updated);
-
       toast.success("Employee deleted");
     } catch (err) {
       console.error(err);
@@ -207,10 +202,7 @@ const Employees = () => {
   /* ---------------- PAGINATION ---------------- */
   const indexOfLast = currentPage * employeesPerPage;
   const indexOfFirst = indexOfLast - employeesPerPage;
-  const currentEmployees = filteredEmployees.slice(
-    indexOfFirst,
-    indexOfLast
-  );
+  const currentEmployees = filteredEmployees.slice(indexOfFirst, indexOfLast);
 
   const totalPages = Math.ceil(
     filteredEmployees.length / employeesPerPage
@@ -240,17 +232,11 @@ const Employees = () => {
         {/* CONTROLS */}
         <div className="employees-actions">
 
-          <input
-            type="text"
-            placeholder="Search..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+          <input type="text" placeholder="Search..."
+           value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}/>
 
-          <select
-            value={departmentFilter}
-            onChange={(e) => setDepartmentFilter(e.target.value)}
-          >
+          <select value={departmentFilter}
+           onChange={(e) => setDepartmentFilter(e.target.value)}>
             {uniqueDepartments.map((d, i) => (
               <option key={i} value={d}>
                 {d}
@@ -262,13 +248,11 @@ const Employees = () => {
             + Add Employee
           </button>
 
-          <select
-            value={employeesPerPage}
+          <select value={employeesPerPage}
             onChange={(e) => {
               setEmployeesPerPage(Number(e.target.value));
               setCurrentPage(1);
-            }}
-          >
+            }}>
             <option value={5}>5</option>
             <option value={10}>10</option>
             <option value={20}>20</option>
@@ -302,17 +286,12 @@ const Employees = () => {
                       <b>{emp.name}</b>
                       <div>{emp.email}</div>
                     </td>
-
                     <td>{emp.role}</td>
-
                     <td>{emp.department_name}</td>
 
                     <td>
-                      <select
-                        value={emp.status}
-                        onChange={(e) =>
-                          handleStatusChange(emp.id, e.target.value)
-                        }>
+                      <select value={emp.status}
+                        onChange={(e) => handleStatusChange(emp.id, e.target.value)}>
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
                         <option value="onleave">On Leave</option>
@@ -324,7 +303,6 @@ const Employees = () => {
                         ? new Date(emp.joined_date).toLocaleDateString()
                         : "N/A"}
                     </td>
-
                     <td>
                       <button onClick={() => setEditEmployee(emp)}>
                         Edit
@@ -334,16 +312,13 @@ const Employees = () => {
                         setSelectedEmployee(emp);
                         setSelectedDepartment("");
                         setTransferReason("");
-                        setShowTransferModal(true);
-                      }}>
+                        setShowTransferModal(true);}}>
                        Transfer
                       </button>
-
                       <button onClick={() => handleDeleteEmployee(emp.id)}>
                        Delete
                       </button>
                     </td>
-
                   </tr>
                 ))}
               </tbody>
@@ -356,50 +331,37 @@ const Employees = () => {
         <div className="pagination">
           <button
             disabled={currentPage === 1}
-            onClick={() =>
-              setCurrentPage((p) => Math.max(p - 1, 1))
-            }
-          >
+            onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))
+            }>
             Prev
           </button>
 
           {Array.from({ length: totalPages }, (_, i) => (
-            <button
-              key={i}
-              className={currentPage === i + 1 ? "active" : ""}
-              onClick={() => setCurrentPage(i + 1)}
-            >
+            <button key={i} className={currentPage === i + 1 ? "active" : ""}
+              onClick={() => setCurrentPage(i + 1)}>
               {i + 1}
             </button>
           ))}
 
-          <button
-            disabled={currentPage === totalPages}
-            onClick={() =>
-              setCurrentPage((p) =>
+          <button disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage((p) =>
                 Math.min(p + 1, totalPages)
-              )
-            }
-          >
+              )}>
             Next
           </button>
         </div>
 
         {/* MODALS */}
         {showAddForm && (
-          <AddEmployeeForm
-            onAdd={handleAddEmployee}
-            onClose={() => setShowAddForm(false)}
-          />
+          <AddEmployeeForm onAdd={handleAddEmployee}
+            onClose={() => setShowAddForm(false)}/>
         )}
 
         {editEmployee && (
-          <EditEmployeeForm
-            employee={editEmployee}
-            onSave={handleEditEmployee}
-            onClose={() => setEditEmployee(null)}
-          />
+          <EditEmployeeForm employee={editEmployee} onSave={handleEditEmployee}
+            onClose={() => setEditEmployee(null)}/>
         )}
+
         {/* ---------------- TRANSFER DEPARTMENT MODAL ---------------- */}
 
         {showTransferModal && (
@@ -407,9 +369,7 @@ const Employees = () => {
             <div className="modal">
 
               <h3>Transfer Department</h3>
-              <p>
-              <strong>Employee:</strong> {selectedEmployee?.name}
-              </p>
+              <p><strong>Employee:</strong> {selectedEmployee?.name}</p>
               <label>New Department</label>
               
               <select value={selectedDepartment}
@@ -439,13 +399,10 @@ const Employees = () => {
             }}>
             Cancel
            </button>
-
           </div>
-
     </div>
   </div>
 )}
-
       </div>
     </DashboardLayout>
   );

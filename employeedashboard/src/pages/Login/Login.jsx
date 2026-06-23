@@ -176,7 +176,11 @@ const Login = () => {
         <div className="login-header">
           <div className="login-icon">👤</div>
           <h2>
-            {showSignup ? "Create Account" : showForgot ? "Reset Password" : "Welcome Back!"}
+            {showSignup 
+            ? "Create Account" 
+            : showForgot 
+            ? "Reset Password" 
+            : "Welcome Back!"}
           </h2>
           <p>
             {showSignup

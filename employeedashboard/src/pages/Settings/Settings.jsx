@@ -189,21 +189,16 @@ const Settings = () => {
 
                   {req.status === "pending" && (
                     <div className="request-actions">
-                      <button
-                        className="approve-btn"
-                        onClick={() => updateRequest(req.id, "approved")}
-                      >
+                      <button className="approve-btn"
+                        onClick={() => updateRequest(req.id, "approved")}>
                         ✅ Approve
                       </button>
-                      <button
-                        className="reject-btn"
-                        onClick={() => updateRequest(req.id, "rejected")}
-                      >
+                      <button className="reject-btn"
+                        onClick={() => updateRequest(req.id, "rejected")}>
                         ❌ Reject
                       </button>
                     </div>
                   )}
-
                   {req.status === "approved" && <p className="approved-text">✅ Approved</p>}
                   {req.status === "rejected" && <p className="rejected-text">❌ Rejected</p>}
                 </div>
@@ -217,9 +212,7 @@ const Settings = () => {
           <h3>Notifications</h3>
           <button onClick={markAllAsRead}>✔️ Mark All Read</button>
           {notifications.map((n) => (
-            <p
-              key={n.id}
-              onClick={() => markAsRead(n.id)}
+            <p key={n.id} onClick={() => markAsRead(n.id)}
               style={{
                 fontWeight: n.is_read ? "normal" : "bold",
                 cursor: "pointer",

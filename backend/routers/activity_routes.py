@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-
 import crud
 import database
 import schema
@@ -11,7 +10,7 @@ router = APIRouter(
     tags=["Activity"]
 )
 
-# Company User Activity
+# -------------------Company User Activity-----------------
 
 @router.get(
     "/users",
@@ -26,7 +25,7 @@ def company_user_activity(
         company_id=current_user["company_id"]
     )
 
-# Activity History
+#----------- Activity History--------------
 
 @router.get(
     "/history",

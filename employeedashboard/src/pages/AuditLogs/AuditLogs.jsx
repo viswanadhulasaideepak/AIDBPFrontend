@@ -47,10 +47,9 @@ const AuditLogs = () => {
         ))}
       </tbody>
     </table>
-  </div>
-</DashboardLayout>
+    </div>
+  </DashboardLayout>
   )
-
 };
 
 export default AuditLogs;

@@ -1,20 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-
 import crud
 import database
-
 from auth import get_current_user
-from models import (
-    Employee,
-    RoleChangeRequest,
-    RoleChangeStatus,
-    StatusEnum,
-)
+from models import (Employee, RoleChangeRequest, RoleChangeStatus, StatusEnum)
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
-
 
 @router.get("/stats")
 def get_dashboard_stats(

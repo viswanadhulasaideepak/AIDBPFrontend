@@ -54,17 +54,17 @@ const AttendanceDashboard = () => {
     <div className="attendance-dashboard">
       <h2 className="attendance-title">📅 Attendance Dashboard</h2>
 
-      {/* 🔹 Attendance Percentage */}
+      {/* Attendance Percentage */}
       <p className="attendance-percentage">
         Overall Attendance: <strong>{attendancePercentage}%</strong>
       </p>
 
-      {/* 🔹 Chart */}
+      {/* Chart */}
       <div className="attendance-card">
         <Line data={attendanceData} options={{ maintainAspectRatio: false }} />
       </div>
 
-      {/* 🔹 Table */}
+      {/* Table */}
       <table className="attendance-table">
         <thead>
           <tr>

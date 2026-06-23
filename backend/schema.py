@@ -41,7 +41,6 @@ class EmployeeUpdate(BaseModel):
     joined_date: datetime | None = None
     status: StatusEnum | None = None
 
-
 # Role change request status
 class RoleChangeStatus(str, Enum):
     pending = "pending"
@@ -67,7 +66,6 @@ class RoleChangeRequestOut(BaseModel):
 
     class Config:
         orm_mode = True
-
 
 class NotificationOut(BaseModel):
     id: int
@@ -299,12 +297,10 @@ class AttendanceAccessStatusOut(BaseModel):
 class AttendanceCheckIn(BaseModel):
     employee_id: int
 
-
 # ---------------- Attendance Check Out ----------------
 
 class AttendanceCheckOut(BaseModel):
     employee_id: int
-
 
 # ---------------- Today's Attendance ----------------
 
@@ -318,7 +314,6 @@ class AttendanceTodayOut(BaseModel):
 
     class Config:
         orm_mode = True
-
 
 # ---------------- Attendance History ----------------
 
@@ -359,7 +354,6 @@ class LeaveRequestCreate(BaseModel):
 class LeaveRequestUpdate(BaseModel):
     status: LeaveStatus
 
-
 class LeaveRequestOut(BaseModel):
     id: int
     user_id: int
@@ -376,13 +370,12 @@ class LeaveRequestOut(BaseModel):
     class Config:
         orm_mode = True        
         
-# Data Export Center
+#------ Data Export Center----------
 
 class ExportFormat(str, Enum):
     csv = "csv"
     excel = "excel"
     pdf = "pdf"
-
 
 class ExportDataType(str, Enum):
     employees = "employees"
@@ -391,7 +384,6 @@ class ExportDataType(str, Enum):
     audit_logs = "audit_logs"
     notifications = "notifications"
     analytics = "analytics"
-
 
 class ExportHistoryOut(BaseModel):
     id: int

@@ -61,37 +61,25 @@ const EmployeeDashboard = () => {
     <div className="employee-dashboard">
       <h2 className="employee-title">👥 Employee Dashboard</h2>
 
-      {/* 🔹 Filter */}
+      {/* Filter */}
       <div className="filter-buttons">
         <button onClick={() => setFilter("all")}>All</button>
         <button onClick={() => setFilter("active")}>Active</button>
         <button onClick={() => setFilter("inactive")}>Inactive</button>
       </div>
 
-      {/* 🔹 Add Employee Form */}
+      {/* Add Employee Form */}
       <form className="add-employee-form" onSubmit={handleAddEmployee}>
-        <input
-          type="text"
-          placeholder="Name"
-          value={newEmp.name}
-          onChange={(e) => setNewEmp({ ...newEmp, name: e.target.value })}
-        />
-        <input
-          type="email"
-          placeholder="Email"
-          value={newEmp.email}
-          onChange={(e) => setNewEmp({ ...newEmp, email: e.target.value })}
-        />
-        <input
-          type="text"
-          placeholder="Department ID"
-          value={newEmp.department_id}
-          onChange={(e) => setNewEmp({ ...newEmp, department_id: e.target.value })}
-        />
+        <input type="text" placeholder="Name"
+          value={newEmp.name} onChange={(e) => setNewEmp({ ...newEmp, name: e.target.value })}/>
+        <input type="email" placeholder="Email"
+          value={newEmp.email} onChange={(e) => setNewEmp({ ...newEmp, email: e.target.value })}/>
+        <input type="text" placeholder="Department ID"
+          value={newEmp.department_id} onChange={(e) => setNewEmp({ ...newEmp, department_id: e.target.value })}/>
         <button type="submit">Add Employee</button>
       </form>
 
-      {/* 🔹 Employee Table */}
+      {/* Employee Table */}
       <div className="employee-card">
         <table className="employee-table">
           <thead>

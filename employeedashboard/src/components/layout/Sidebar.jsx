@@ -8,8 +8,8 @@ const Sidebar = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout();               // clears localStorage + resets context
-    navigate("/login");     // redirect to login
+    logout();               
+    navigate("/login");     
   };
 
   const menuItems = [
@@ -20,10 +20,7 @@ const Sidebar = () => {
     { id: "auditlogs", label: "📜 Audit Logs", path: "/audit-logs", roles: ["admin"] },
     { id: "activity", label: "🟢 User Activity", path: "/activity", roles: ["admin"] },
     { id: "dataexport", label: "📤 Data Export Center", path: "/data-export", roles: ["admin"]},
-
-
     { id: "invitations", label: "📩 Invitations", path: "/invitations", roles: ["admin"] },
-
     { id: "settings", label: "⚙️ Settings", path: "/settings", roles: ["admin", "user"] },
   ];
 
@@ -35,10 +32,8 @@ const Sidebar = () => {
           .filter((item) => item.roles.includes(user?.role))
           .map((item) => (
             <li key={item.id}>
-              <NavLink
-                to={item.path}
-                className={({ isActive }) => (isActive ? "active" : "")}
-              >
+              <NavLink to={item.path}
+                className={({ isActive }) => (isActive ? "active" : "")}>
                 {item.label}
               </NavLink>
             </li>

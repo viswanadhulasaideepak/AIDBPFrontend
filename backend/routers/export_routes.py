@@ -10,15 +10,8 @@ from reportlab.pdfgen import canvas
 import models
 import database
 from auth import get_current_user
-
-from models import (
-    Employee,
-    Attendance,
-    LeaveRequest,
-    Notification,
-    AuditLog,
-    ExportHistory
-)
+from models import (Employee, Attendance, LeaveRequest,
+    Notification, AuditLog, ExportHistory)
 
 router = APIRouter( prefix="/exports", tags=["Data Export Center"])
 
@@ -40,7 +33,7 @@ def admin_only(current_user: dict):
 
     return current_user["company_id"]
 
-# EXPORT HISTORY
+#-------------- EXPORT HISTORY--------------
 
 def log_export(db: Session, current_user: dict, data_type: str, export_format: str,):
 
@@ -54,7 +47,7 @@ def log_export(db: Session, current_user: dict, data_type: str, export_format: s
     db.add(history)
     db.commit()
 
-# CSV
+#----------- CSV----------------
 
 def csv_stream(headers, rows):
     stream = io.StringIO()
@@ -69,7 +62,7 @@ def csv_stream(headers, rows):
 
     return output
 
-# EXCEL
+#-------------- EXCEL---------------
 
 def excel_stream(title, headers, rows):
     wb = Workbook()
@@ -86,7 +79,7 @@ def excel_stream(title, headers, rows):
 
     return stream
 
-# PDF
+#------------ PDF-----------------
 
 def pdf_stream(title, headers, rows):
     buffer = io.BytesIO()
@@ -126,7 +119,7 @@ def pdf_stream(title, headers, rows):
 
     return buffer
 
-# EMPLOYEES CSV
+#--------------- EMPLOYEES CSV----------------
 
 @router.get("/employees/csv")
 def export_employees_csv(
@@ -179,7 +172,7 @@ def export_employees_csv(
         }
     )
     
-# EMPLOYEES EXCEL  
+#-------------- EMPLOYEES EXCEL -------------------
 
 @router.get("/employees/excel")
 def export_employees_excel(
@@ -232,7 +225,7 @@ def export_employees_excel(
         }
     )
 
-# EMPLOYEES PDF
+#----------------- EMPLOYEES PDF----------------
 
 @router.get("/employees/pdf")
 def export_employees_pdf(
@@ -253,21 +246,9 @@ def export_employees_pdf(
         if emp.department_rel:
             department = emp.department_rel.name
 
-        rows.append([
-            emp.id,
-            emp.name,
-            emp.email,
-            emp.role,
-            department
-        ])
+        rows.append([emp.id, emp.name, emp.email, emp.role, department])
 
-    headers = [
-        "ID",
-        "Name",
-        "Email",
-        "Role",
-        "Department"
-    ]
+    headers = ["ID", "Name", "Email", "Role", "Department"]
 
     file = pdf_stream( "Employees Report", headers, rows)
     log_export( db, current_user, "Employees", "PDF")
@@ -281,7 +262,7 @@ def export_employees_pdf(
         }
     )
 
-# ATTENDANCE CSV
+#----------------- ATTENDANCE CSV----------------------
 
 @router.get("/attendance/csv")
 def export_attendance_csv(
@@ -311,18 +292,8 @@ def export_attendance_csv(
             record.working_hours or ""
         ])
 
-    headers = [
-        "ID",
-        "Employee ID",
-        "Date",
-        "Status",
-        "Check In",
-        "Check Out",
-        "Working Hours"
-    ]
-
+    headers = ["ID","Employee ID","Date","Status","Check In","Check Out","Working Hours"]
     file = csv_stream( headers, rows )
-
     log_export( db, current_user, "Attendance", "CSV")
 
     return StreamingResponse(
@@ -334,7 +305,7 @@ def export_attendance_csv(
         }
     )    
     
-# ATTENDANCE EXCEL
+#----------------- ATTENDANCE EXCEL------------------
 
 @router.get("/attendance/excel")
 def export_attendance_excel(
@@ -385,7 +356,7 @@ def export_attendance_excel(
         }
     )
 
-# ATTENDANCE PDF
+#------------------ ATTENDANCE PDF----------------------
 
 @router.get("/attendance/pdf")
 def export_attendance_pdf(
@@ -424,7 +395,7 @@ def export_attendance_pdf(
         }
     )
 
-# LEAVE REQUESTS CSV
+#---------------------- LEAVE REQUESTS CSV--------------------
 
 @router.get("/leave/csv")
 def export_leave_csv(
@@ -475,7 +446,7 @@ def export_leave_csv(
         }
     )    
     
-# LEAVE REQUESTS EXCEL
+#--------------------- LEAVE REQUESTS EXCEL--------------------------
 
 @router.get("/leave/excel")
 def export_leave_excel(
@@ -508,15 +479,7 @@ def export_leave_excel(
             leave.reason
         ])
 
-    headers = [
-        "ID",
-        "User",
-        "Leave Type",
-        "Start Date",
-        "End Date",
-        "Status",
-        "Reason"
-    ]
+    headers = ["ID","User","Leave Type","Start Date","End Date","Status","Reason"]
 
     file = excel_stream( "Leave Requests", headers, rows)
     log_export( db, current_user, "Leave Requests", "Excel")
@@ -530,7 +493,7 @@ def export_leave_excel(
         }
     )
 
-# LEAVE REQUESTS PDF
+# -----------------------LEAVE REQUESTS PDF-----------------------
 
 @router.get("/leave/pdf")
 def export_leave_pdf(
@@ -572,7 +535,7 @@ def export_leave_pdf(
         }
     )
 
-# AUDIT LOGS CSV
+#-------------------- AUDIT LOGS CSV-------------------------
 
 @router.get("/audit/csv")
 def export_audit_csv(
@@ -628,7 +591,7 @@ def export_audit_csv(
         }
     )    
     
-# AUDIT LOGS EXCEL
+#------------------- AUDIT LOGS EXCEL--------------------
 
 @router.get("/audit/excel")
 def export_audit_excel(
@@ -684,7 +647,7 @@ def export_audit_excel(
         }
     )
 
-# AUDIT LOGS PDF
+#------------------ AUDIT LOGS PDF-------------------
 
 @router.get("/audit/pdf")
 def export_audit_pdf(
@@ -725,7 +688,7 @@ def export_audit_pdf(
         }
     )
 
-# NOTIFICATIONS CSV
+# --------------------NOTIFICATIONS CSV----------------------------
 
 @router.get("/notifications/csv")
 def export_notifications_csv(
@@ -767,7 +730,7 @@ def export_notifications_csv(
         }
     )    
     
-# NOTIFICATIONS EXCEL
+# ---------------NOTIFICATIONS EXCEL---------------------
 
 @router.get("/notifications/excel")
 def export_notifications_excel(
@@ -795,9 +758,7 @@ def export_notifications_excel(
         ])
 
     headers = [ "ID", "Recipient", "Message", "Status", "Created At"]
-
     file = excel_stream("Notifications",headers,rows)
-
     log_export( db, current_user, "Notifications", "Excel")
 
     return StreamingResponse(
@@ -809,7 +770,7 @@ def export_notifications_excel(
         }
     )
 
-# NOTIFICATIONS PDF
+# --------------------NOTIFICATIONS PDF-----------------------
 
 @router.get("/notifications/pdf")
 def export_notifications_pdf(
@@ -849,7 +810,7 @@ def export_notifications_pdf(
         }
     )
 
-# ANALYTICS PDF
+#---------------- ANALYTICS PDF---------------------
 
 
 @router.get("/analytics/pdf")
@@ -934,7 +895,7 @@ def export_analytics_pdf(
         }
     )
 
-# EXPORT HISTORY
+#------------------- EXPORT HISTORY--------------------
 
 @router.get("/history")
 def export_history(

@@ -41,7 +41,7 @@ const DepartmentsDashboard = () => {
       await addDepartment({ name: newDept });
       toast.success("Department added!");
       setNewDept("");
-      loadDepartments(); // reload list
+      loadDepartments();
     } catch {
       toast.error("Failed to add department");
     }
@@ -65,18 +65,14 @@ const DepartmentsDashboard = () => {
     <div className="departments-dashboard">
       <h2 className="departments-title">🏢 Departments Dashboard</h2>
 
-      {/* 🔹 Add Department Form */}
+      {/* Add Department Form */}
       <form className="add-department-form" onSubmit={handleAddDepartment}>
-        <input
-          type="text"
-          placeholder="Enter department name"
-          value={newDept}
-          onChange={(e) => setNewDept(e.target.value)}
-        />
+        <input type="text" placeholder="Enter department name"
+          value={newDept} onChange={(e) => setNewDept(e.target.value)}/>
         <button type="submit">Add Department</button>
       </form>
 
-      {/* 🔹 Department List */}
+      {/* Department List */}
       <ul className="department-list">
         {departments.map((d, idx) => (
           <li key={idx}>
@@ -85,7 +81,7 @@ const DepartmentsDashboard = () => {
         ))}
       </ul>
 
-      {/* 🔹 Chart */}
+      {/* Chart */}
       <div className="departments-card">
         <div className="chart-container">
           <Bar data={departmentData} options={{ maintainAspectRatio: false }} />

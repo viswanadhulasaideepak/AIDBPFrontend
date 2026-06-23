@@ -85,7 +85,7 @@ def add_attendance(
         "company_id": record.company_id
     }
     
-#-------Pending Request----------------    
+#---------------Pending Request----------------    
 @router.get("/access-requests")
 def get_pending_requests(
     db: Session = Depends(get_db),
@@ -336,7 +336,6 @@ def history(
         )
     
 # ---------------- REPORT (JSON for Analytics) ----------------
-
 @router.get("/report")
 def get_attendance_report(
     db: Session = Depends(get_db),
@@ -383,16 +382,7 @@ def get_attendance_report_excel(
     current_user: dict = Depends(get_current_user)
 ):
     if current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Access denied")
-    
-    if not crud.is_attendance_access_approved(
-    db,
-    current_user["id"]
-    ):
-        raise HTTPException(
-        status_code=403,
-        detail="Attendance access pending approval."
-    )
+        raise HTTPException(status_code=403, detail="Only Admins can export Excel reports")
 
     records = crud.get_attendance(db, current_user["company_id"])
     records = sorted(records, key=lambda r: r.date)
@@ -423,16 +413,7 @@ def get_attendance_report_pdf(
     current_user: dict = Depends(get_current_user)
 ):
     if current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Access denied")
-    
-    if not crud.is_attendance_access_approved(
-    db,
-    current_user["id"]
-    ):
-        raise HTTPException(
-        status_code=403,
-        detail="Attendance access pending approval."
-    )
+        raise HTTPException(status_code=403, detail="Only Admins can export Excel reports")
 
     records = crud.get_attendance(db, current_user["company_id"])
     records = sorted(records, key=lambda r: r.date)

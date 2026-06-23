@@ -106,16 +106,13 @@ const AttendanceUserPanel = () => {
 
     try {
       await submitLeaveRequest(leaveForm);
-
       toast.success("Leave request submitted.");
-
       setLeaveForm({
         leave_type: "casual",
         start_date: "",
         end_date: "",
         reason: "",
       });
-
       loadUserData();
     } catch (err) {
       toast.error(
@@ -208,53 +205,41 @@ const AttendanceUserPanel = () => {
         <h3>My Leave Requests</h3>
 
         <form onSubmit={handleLeaveSubmit}>
-          <select
-            value={leaveForm.leave_type}
-            onChange={(e) =>
-              setLeaveForm({
+          <select value={leaveForm.leave_type}
+            onChange={(e) => setLeaveForm({
                 ...leaveForm,
                 leave_type: e.target.value,
               })
-            }
-          >
+            }>
             <option value="casual">Casual</option>
             <option value="sick">Sick</option>
             <option value="earned">Earned</option>
             <option value="unpaid">Unpaid</option>
           </select>
 
-          <input
-            type="date"
-            value={leaveForm.start_date}
-            onChange={(e) =>
+          <input type="date"
+            value={leaveForm.start_date} onChange={(e) =>
               setLeaveForm({
                 ...leaveForm,
                 start_date: e.target.value,
               })
-            }
-          />
+            }/>
 
-          <input
-            type="date"
-            value={leaveForm.end_date}
-            onChange={(e) =>
+          <input type="date"
+            value={leaveForm.end_date} onChange={(e) =>
               setLeaveForm({
                 ...leaveForm,
                 end_date: e.target.value,
               })
-            }
-          />
+            }/>
 
-          <textarea
-            placeholder="Reason"
-            value={leaveForm.reason}
-            onChange={(e) =>
+          <textarea placeholder="Reason"
+            value={leaveForm.reason} onChange={(e) =>
               setLeaveForm({
                 ...leaveForm,
                 reason: e.target.value,
               })
-            }
-          />
+            }/>
 
           <button type="submit">
             Submit Leave Request

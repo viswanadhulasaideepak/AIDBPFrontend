@@ -1,14 +1,8 @@
 import React, { useEffect, useState, useContext } from "react";
 import { Bar, Line } from "react-chartjs-2";
 import { Chart as ChartJS } from "chart.js/auto";
-import {
-  fetchDepartments,
-  fetchAttendanceReport,
-  fetchEmployees,
-  fetchDashboardStats,   
-  downloadAttendanceReportExcel,
-  downloadAttendanceReportPDF  
-} from "../../services/api";
+import {fetchDepartments,fetchAttendanceReport,fetchEmployees,fetchDashboardStats,
+  downloadAttendanceReportExcel,downloadAttendanceReportPDF  } from "../../services/api";
 import toast from "react-hot-toast";
 import "./Dashboard.css";
 import DashboardLayout from "../../components/layout/DashboardLayout";
@@ -33,7 +27,6 @@ const Dashboard = () => {
           name: d.name || d.department,
           employee_count: Number(d.employee_count || d.count || 0),
         }));
-       // console.log("DEPARTMENTS API:", data);
         setDepartments(validData);
       } catch {
         toast.error("Failed to load departments");
@@ -89,13 +82,11 @@ useEffect(() => {
   loadAttendance();
 }, []);
 
-
   // Load employees
   useEffect(() => {
     const loadEmployees = async () => {
       try {
         const data = await fetchEmployees();
-       // console.log("EMPLOYEES API:", data);
         setEmployees(data);
       } catch {
         toast.error("Failed to load employees");

@@ -87,11 +87,8 @@ const Activity = () => {
           </div>
         </div>
         <div className="activity-toolbar">
-          <input
-            type="text"
-            placeholder="Search by user, browser or IP..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}/>
+          <input type="text" placeholder="Search by user, browser or IP..."
+            value={search} onChange={(e) => setSearch(e.target.value)}/>
         </div>
         <div className="activity-table">
           {loading ? (
@@ -114,8 +111,7 @@ const Activity = () => {
               <tbody>
                 {filteredActivities.length === 0 ? (
                   <tr>
-                    <td colSpan="8"
-                      style={{ textAlign: "center", padding: "40px",}}>
+                    <td colSpan="8" style={{ textAlign: "center", padding: "40px",}}>
                       No activity found.
                     </td>
                   </tr>
@@ -123,10 +119,10 @@ const Activity = () => {
                   filteredActivities.map((item) => (
                     <tr key={item.id}>
                       <td>
-                        {item.user?.username || "-"}
+                        {item.username || "-"}
                       </td>
                       <td>
-                        {item.user?.email || "-"}
+                        {item.email || "-"}
                       </td>
                       <td>
                         {item.browser || "-"}
@@ -164,8 +160,7 @@ const Activity = () => {
             <tbody>
               {history.length === 0 ? (
                 <tr>
-                  <td colSpan="5"
-                    style={{ textAlign: "center", padding: "40px",}}>
+                  <td colSpan="5" style={{ textAlign: "center", padding: "40px",}}>
                     No history available.
                   </td>
                 </tr>
@@ -206,7 +201,6 @@ const Activity = () => {
                             </span>
                         )}
                     </td>
-
                     <td>
                         {formatDate(log.timestamp)}
                     </td>

@@ -8,7 +8,7 @@ from schema import (LeaveRequestCreate, LeaveRequestUpdate)
 
 router = APIRouter( prefix="/leave",tags=["Leave Management"])
 
-# USER SUBMIT LEAVE REQUEST
+#--------------- USER SUBMIT LEAVE REQUEST-------------------------
 
 @router.post("/request")
 def submit_leave_request(
@@ -47,7 +47,7 @@ def submit_leave_request(
         "request": request
     }
 
-# USER VIEW MY LEAVE REQUESTS
+#----------------- USER VIEW MY LEAVE REQUESTS----------------------
 
 @router.get("/my")
 def get_my_leave_requests(
@@ -62,7 +62,7 @@ def get_my_leave_requests(
 
     return requests
 
-# ADMIN VIEW ALL COMPANY LEAVE REQUESTS
+#------------ ADMIN VIEW ALL COMPANY LEAVE REQUESTS----------------
 
 @router.get("/company")
 def get_company_leave_requests(
@@ -83,7 +83,7 @@ def get_company_leave_requests(
 
     return requests
 
-# ADMIN APPROVE / REJECT LEAVE
+# --------------------ADMIN APPROVE / REJECT LEAVE-----------------------
 
 @router.put("/{request_id}")
 def update_leave_request(
@@ -107,7 +107,6 @@ def update_leave_request(
         reviewed_by=current_user["email"]
     )
     
-
     if request is None:
         raise HTTPException(
             status_code=404,

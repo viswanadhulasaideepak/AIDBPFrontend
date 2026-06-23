@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect } from "react";
+import api from "../services/api";
 
 export const AuthContext = createContext();
 
@@ -33,11 +34,16 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("token", data.token);
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-  };
+  const logout = async () => {
+  try {
+    await api.post("/logout");
+  } catch (error) {
+    console.error("Logout API failed:", error);
+  }
+  setUser(null);
+  localStorage.removeItem("user");
+  localStorage.removeItem("token");
+};
 
   return (
     <AuthContext.Provider value={{ user, login, logout }}>
@@ -46,5 +52,4 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// 
 export const useAuth = () => React.useContext(AuthContext);

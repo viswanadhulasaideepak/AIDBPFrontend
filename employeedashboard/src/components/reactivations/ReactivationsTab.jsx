@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import {
-  getReactivationRequests,
-  updateReactivationRequest,
-} from "../../services/api";
+import {getReactivationRequests,updateReactivationRequest} from "../../services/api";
 import "./ReactivationsTab.css";
 
 function ReactivationTab() {
@@ -42,7 +39,6 @@ function ReactivationTab() {
           ? "User reactivated successfully"
           : "Request rejected"
       );
-
       loadRequests();
     } catch (err) {
       console.error(err);
@@ -102,8 +98,7 @@ function ReactivationTab() {
                       </button>
                       <button disabled={processing === req.id}
                         className="reject-btn" onClick={() =>
-                          handleUpdate(req.id, "rejected")
-                        }>
+                          handleUpdate(req.id, "rejected")}>
                         Reject
                       </button>
                     </>

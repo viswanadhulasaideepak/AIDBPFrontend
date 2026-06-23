@@ -65,33 +65,20 @@ const EditEmployeeForm = ({ employee, onSave, onClose }) => {
 
           {/* NAME */}
           <label>Name</label>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            placeholder="Enter name"
-          />
+          <input type="text" name="name" value={formData.name}
+            onChange={handleChange} placeholder="Enter name"/>
           {errors.name && <span className="error">{errors.name}</span>}
 
           {/* EMAIL */}
           <label>Email</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            placeholder="Enter email"
-          />
+          <input type="email" name="email" value={formData.email}
+            onChange={handleChange} placeholder="Enter email"/>
           {errors.email && <span className="error">{errors.email}</span>}
 
           {/* ROLE */}
           <label>Role</label>
-          <select
-            name="role"
-            value={formData.role}
-            onChange={handleChange}
-          >
+          <select name="role"
+            value={formData.role} onChange={handleChange}>
             <option value="HR">HR</option>
             <option value="Finance">Finance</option>
             <option value="IT">IT</option>
@@ -101,13 +88,8 @@ const EditEmployeeForm = ({ employee, onSave, onClose }) => {
 
           {/* DEPARTMENT (TRANSFER FEATURE) */}
           <label>Department (Transfer)</label>
-          <input
-            type="text"
-            name="department_name"
-            value={formData.department_name}
-            onChange={handleChange}
-            placeholder="Change department"
-          />
+          <input type="text" name="department_name" value={formData.department_name}
+            onChange={handleChange} placeholder="Change department"/>
           {errors.department_name && (
             <span className="error">{errors.department_name}</span>
           )}
@@ -118,20 +100,13 @@ const EditEmployeeForm = ({ employee, onSave, onClose }) => {
 
           {/* JOINED DATE */}
           <label>Joined Date</label>
-          <input
-            type="date"
-            name="joined_date"
-            value={formData.joined_date}
-            onChange={handleChange}
-          />
+          <input type="date" name="joined_date" value={formData.joined_date}
+            onChange={handleChange}/>
 
           {/* STATUS */}
           <label>Status</label>
-          <select
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-          >
+          <select name="status" value={formData.status}
+            onChange={handleChange}>
             <option value="active">Active</option>
             <option value="onleave">On Leave</option>
             <option value="inactive">Inactive</option>
@@ -143,15 +118,11 @@ const EditEmployeeForm = ({ employee, onSave, onClose }) => {
               Save Changes
             </button>
 
-            <button
-              type="button"
-              className="cancel-btn"
-              onClick={onClose}
-            >
+            <button type="button" className="cancel-btn"
+              onClick={onClose}>
               Cancel
             </button>
           </div>
-
         </form>
       </div>
     </div>

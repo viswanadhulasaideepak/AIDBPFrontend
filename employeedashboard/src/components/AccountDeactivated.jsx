@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import {
-  submitReactivationRequest,
-  getMyReactivationRequest,
-} from "../services/api";
+import {submitReactivationRequest,getMyReactivationRequest} from "../services/api";
 import { useNavigate } from "react-router-dom";
 import "./AccountDeactivated.css";
 
@@ -13,7 +10,6 @@ function AccountDeactivated({ currentUser }) {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
 
-  // ✅ Correct
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -85,34 +81,22 @@ function AccountDeactivated({ currentUser }) {
       <div className="deactivated-card">
         <h1>Account Deactivated</h1>
 
-        <p>
-          Your account has been deactivated by your administrator.
-        </p>
-
+        <p> Your account has been deactivated by your administrator.</p>
         <p>
           You can submit a reactivation request below. The administrator
           will review it.
         </p>
-
         {!request && (
           <>
             <h3>Additional Details (Optional)</h3>
 
             <textarea
               placeholder="Example: Please reactivate my account. I need access to continue working on my assigned tasks."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              rows={5}
-            />
+              value={message} onChange={(e) => setMessage(e.target.value)} rows={5}/>
 
-            <button
-              className="submit-btn"
-              onClick={handleSubmit}
-              disabled={submitting}
-            >
-              {submitting
-                ? "Submitting..."
-                : "Submit Reactivation Request"}
+            <button className="submit-btn"
+              onClick={handleSubmit} disabled={submitting}>
+              {submitting ? "Submitting..." : "Submit Reactivation Request"}
             </button>
           </>
         )}
@@ -153,7 +137,6 @@ function AccountDeactivated({ currentUser }) {
             )}
           </div>
         )}
-
         <button className="logout-btn" onClick={handleLogout}>
           Logout
         </button>

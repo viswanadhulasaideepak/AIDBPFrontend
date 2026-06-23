@@ -7,7 +7,7 @@ const AddEmployeeForm = ({ onAdd, onClose }) => {
   const [role, setRole] = useState("HR");
   const [departmentName, setDepartmentName] = useState("");
   const [status, setStatus] = useState("active");
-  const [joinedDate, setJoinedDate] = useState(""); // ✅ new field
+  const [joinedDate, setJoinedDate] = useState(""); 
   const [errors, setErrors] = useState({});
 
   // Validation logic
@@ -87,22 +87,13 @@ const AddEmployeeForm = ({ onAdd, onClose }) => {
       <div className="modal-content">
         <h3 className="modal-title">➕ Add Employee</h3>
         <form onSubmit={handleSubmit} className="employee-form">
-          <input
-            type="text"
-            placeholder="Full Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-          {errors.name && <span className="error">{errors.name}</span>}
+          <input type="text" placeholder="Full Name"
+            value={name} onChange={(e) => setName(e.target.value)} required/>
 
-          <input
-            type="email"
-            placeholder="Email Address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+          {errors.name && <span className="error">{errors.name}</span>}
+          <input type="email" placeholder="Email Address"
+            value={email} onChange={(e) => setEmail(e.target.value)} required/>
+
           {errors.email && <span className="error">{errors.email}</span>}
 
           <select value={role} onChange={(e) => setRole(e.target.value)} required>
@@ -112,24 +103,15 @@ const AddEmployeeForm = ({ onAdd, onClose }) => {
             <option value="Sales">Sales</option>
           </select>
 
-          <input
-            type="text"
-            placeholder="Department Name"
-            value={departmentName}
-            onChange={(e) => setDepartmentName(e.target.value)}
-            required
-          />
+          <input type="text" placeholder="Department Name"
+            value={departmentName} onChange={(e) => setDepartmentName(e.target.value)} required/>
           {errors.departmentName && (
             <span className="error">{errors.departmentName}</span>
           )}
 
-          {/* ✅ Joined Date Field */}
-          <input
-            type="date"
-            value={joinedDate}
-            onChange={(e) => setJoinedDate(e.target.value)}
-            required
-          />
+          {/* Joined Date Field */}
+          <input type="date" value={joinedDate}
+            onChange={(e) => setJoinedDate(e.target.value)} required/>
           {errors.joinedDate && <span className="error">{errors.joinedDate}</span>}
 
           {/* Status Dropdown */}

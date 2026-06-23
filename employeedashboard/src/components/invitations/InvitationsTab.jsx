@@ -55,22 +55,15 @@ function InvitationsTab() {
 
       {/* Create Invitation Form */}
       <form onSubmit={handleCreate}>
-        <input
-          type="email"
-          placeholder="User email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
+        <input type="email" placeholder="User email"
+          value={email} onChange={(e) => setEmail(e.target.value)} required/>
         <select value={role} onChange={(e) => setRole(e.target.value)}>
           <option value="user">User</option>
           <option value="admin">Admin</option>
           </select>
-        <input
-          type="date"
-          value={expiresAt}
-          onChange={(e) => setExpiresAt(e.target.value)}
-        />
+        <input type="date" value={expiresAt}
+          onChange={(e) => setExpiresAt(e.target.value)}/>
+          
         <button type="submit">Create Invitation</button>
       </form>
 

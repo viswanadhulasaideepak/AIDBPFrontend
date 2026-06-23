@@ -32,18 +32,9 @@ class DepartmentTransfer(Base):
     transferred_at = Column(DateTime, default=datetime.utcnow)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
     reason = Column(String, nullable=True)
-    # Relationships
     employee = relationship("Employee")
-    old_department = relationship(
-        "Department",
-        foreign_keys=[old_department_id]
-    )
-
-    new_department = relationship(
-        "Department",
-        foreign_keys=[new_department_id]
-    )
-
+    old_department = relationship("Department",foreign_keys=[old_department_id])
+    new_department = relationship("Department",foreign_keys=[new_department_id])
     company = relationship("Company")
 
 #-------------EmployeeModel-----------
@@ -54,11 +45,9 @@ class Employee(Base):
     name = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
     role = Column(String, nullable=False)
-
     department_id = Column(Integer, ForeignKey("departments.id"))
     joined_date = Column(DateTime, default=datetime.utcnow)
     status = Column(Enum(StatusEnum), default=StatusEnum.active, nullable=False)
-
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
     department_rel = relationship("Department", back_populates="employees")
     company = relationship("Company", back_populates="employees") 
@@ -91,25 +80,17 @@ class UserActivity(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
-
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
-
     last_login = Column(DateTime, nullable=True)
     last_logout = Column(DateTime, nullable=True)
     last_activity = Column(DateTime)
-    
     login_count = Column(Integer, default=0)
     is_online = Column(Boolean, default=False)
-
-
     browser = Column(String(255), nullable=True)
     ip_address = Column(String(100), nullable=True)
-
     device_hash = Column(String(64), nullable=True)
-
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
     user = relationship("User", back_populates="activity")
     company = relationship("Company", back_populates="activities")
     
@@ -141,11 +122,8 @@ class AttendanceAccessRequest(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
     admin_email = Column(String, nullable=False)
-    status = Column(
-        Enum(AttendanceAccessStatus),
-        default=AttendanceAccessStatus.pending,
-        nullable=False
-    )
+    status = Column(Enum(AttendanceAccessStatus),default=AttendanceAccessStatus.pending,
+        nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     approved_at = Column(DateTime, nullable=True)
     approved_by = Column(String, nullable=True)
@@ -210,7 +188,6 @@ class RoleChangeRequest(Base):
     status = Column(Enum(RoleChangeStatus), default=RoleChangeStatus.pending, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
-
     user = relationship("User", backref="role_requests")
 
 #------------------CompanyModel---------    
@@ -296,21 +273,9 @@ class ExportHistory(Base):
     __tablename__ = "export_history"
 
     id = Column(Integer, primary_key=True, index=True)
-
     exported_by = Column(String, nullable=False)
-
     data_type = Column(String, nullable=False)
     export_format = Column(String, nullable=False)
-
     exported_at = Column(DateTime, default=datetime.utcnow)
-
-    company_id = Column(
-        Integer,
-        ForeignKey("companies.id"),
-        nullable=False
-    )
-
-    company = relationship(
-        "Company",
-        back_populates="export_history"
-    )
+    company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
+    company = relationship("Company", back_populates="export_history")

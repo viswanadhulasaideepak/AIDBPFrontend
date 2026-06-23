@@ -58,9 +58,7 @@ useEffect(() => {
         .filter((n) => !n.is_read)
         .map((n) => api.put(`/notifications/${n.id}/read`))
     );
-
     toast.success("All notifications marked as read");
-
     await loadNotifications();
   } catch (error) {
     console.error(error);
@@ -72,9 +70,7 @@ useEffect(() => {
   const approveAttendance = async (requestId) => {
   try {
     await updateAttendanceAccessRequest(requestId, "approved");
-
     toast.success("Attendance Approved");
-
     await loadNotifications();
   } catch (err) {
     console.error(err);
@@ -86,9 +82,7 @@ useEffect(() => {
   const rejectAttendance = async (requestId) => {
   try {
     await updateAttendanceAccessRequest(requestId, "rejected");
-
     toast.success("Attendance Rejected");
-
     await loadNotifications();
   } catch (err) {
     console.error(err);
@@ -100,9 +94,7 @@ useEffect(() => {
   const approveLeave = async (requestId) => {
   try {
     await updateLeaveRequest(requestId, "approved");
-
     toast.success("Leave Approved");
-
     await loadNotifications();
   } catch (err) {
     console.error(err);
@@ -114,9 +106,7 @@ useEffect(() => {
   const rejectLeave = async (requestId) => {
   try {
     await updateLeaveRequest(requestId, "rejected");
-
     toast.success("Leave Rejected");
-
     await loadNotifications();
   } catch (err) {
     console.error(err);
@@ -195,14 +185,9 @@ useEffect(() => {
         <div className="user-info">
           <span className="user-name">{userName}</span>
           <div className="user-avatar">
-            <img
-              src="https://placehold.co"
-              alt="User Avatar"
-              onError={(e) => {
+            <img src="https://placehold.co" alt="User Avatar" onError={(e) => {
                 e.target.style.display = "none";
-                e.target.nextSibling.style.display = "flex";
-              }}
-            />
+                e.target.nextSibling.style.display = "flex";}}/>
             <div className="avatar-fallback">{initials}</div>
           </div>
         </div>

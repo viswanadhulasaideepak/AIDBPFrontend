@@ -109,13 +109,6 @@ def add_employee(
         
     elif new_emp.status.lower() == "inactive":
         attendance_status = "absent"
-        
-    '''attendance = Attendance(
-        employee_id=new_emp.id,
-        date=datetime.utcnow(),
-        status=attendance_status,
-        company_id=new_emp.company_id
-        )'''
 
 # Audit log only (no notification)
 
@@ -137,7 +130,6 @@ def add_employee(
     request_id=new_emp.id,
     type="employee"
 )
-
     
     return {
             "id": new_emp.id,
@@ -229,7 +221,6 @@ def update_employee(
     type="employee"
 )
 
-        
     return {
             "id": emp.id,
             "name": emp.name,
@@ -258,7 +249,6 @@ def delete_employee(
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
     
-    
     db.query(Attendance).filter(
         Attendance.employee_id == emp.id,
         Attendance.company_id == emp.company_id
@@ -285,7 +275,6 @@ def delete_employee(
     type="employee"
 )
 
-    
     return {"message": "Employee deleted successfully"} 
 
 # ---------------- Transfer Department ----------------
@@ -333,7 +322,6 @@ def transfer_department(
         db.refresh(employee)
 
         return result
-
     except Exception as e:
         db.rollback()
         traceback.print_exc()   # <-- prints full error in terminal
@@ -362,7 +350,6 @@ def get_department_transfer_history(
     )
 
     history = []
-
     for transfer in transfers:
 
         employee = db.query(models.Employee).filter(

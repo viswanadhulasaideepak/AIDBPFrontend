@@ -47,11 +47,8 @@ const AttendanceAdminPanel = () => {
   const approveRequest = async (id) => {
     try {
       setProcessingId(id);
-
       await updateAttendanceAccessRequest(id, "approved");
-
       toast.success("Attendance access approved.");
-
       loadAdminData();
     } catch (err) {
       toast.error(
@@ -68,11 +65,8 @@ const AttendanceAdminPanel = () => {
   const rejectRequest = async (id) => {
     try {
       setProcessingId(id);
-
       await updateAttendanceAccessRequest(id, "rejected");
-
       toast.success("Attendance access rejected.");
-
       loadAdminData();
     } catch (err) {
       toast.error(
@@ -89,11 +83,8 @@ const AttendanceAdminPanel = () => {
   const handleLeaveUpdate = async (id, status) => {
     try {
       setProcessingId(id);
-
       await updateLeaveRequest(id, status);
-
       toast.success(`Leave ${status} successfully.`);
-
       loadAdminData();
     } catch (err) {
       toast.error(
@@ -131,7 +122,7 @@ const AttendanceAdminPanel = () => {
 
   return (
     <>
-      {/* ================= ACCESS REQUESTS ================= */}
+      {/* --------------------- ACCESS REQUESTS ------------------- */}
 
       <div className="attendance-card">
         <h3>Attendance Access Requests</h3>
@@ -157,17 +148,13 @@ const AttendanceAdminPanel = () => {
                   <td>{req.status}</td>
 
                   <td>
-                    <button
-                      disabled={processingId === req.id}
-                      onClick={() => approveRequest(req.id)}
-                    >
+                    <button disabled={processingId === req.id}
+                      onClick={() => approveRequest(req.id)}>
                       Approve
                     </button>
 
-                    <button
-                      disabled={processingId === req.id}
-                      onClick={() => rejectRequest(req.id)}
-                    >
+                    <button disabled={processingId === req.id}
+                      onClick={() => rejectRequest(req.id)}>
                       Reject
                     </button>
                   </td>
@@ -178,7 +165,7 @@ const AttendanceAdminPanel = () => {
         )}
       </div>
 
-      {/* ================= LEAVE REQUESTS ================= */}
+      {/* -------------------- LEAVE REQUESTS -------------------- */}
 
       <div className="leave-card">
         <h3>Company Leave Requests</h3>
@@ -203,7 +190,6 @@ const AttendanceAdminPanel = () => {
               {leaveRequests.map((req) => (
                 <tr key={req.id}>
                   <td>{req.user?.username || "-"}</td>
-
                   <td>{req.leave_type}</td>
 
                   <td>
@@ -221,21 +207,13 @@ const AttendanceAdminPanel = () => {
                   <td>
                     {req.status === "pending" ? (
                       <>
-                        <button
-                          disabled={processingId === req.id}
-                          onClick={() =>
-                            handleLeaveUpdate(req.id, "approved")
-                          }
-                        >
+                        <button disabled={processingId === req.id}
+                          onClick={() => handleLeaveUpdate(req.id, "approved")}>
                           Approve
                         </button>
 
-                        <button
-                          disabled={processingId === req.id}
-                          onClick={() =>
-                            handleLeaveUpdate(req.id, "rejected")
-                          }
-                        >
+                        <button disabled={processingId === req.id}
+                          onClick={() => handleLeaveUpdate(req.id, "rejected")}>
                           Reject
                         </button>
                       </>
@@ -250,7 +228,7 @@ const AttendanceAdminPanel = () => {
         )}
       </div>
 
-      {/* ================= DOWNLOAD REPORTS ================= */}
+      {/* ----------------- DOWNLOAD REPORTS ---------------- */}
 
       <div className="download-actions">
         <button onClick={handleExcelDownload}>
