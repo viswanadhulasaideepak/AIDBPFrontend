@@ -31,7 +31,6 @@ const SignupForm = ({
       );
       toast.success("Invitation accepted successfully!");
       } else {
-        // Normal signup
         await signupUser(
           emailState,
           password,

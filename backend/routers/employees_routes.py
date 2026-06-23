@@ -324,7 +324,7 @@ def transfer_department(
         return result
     except Exception as e:
         db.rollback()
-        traceback.print_exc()   # <-- prints full error in terminal
+        traceback.print_exc()  
         raise HTTPException(status_code=400, detail=str(e))
     
     # ---------------- DEPARTMENT TRANSFER HISTORY ----------------
