@@ -1,0 +1,205 @@
+/* ================================
+   Account Suspended Page
+================================ */
+
+.account-suspended-container {
+    max-width: 750px;
+    margin: 40px auto;
+    padding: 30px;
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+    border-top: 6px solid #dc3545;
+}
+
+.account-header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.account-header h1 {
+    color: #dc3545;
+    margin-bottom: 10px;
+    font-size: 34px;
+}
+
+.account-header p {
+    color: #555;
+    font-size: 16px;
+    margin: 4px 0;
+}
+
+.account-section {
+    margin-top: 25px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.account-section h3 {
+    margin-bottom: 18px;
+    color: #333;
+    border-left: 5px solid #dc3545;
+    padding-left: 12px;
+}
+
+.account-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ececec;
+}
+
+.account-row:last-child {
+    border-bottom: none;
+}
+
+.account-label {
+    font-weight: 600;
+    color: #444;
+    width: 180px;
+}
+
+.account-value {
+    flex: 1;
+    color: #666;
+    word-break: break-word;
+}
+
+.status-badge {
+    display: inline-block;
+    background: #dc3545;
+    color: white;
+    padding: 6px 14px;
+    border-radius: 30px;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.request-textarea {
+    width: 100%;
+    min-height: 130px;
+    resize: vertical;
+    margin-top: 12px;
+    padding: 14px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 15px;
+    outline: none;
+    transition: .3s;
+}
+
+.request-textarea:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 6px rgba(13,110,253,.25);
+}
+
+.button-group {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 25px;
+    gap: 15px;
+}
+
+.submit-btn {
+    flex: 1;
+    background: #198754;
+    color: white;
+    border: none;
+    padding: 13px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    transition: .3s;
+}
+
+.submit-btn:hover:not(:disabled) {
+    background: #157347;
+}
+
+.submit-btn:disabled {
+    background: #8dc5a2;
+    cursor: not-allowed;
+}
+
+.logout-btn {
+    flex: 1;
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 13px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    transition: .3s;
+}
+
+.logout-btn:hover {
+    background: #bb2d3b;
+}
+
+.request-status {
+    margin-top: 18px;
+    padding: 15px;
+    border-radius: 8px;
+    background: #eaf4ff;
+    border-left: 5px solid #0d6efd;
+}
+
+.request-status h4 {
+    margin-bottom: 10px;
+    color: #0d6efd;
+}
+
+.pending {
+    color: #fd7e14;
+    font-weight: bold;
+}
+
+.approved {
+    color: #198754;
+    font-weight: bold;
+}
+
+.rejected {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.loading-box {
+    text-align: center;
+    padding: 80px;
+    font-size: 18px;
+    color: #666;
+}
+
+@media (max-width: 768px) {
+
+    .account-suspended-container {
+        margin: 20px;
+        padding: 20px;
+    }
+
+    .account-row {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .account-label {
+        width: 100%;
+    }
+
+    .button-group {
+        flex-direction: column;
+    }
+
+    .submit-btn,
+    .logout-btn {
+        width: 100%;
+    }
+
+}

@@ -5,6 +5,8 @@ import { AuthContext } from "../../auth/AuthContext";
 
 const Sidebar = () => {
   const { user, logout } = useContext(AuthContext);
+  const isSuspended = user?.status === "suspended";
+  const isDeactivated = user?.status === "deactivated";
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -25,8 +27,19 @@ const Sidebar = () => {
   ];
 
   return (
-    <aside className="sidebar">
-      <h2 className="sidebar-title">EEMS</h2>
+  <aside className="sidebar">
+    <h2 className="sidebar-title">EEMS</h2>
+
+    {isSuspended ? (
+      <ul className="sidebar-links">
+        <li>
+          <NavLink to="/account-suspended"
+            className={({ isActive }) => (isActive ? "active" : "")}>
+            🚫 Account Suspended
+          </NavLink>
+        </li>
+      </ul>
+    ) : (
       <ul className="sidebar-links">
         {menuItems
           .filter((item) => item.roles.includes(user?.role))
@@ -39,13 +52,13 @@ const Sidebar = () => {
             </li>
           ))}
       </ul>
+    )}
 
-      {/* Fixed logout button */}
-      <button className="logout-btn" onClick={handleLogout}>
-        🚪 Logout
-      </button>
-    </aside>
-  );
+    <button className="logout-btn" onClick={handleLogout}>
+      🚪 Logout
+    </button>
+  </aside>
+);
 };
 
 export default Sidebar;

@@ -7,11 +7,19 @@ from sqlalchemy import or_
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import datetime
 from database import get_db
-import schema, models, crud, database
+import schema, models, crud, database,auth
 from models import Invitation, InvitationStatus
-from auth import verify_password, create_token, hash_password, get_client_info, get_current_user
+from auth import (
+    verify_password,
+    create_token,
+    hash_password,
+    get_client_info,
+    get_current_user,
+    require_active_user
+)
 from routers.analytics_routes import router as analytics_router
 from routers.role_requests_routes import router as role_requests_router
+from routers.suspension_routes import router as suspension_router
 from routers import (
     employees_routes, departments_routes, attendance_routes, dashboard_routes,
     notifications_routes, auditlogs_routes, invitations_routes,  members_routes, 
@@ -28,6 +36,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+
 # ---------------- ROUTERS ----------------
 app.include_router(employees_routes.router)
 app.include_router(departments_routes.router)
@@ -43,6 +53,10 @@ app.include_router(reactivation_routes.router)
 app.include_router(leave_routes.router)
 app.include_router(activity_routes.router)
 app.include_router(export_routes.router)
+app.include_router(suspension_router)
+
+for route in app.routes:
+    print(route.path)
 
 
 # ---------------- FAKE API ----------------
@@ -68,6 +82,7 @@ models.Base.metadata.create_all(bind=database.engine)
         db.close()'''
 
 # ---------------- SEED FUNCTION ----------------
+from auth import hash_password
 import random
 
 def seed_data():
@@ -99,7 +114,7 @@ def seed_data():
     response = requests.get(FAKE_API_URL)
     users = response.json()
 
-    # Insert employees, departments, attendance, audit logs
+    # Insert employees + users
     for i, u in enumerate(users):
         company = companies[i % 2]  # alternate A/B
 
@@ -118,11 +133,22 @@ def seed_data():
             email=u["email"],
             department_id=dept.id,
             role="Employee",
-            status=random.choice(["active", "onleave", "inactive"]),
+            status=random.choice([models.UserStatus.active, models.UserStatus.suspended, models.UserStatus.deactivated]),
             company_id=company.id
         )
         db.add(emp)
         db.flush()
+
+        # Create matching User with default password "deepak"
+        new_user = models.User(
+            username=u["username"] if "username" in u else u["name"].replace(" ", "").lower(),
+            email=u["email"],
+            hashed_password=hash_password("deepak"),
+            role="user",
+            company_id=company.id,
+            status=models.UserStatus.active
+        )
+        db.add(new_user)
 
         att = models.Attendance(
             employee_id=emp.id,
@@ -140,10 +166,10 @@ def seed_data():
         )
         db.add(log)
 
-    # 
     db.commit()
     db.close()
     print(" Seed completed successfully!")
+
 
 # ---------------- STARTUP ----------------
 @app.on_event("startup")
@@ -216,12 +242,16 @@ def login(
         )
 
     return {
-        "token": token,
-        "id": user.id,
-        "email": user.email,
-        "role": user.role,
-        "company_id": user.company_id,
-        "status": user.status.value
+    "token": token,
+    "id": user.id,
+    "email": user.email,
+    "role": user.role,
+    "company_id": user.company_id,
+    "status": user.status.value,
+
+    "suspended_at": getattr(user, "suspended_at", None),
+    "suspended_by": getattr(user, "suspended_by", None),
+    "suspended_reason": getattr(user, "suspended_reason", None)
     }
     
  #----------------Logout--------------------

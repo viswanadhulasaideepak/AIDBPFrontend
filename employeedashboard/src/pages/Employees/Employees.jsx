@@ -5,8 +5,8 @@ import toast from "react-hot-toast";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import AddEmployeeForm from "./AddEmployeeForm";
 import EditEmployeeForm from "./EditEmployeeForm";
-import {fetchEmployees,fetchDepartments,transferDepartment,updateEmployee,deleteEmployee} from "../../services/api";
-
+import {fetchEmployees,fetchDepartments,transferDepartment,updateEmployee,
+  deleteEmployee,suspendUser,reinstateUser} from "../../services/api";
 import "./Employees.css";
 
 const Employees = () => {
@@ -199,6 +199,46 @@ const Employees = () => {
     }
   };
 
+//--------------- Suspend Employee--------------
+const handleSuspend = async (userId) => {
+  console.log("Suspend clicked");
+  console.log("Suspending user:", userId);
+  
+  const reason = prompt("Enter suspension reason");
+
+  if (!reason) return;
+
+  try {
+    await suspendUser(userId, reason);
+
+    toast.success("User suspended");
+  } catch (err) {
+    console.error(err);
+    toast.error("Suspension failed");
+  }
+};
+
+//----------------Reinstate Employee---------------------
+const handleReinstate = async (userId) => {
+  try {
+    await reinstateUser(userId);
+
+    const updated = employees.map((emp) =>
+      emp.id === userId
+        ? { ...emp, status: "active" }
+        : emp
+    );
+
+    setEmployees(updated);
+    setFilteredEmployees(updated);
+
+    toast.success("User reinstated");
+  } catch (err) {
+    console.error(err);
+    toast.error("Reinstatement failed");
+  }
+};  
+
   /* ---------------- PAGINATION ---------------- */
   const indexOfLast = currentPage * employeesPerPage;
   const indexOfFirst = indexOfLast - employeesPerPage;
@@ -305,18 +345,33 @@ const Employees = () => {
                     </td>
                     <td>
                       <button onClick={() => setEditEmployee(emp)}>
-                        Edit
+                       Edit
                       </button>
 
                       <button onClick={() => {
                         setSelectedEmployee(emp);
                         setSelectedDepartment("");
                         setTransferReason("");
-                        setShowTransferModal(true);}}>
+                        setShowTransferModal(true);
+                      }}>
                        Transfer
                       </button>
+                      {emp.status !== "suspended" ? (
+                      <button onClick={() => {
+                        console.log("EMP:", emp);
+                        handleSuspend(emp.id);
+                        }}>
+                        Suspend
+                      </button>
+                      ) : (
+                      <button className="reinstate-btn"
+                       onClick={() => handleReinstate(emp.id)}>
+                        Reinstate
+                      </button>
+                    )}
+
                       <button onClick={() => handleDeleteEmployee(emp.id)}>
-                       Delete
+                        Delete
                       </button>
                     </td>
                   </tr>

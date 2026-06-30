@@ -4,68 +4,128 @@ import models
 from database import get_db
 from models import Notification, AuditLog
 from pydantic import BaseModel
-from auth import get_current_user
+from auth import get_current_user,require_active_user
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
 
-# ---------------- GET NOTIFICATIONS ----------------
 @router.get("/")
 def get_notifications(
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_active_user)
 ):
     notes = (
-    db.query(Notification)
-    .filter(
-        Notification.company_id == current_user["company_id"],
-        Notification.recipient_email == current_user["email"]
+        db.query(Notification)
+        .filter(
+            Notification.company_id == current_user["company_id"],
+            Notification.recipient_email == current_user["email"]
+        )
+        .order_by(Notification.created_at.desc())
+        .all()
     )
-    .order_by(Notification.created_at.desc())
-    .all()
-)
 
     result = []
-    
+
     for n in notes:
-        
+
         item = {
-        "id": n.id,
-        "message": n.message,
-        "recipient_email": n.recipient_email,
-        "is_read": n.is_read,
-        "created_at": n.created_at,
-        "company_id": n.company_id,
-        "type": n.type,
-        "request_id": n.request_id
+            "id": n.id,
+            "message": n.message,
+            "recipient_email": n.recipient_email,
+            "is_read": n.is_read,
+            "created_at": n.created_at,
+            "company_id": n.company_id,
+            "type": n.type,
+            "request_id": n.request_id
         }
 
+        # ---------------- Attendance ----------------
         if n.type == "attendance" and n.request_id:
-            
+
             req = db.query(models.AttendanceAccessRequest).filter(
                 models.AttendanceAccessRequest.id == n.request_id
-                ).first()
-        
+            ).first()
+
             if req:
                 user = db.query(models.User).filter(
                     models.User.id == req.user_id
-                    ).first()
-            
+                ).first()
+
                 if user:
                     item["user_name"] = user.username
                     item["user_email"] = user.email
                     item["request_timestamp"] = req.created_at
                     item["status"] = req.status
-                    
+
+        # ---------------- Leave ----------------
+        elif n.type == "leave" and n.request_id:
+
+            req = db.query(models.LeaveRequest).filter(
+                models.LeaveRequest.id == n.request_id
+            ).first()
+
+            if req:
+                user = db.query(models.User).filter(
+                    models.User.id == req.user_id
+                ).first()
+
+                if user:
+                    item["user_name"] = user.username
+                    item["user_email"] = user.email
+                    item["leave_type"] = req.leave_type
+                    item["status"] = req.status
+
+        # ---------------- Reinstatement ----------------
+        elif n.type == "reinstatement" and n.request_id:
+
+            req = db.query(models.ReinstatementRequest).filter(
+                models.ReinstatementRequest.id == n.request_id
+            ).first()
+
+            if req:
+                user = db.query(models.User).filter(
+                    models.User.id == req.user_id
+                ).first()
+
+                if user:
+                    item["user_name"] = user.username
+                    item["user_email"] = user.email
+                    item["reason"] = req.request_reason
+                    item["status"] = req.status
+                    item["submitted_at"] = req.submitted_at
+
         result.append(item)
-                
+
     return result
 
+#-------------------Mark Notifications All---------------------
+
+@router.put("/read-all")
+def mark_all_notifications_as_read(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_active_user)
+):
+    updated = db.query(Notification).filter(
+        Notification.company_id == current_user["company_id"],
+        Notification.recipient_email == current_user["email"],
+        Notification.is_read == False
+    ).update(
+        {"is_read": True},
+        synchronize_session=False
+    )
+
+    db.commit()
+
+    return {
+        "message": f"{updated} notifications marked as read"
+    }
+    
 # ---------------- MARK AS READ ----------------
+
 @router.put("/{id}/read")
 def mark_notification_as_read(
     id: int,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_active_user)
 ):
     print("========== MARK READ ==========")
     print("MARK READ CLICKED")
@@ -112,7 +172,7 @@ class NotificationCreate(BaseModel):
 def add_notification(
     request: NotificationCreate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_active_user)
 ):
     note = Notification(
         message=request.message,
@@ -143,22 +203,3 @@ def add_notification(
         "company_id": note.company_id
     }
     
-@router.put("/read-all")
-def mark_all_notifications_as_read(
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
-):
-    notifications = db.query(Notification).filter(
-        Notification.company_id == current_user["company_id"],
-        Notification.recipient_email == current_user["email"],
-        Notification.is_read == False
-    ).all()
-
-    for note in notifications:
-        note.is_read = True
-
-    db.commit()
-
-    return {
-        "message": "All notifications marked as read."
-    }

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 import crud, models
-from auth import get_current_user
+from auth import get_current_user, require_admin
 from pydantic import BaseModel
 from database import get_db
 
@@ -15,10 +15,8 @@ class DepartmentRequest(BaseModel):
 @router.get("/")
 def read_departments(
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
-    if current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Not authorized")
 
     departments = crud.get_departments(db, current_user["company_id"])
 
@@ -37,10 +35,19 @@ def read_departments(
 def add_department(
     request: DepartmentRequest,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
-    if current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    existing = db.query(models.Department).filter(
+    models.Department.name == request.name.strip(),
+    models.Department.company_id == current_user["company_id"]
+    ).first()
+    
+    if existing:
+        raise HTTPException(
+        status_code=400,
+        detail="Department already exists"
+        )
 
     return crud.create_department(db, request.name, current_user["company_id"])
 
@@ -50,7 +57,7 @@ def add_department(
 @router.get("/list")
 def list_departments(
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
     departments = crud.get_departments(db, current_user["company_id"])
 
@@ -61,13 +68,8 @@ def list_departments(
 @router.get("/transfer-history")
 def get_department_transfer_history(
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
-    if current_user["role"] != "admin":
-        raise HTTPException(
-            status_code=403,
-            detail="Not authorized"
-        )
 
     history = (
         db.query(models.DepartmentTransfer)
@@ -81,9 +83,18 @@ def get_department_transfer_history(
     return [
         {
             "id": record.id,
-            "employee_name": record.employee.name,
-            "old_department": record.old_department.name,
-            "new_department": record.new_department.name,
+            "employee_name": (
+                record.employee.name
+                if record.employee
+                else "Deleted Employee"),
+            "old_department": (
+                record.old_department.name
+                if record.old_department
+                else "Deleted Department"),
+            "new_department": (
+                record.new_department.name
+                if record.new_department
+                else "Deleted Department"),
             "transferred_by": record.transferred_by,
             "reason": record.reason,
             "transferred_at": record.transferred_at,

@@ -1,11 +1,22 @@
 from sqlalchemy.orm import Session
 from datetime import datetime
 import models
-from models import Notification, InvitationStatus, UserStatus, ReactivationStatus,LeaveRequest,LeaveStatus,LeaveType
+from models import (
+    Notification,
+    InvitationStatus,
+    UserStatus,
+    ReactivationStatus,
+    LeaveRequest,
+    LeaveStatus,
+    LeaveType,
+    ReinstatementRequest,
+    ReinstatementStatus,
+    ExportHistory
+)
 import uuid
 from models import Invitation, User, ReactivationRequest
 from hashlib import sha256
-from models import ExportHistory
+
 
 # ---------------- EMPLOYEES ----------------
 def get_employees(db: Session, company_id: int):
@@ -1058,6 +1069,113 @@ def deactivate_user(db: Session, user_id: int, company_id: int, admin_email: str
         )
     return user
 
+#---------------Suspend User-----------------------
+
+def suspend_user(
+    db: Session,
+    user_id: int,
+    company_id: int,
+    admin_email: str,
+    reason: str
+):
+    print("======== SUSPEND DEBUG ========")
+    print("User ID:", user_id)
+    print("Company ID:", company_id)
+
+    user = db.query(User).filter(
+        User.id == user_id,
+        User.company_id == company_id
+    ).first()
+
+    print("Found User:", user)
+
+    if user:
+        print("Email:", user.email)
+        print("Role:", user.role)
+        print("Company:", user.company_id)
+
+    print("==============================")
+
+    if not user:
+        return None
+
+    user.status = UserStatus.suspended
+    user.suspended_by = admin_email
+    user.suspended_reason = None
+    user.suspended_at = datetime.utcnow()
+
+    db.commit()
+    db.refresh(user)
+
+    # Notification to suspended user
+    create_notification(
+        db=db,
+        message=f"Your account has been suspended. Reason: {reason}",
+        recipient_email=user.email,
+        company_id=company_id,
+        type="suspension"
+    )
+
+    # Audit
+    create_audit_log(
+        db=db,
+        user_name=admin_email,
+        action=(
+            "Admin Suspended"
+            if user.role.lower() == "admin"
+            else "User Suspended"
+        ),
+        related_user=user.email,
+        company_id=company_id,
+        details=reason
+    )
+
+    return user
+
+#--------------------Reinstate User--------------------
+
+def reinstate_user(
+    db: Session,
+    user_id: int,
+    company_id: int,
+    admin_email: str
+):
+    user = db.query(User).filter(
+        User.id == user_id,
+        User.company_id == company_id
+    ).first()
+
+    if not user:
+        return None
+
+    user.status = UserStatus.active
+
+    user.suspended_by = None
+    user.suspended_at = None
+    user.suspended_reason = None
+
+    db.commit()
+    db.refresh(user)
+
+    create_notification(
+        db=db,
+        message="Your account has been reinstated.",
+        recipient_email=user.email,
+        company_id=company_id,
+        type="reinstatement"
+    )
+
+    create_audit_log(
+        db=db,
+        user_name=admin_email,
+        action="User Reinstated",
+        related_user=user.email,
+        company_id=company_id
+    )
+
+    return user
+#-----------------Reactivate User-------------------
+
 def reactivate_user(db: Session, user_id: int, company_id: int):
     user = db.query(User).filter(User.id == user_id, User.company_id == company_id).first()
     if user:
@@ -1111,6 +1229,7 @@ def create_reactivation_request(
 
 def get_reactivation_requests(db: Session, company_id: int):
     return db.query(ReactivationRequest).filter(ReactivationRequest.company_id == company_id).all()
+    
 
 # ---------------- UPDATE REACTIVATION REQUEST ----------------
 def update_reactivation_request(
@@ -1177,6 +1296,221 @@ def update_reactivation_request(
     db.refresh(req)
 
     return req
+
+#-------------Reinstatement Request------------------------
+
+def create_reinstatement_request(
+    db: Session,
+    user_id: int,
+    company_id: int,
+    reason: str
+):
+    user = db.query(User).filter(
+        User.id == user_id,
+        User.company_id == company_id
+    ).first()
+
+    if not user:
+        return None
+
+    existing = db.query(
+        ReinstatementRequest
+    ).filter(
+        ReinstatementRequest.user_id == user_id,
+        ReinstatementRequest.status == ReinstatementStatus.pending
+    ).first()
+
+    if existing:
+        return existing
+
+    request = ReinstatementRequest(
+        user_id=user_id,
+        company_id=company_id,
+        request_reason=reason,
+        status=ReinstatementStatus.pending
+    )
+
+    db.add(request)
+    db.commit()
+    db.refresh(request)
+
+    # Notify suspension admin
+    admins = db.query(User).filter(
+        User.company_id == company_id,
+        User.role == "admin"
+    ).all()
+
+    for admin in admins:
+
+        create_notification(
+            db=db,
+            message=(
+                f"{user.username} submitted "
+                f"a reinstatement request."
+            ),
+            recipient_email=admin.email,
+            company_id=company_id,
+            request_id=request.id,
+            type="reinstatement"
+        )
+
+    create_audit_log(
+        db=db,
+        user_name=user.email,
+        action="Reinstatement Request Submitted",
+        related_user=user.email,
+        company_id=company_id
+    )
+
+    return request
+
+def get_reinstatement_requests(
+    db: Session,
+    company_id: int
+):
+   return (
+    db.query(ReinstatementRequest)
+    .filter(
+        ReinstatementRequest.company_id == company_id,
+        ReinstatementRequest.status == ReinstatementStatus.pending
+    )
+    .order_by(ReinstatementRequest.submitted_at.desc())
+    .all()
+)
+   
+#--------------Get My Reinstatement Request-------------------
+
+def get_my_reinstatement_request(
+    db: Session,
+    user_id: int,
+    company_id: int
+):
+    return (
+        db.query(ReinstatementRequest)
+        .filter(
+            ReinstatementRequest.user_id == user_id,
+            ReinstatementRequest.company_id == company_id
+        )
+        .order_by(ReinstatementRequest.submitted_at.desc())
+        .first()
+    )    
+    
+#--------------Update Reinstatement-------------------    
+    
+def update_reinstatement_request(
+    db: Session,
+    request_id: int,
+    status: ReinstatementStatus,
+    company_id: int,
+    reviewed_by: str,
+    admin_comment: str | None = None
+):
+    request = db.query(
+        ReinstatementRequest
+    ).filter(
+        ReinstatementRequest.id == request_id,
+        ReinstatementRequest.company_id == company_id
+    ).first()
+
+    if not request:
+        return None
+
+    request.status = status
+    request.reviewed_at = datetime.utcnow()
+    request.reviewed_by = reviewed_by
+    request.admin_comment = admin_comment
+
+    user = db.query(User).filter(
+        User.id == request.user_id,
+        User.company_id == company_id
+    ).first()
+
+    if not user:
+        return None
+
+    # APPROVE
+    if status == ReinstatementStatus.approved:
+
+        user.status = UserStatus.active
+        user.suspended_by = None
+        user.suspended_at = None
+        user.suspended_reason = None
+
+        create_audit_log(
+            db=db,
+            user_name=reviewed_by,
+            action="Reinstatement Approved",
+            related_user=user.email,
+            company_id=company_id
+        )
+
+        create_notification(
+            db=db,
+            message="Your reinstatement request was approved.",
+            recipient_email=user.email,
+            company_id=company_id,
+            type="reinstatement"
+        )
+
+    # REJECT
+    elif status == ReinstatementStatus.rejected:
+
+        create_audit_log(
+            db=db,
+            user_name=reviewed_by,
+            action="Reinstatement Rejected",
+            related_user=user.email,
+            company_id=company_id
+        )
+
+        create_notification(
+            db=db,
+            message="Your reinstatement request was rejected.",
+            recipient_email=user.email,
+            company_id=company_id,
+            type="reinstatement"
+        )
+
+    db.commit()
+    db.refresh(request)
+
+    return request
+
+#-----------------Approve Reinstatement---------------
+
+def approve_reinstatement(
+    db: Session,
+    request_id: int,
+    company_id: int,
+    approved_by: str,
+    comment: str | None = None
+):
+    return update_reinstatement_request(
+        db=db,
+        request_id=request_id,
+        status=ReinstatementStatus.approved,
+        company_id=company_id,
+        reviewed_by=approved_by,
+        admin_comment=comment
+    )
+
+#-------------Reject Reinstatement---------------
+
+def reject_reinstatement(
+    db: Session,
+    request_id: int,
+    company_id: int,
+    rejected_by: str,
+    comment: str | None = None
+):
+    return update_reinstatement_request(
+        db=db,
+        request_id=request_id,
+        status=ReinstatementStatus.rejected,
+        company_id=company_id,
+        reviewed_by=rejected_by,
+        admin_comment=comment
+    )
 
 #----------------- DATA EXPORT CENTER--------------------------
 

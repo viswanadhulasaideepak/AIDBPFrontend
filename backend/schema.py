@@ -182,6 +182,7 @@ class InvitationOut(BaseModel):
 # ---------------- User Status ----------------
 class UserStatus(str, Enum):
     active = "active"
+    suspended = "suspended"
     deactivated = "deactivated"
 
 class UserOut(BaseModel):
@@ -191,9 +192,17 @@ class UserOut(BaseModel):
     role: str
     status: UserStatus
     company_id: int
+    
+    suspended_at: datetime | None = None
+    suspended_by: str | None = None
+    suspended_reason: str | None = None
+
 
     class Config:
         orm_mode = True
+        
+class SuspensionRequest(BaseModel):
+    reason: str        
         
 class UserActivityOut(BaseModel):
     user_id: int
@@ -246,6 +255,7 @@ class ReactivationStatus(str, Enum):
     approved = "approved"
     rejected = "rejected"
 
+
 class ReactivationRequestCreate(BaseModel):
     message: str | None=None
 
@@ -263,6 +273,54 @@ class ReactivationRequestOut(BaseModel):
 
     class Config:
         orm_mode = True
+        
+ #-----------Reinstatement Request------------
+ 
+class ReinstatementStatus(str, Enum):
+    pending = "pending"
+    approved = "approved"
+    rejected = "rejected"
+    
+class ReinstatementRequestCreate(BaseModel):
+    reason: str
+    
+class ReinstatementReview(BaseModel):
+    admin_comment: str | None = None
+    
+class ReinstatementRequestOut(BaseModel):
+    id: int
+    user_id: int
+    company_id: int
+
+    request_reason: str
+    
+    status: ReinstatementStatus
+    submitted_at: datetime
+    reviewed_at: datetime | None = None
+
+    reviewed_by: str | None = None
+    admin_comment: str | None = None
+
+    class Config:
+        orm_mode = True     
+        
+#--------------Suspend User Request--------------------        
+        
+class SuspendUserRequest(BaseModel):
+    reason: str        
+        
+  #--------Account Status Out------------
+        
+class AccountStatusOut(BaseModel):
+    status: str
+
+    suspended_at: datetime | None = None
+
+    suspended_by: str | None = None
+    suspensded_reason: str | None = None
+    deactivated_by: str | None = None
+    deactivated_reason: str | None = None           
+                
 
 class AttendanceAccessStatus(str, Enum):
     pending = "pending"

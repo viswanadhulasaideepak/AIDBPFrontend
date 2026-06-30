@@ -6,7 +6,12 @@ from datetime import datetime
 from openpyxl import Workbook
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-from auth import get_current_user
+from auth import (
+    get_current_user,
+    require_active_user,
+    require_admin,
+    require_suspended_user
+)
 from database import get_db
 import crud,models
 from models import AuditLog
@@ -17,7 +22,7 @@ router = APIRouter(prefix="/attendance", tags=["Attendance"])
 @router.get("/access-status")
 def attendance_access_status(
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_active_user)
 ):
 
     print("Current User:", current_user)
@@ -54,7 +59,7 @@ def attendance_access_status(
 def add_attendance(
     status: str,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_active_user)
     ):
     
     if not current_user.get("company_id"):
@@ -89,13 +94,8 @@ def add_attendance(
 @router.get("/access-requests")
 def get_pending_requests(
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
-):
-    if current_user["role"] != "admin":
-        raise HTTPException(
-            status_code=403,
-            detail="Only admin can view attendance requests."
-        )
+    current_user: dict = Depends(require_admin)
+    ):
 
     requests = crud.get_pending_attendance_access_requests(
         db,
@@ -109,15 +109,8 @@ def update_attendance_access(
     request_id: int,
     status: str,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
-):
-
-    # Only admins can approve/reject
-    if current_user["role"] != "admin":
-        raise HTTPException(
-            status_code=403,
-            detail="Only admin can approve attendance requests."
-        )
+    current_user: dict = Depends(require_admin)
+    ):
 
     # Validate status
     if status not in ["approved", "rejected"]:
@@ -160,7 +153,7 @@ def update_attendance_access(
 @router.post("/check-in")
 def check_in(
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_active_user)
 ):
 
     if not crud.is_attendance_access_approved(
@@ -219,7 +212,7 @@ def check_in(
 @router.post("/check-out")
 def check_out(
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_active_user)
 ):
 
     if not crud.is_attendance_access_approved(
@@ -306,7 +299,7 @@ def today(
 @router.get("/history")
 def history(
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_active_user)
 ):
 
     if not crud.is_attendance_access_approved(
@@ -339,7 +332,7 @@ def history(
 @router.get("/report")
 def get_attendance_report(
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_active_user)
 ):
     if not current_user.get("company_id"):
         raise HTTPException(status_code=401, detail="Company not found in token")
@@ -379,10 +372,8 @@ def get_attendance_report(
 @router.get("/report/excel")
 def get_attendance_report_excel(
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
-):
-    if current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Only Admins can export Excel reports")
+    current_user: dict = Depends(require_admin)
+    ):
 
     records = crud.get_attendance(db, current_user["company_id"])
     records = sorted(records, key=lambda r: r.date)
@@ -410,11 +401,8 @@ def get_attendance_report_excel(
 @router.get("/report/pdf")
 def get_attendance_report_pdf(
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
-):
-    if current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Only Admins can export Excel reports")
-
+    current_user: dict = Depends(require_admin)
+    ):
     records = crud.get_attendance(db, current_user["company_id"])
     records = sorted(records, key=lambda r: r.date)
 

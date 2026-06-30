@@ -158,10 +158,13 @@ const Login = () => {
       localStorage.setItem("company_id", data.company_id);
 
       // Redirect based on status
-      if (data.status === "deactivated") {
+      if (data.status === "suspended") {
+        navigate("/account-suspended");
+      }
+      else if (data.status === "deactivated") {
         navigate("/account-deactivated");
-      } else {
-        toast.success("Login successful!");
+      }
+      else {
         navigate("/dashboard");
       }
     } catch (err) {
@@ -234,7 +237,7 @@ const Login = () => {
                 <label>Password</label>
                 <div className="input-field">
                   <FaLock className="icon" />
-                  <input type="password" placeholder="Enter password"
+                  <input type="password" placeholder="Enter password"  maxLength={72}
                     value={password} onChange={(e) => setPassword(e.target.value)} required />
                 </div>
               </div>

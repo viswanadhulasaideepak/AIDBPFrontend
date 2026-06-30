@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 import crud
 import database
-from auth import get_current_user
+from auth import get_current_user, require_active_user,require_admin
 from models import (Employee, RoleChangeRequest, RoleChangeStatus, StatusEnum)
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
@@ -11,14 +11,8 @@ router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 @router.get("/stats")
 def get_dashboard_stats(
     db: Session = Depends(database.get_db),
-    current_user: dict = Depends(get_current_user),
-):
-    # ---------------- Authorization ----------------
-    if current_user["role"] != "admin":
-        raise HTTPException(
-            status_code=403,
-            detail="Not authorized"
-        )
+    current_user: dict = Depends(require_admin)
+    ):
 
     company_id = current_user.get("company_id")
 
@@ -32,12 +26,15 @@ def get_dashboard_stats(
     employees = crud.get_employees(db, company_id)
 
     total_employees = len(employees)
-
     active_employees = sum(
         1
-        for emp in employees
-        if emp.status == StatusEnum.active
+    for emp in employees
+    if (
+        emp.status == StatusEnum.active
+        or str(emp.status).lower() == "active"
+        or getattr(emp.status, "value", "") == "active"
     )
+)
 
     # ---------------- Departments ----------------
     departments = crud.get_departments(db, company_id)
@@ -45,7 +42,6 @@ def get_dashboard_stats(
 
     # ---------------- Attendance ----------------
     attendance_records = crud.get_attendance(db, company_id)
-
     attendance_by_date = {}
 
     for record in attendance_records:
@@ -58,12 +54,13 @@ def get_dashboard_stats(
                 "leave": 0,
                 "absent": 0,
             }
+            
+        status = record.status.lower()    
 
         if record.status in attendance_by_date[date]:
-            attendance_by_date[date][record.status] += 1
+            attendance_by_date[date][status] += 1
 
     total_days = len(attendance_by_date)
-
     total_possible = total_days * total_employees
 
     total_present = sum(
@@ -107,11 +104,15 @@ def get_dashboard_stats(
         .all()
     )
 
-    status_map = {
-        "active": 0,
-        "inactive": 0,
-        "onleave": 0,
-    }
+    status_map = {}
+
+    for status, count in status_distribution:
+        key = (
+            status.value
+            if hasattr(status, "value")
+            else str(status)
+        )
+        status_map[key] = count
 
     for status, count in status_distribution:
 
@@ -124,18 +125,11 @@ def get_dashboard_stats(
         status_map[key] = count
 
     status_data = [
-        {
-            "status": "active",
-            "count": status_map["active"],
-        },
-        {
-            "status": "inactive",
-            "count": status_map["inactive"],
-        },
-        {
-            "status": "onleave",
-            "count": status_map["onleave"],
-        },
+    {
+        "status": k,
+        "count": v
+    }
+    for k, v in status_map.items()
     ]
 
     # ---------------- Pending Role Requests ----------------

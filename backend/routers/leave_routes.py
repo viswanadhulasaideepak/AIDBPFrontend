@@ -2,11 +2,26 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 import models
 import crud
-from auth import get_current_user
+from auth import get_current_user, require_active_user
 from database import get_db
+from auth import require_admin
+from models import UserStatus
 from schema import (LeaveRequestCreate, LeaveRequestUpdate)
 
 router = APIRouter( prefix="/leave",tags=["Leave Management"])
+
+def check_user_not_suspended(current_user):
+    if current_user.get("status") == UserStatus.suspended:
+        raise HTTPException(
+            status_code=403,
+            detail="Account suspended. Access denied."
+        )
+
+    if current_user.get("status") == UserStatus.deactivated:
+        raise HTTPException(
+            status_code=403,
+            detail="Account deactivated. Access denied."
+        )
 
 #--------------- USER SUBMIT LEAVE REQUEST-------------------------
 
@@ -14,8 +29,9 @@ router = APIRouter( prefix="/leave",tags=["Leave Management"])
 def submit_leave_request(
     leave: LeaveRequestCreate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_active_user)
 ):
+    check_user_not_suspended(current_user)
 
     request = crud.create_leave_request(
         db=db,
@@ -27,20 +43,7 @@ def submit_leave_request(
         reason=leave.reason
     )
     
-    admins = db.query(models.User).filter(
-        models.User.company_id == current_user["company_id"],
-        models.User.role == "admin"
-        ).all()
     
-    for admin in admins:
-        crud.create_notification(
-        db=db,
-        message=f"{current_user['email']} submitted a leave request.",
-        recipient_email=admin.email,
-        company_id=current_user["company_id"],
-        request_id=request.id,
-        type="leave"
-    )
 
     return {
         "message": "Leave request submitted successfully.",
@@ -52,8 +55,9 @@ def submit_leave_request(
 @router.get("/my")
 def get_my_leave_requests(
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_active_user)
 ):
+    check_user_not_suspended(current_user)
 
     requests = crud.get_my_leave_requests(
         db=db,
@@ -67,14 +71,9 @@ def get_my_leave_requests(
 @router.get("/company")
 def get_company_leave_requests(
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
-
-    if current_user["role"] != "admin":
-        raise HTTPException(
-            status_code=403,
-            detail="Only admins can view leave requests."
-        )
+    check_user_not_suspended(current_user)
 
     requests = crud.get_company_leave_requests(
         db=db,
@@ -90,14 +89,9 @@ def update_leave_request(
     request_id: int,
     leave: LeaveRequestUpdate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
-
-    if current_user["role"] != "admin":
-        raise HTTPException(
-            status_code=403,
-            detail="Only admins can approve/reject leave requests."
-        )
+    check_user_not_suspended(current_user)
 
     request = crud.update_leave_request(
         db=db,

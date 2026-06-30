@@ -6,6 +6,7 @@ from schema import RoleChangeRequestCreate, RoleChangeRequestOut, RoleChangeRequ
 from auth import verify_user_identity, get_current_user
 from typing import List
 import models
+from auth import require_admin
 
 router = APIRouter(prefix="/role-change-request", tags=["Role Change Requests"])
 
@@ -14,7 +15,7 @@ router = APIRouter(prefix="/role-change-request", tags=["Role Change Requests"])
 def submit_role_change_request(
     request: RoleChangeRequestCreate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
     # Only Users can request role change
     user = db.query(User).filter(User.email == current_user["email"]).first()
@@ -23,6 +24,17 @@ def submit_role_change_request(
 
     # Verify password
     verify_user_identity(db, user.email, request.current_password)
+    
+    existing = db.query(RoleChangeRequest).filter(
+    RoleChangeRequest.user_id == user.id,
+    RoleChangeRequest.status == RoleChangeStatus.pending
+).first()
+
+    if existing:
+        raise HTTPException(
+        status_code=400,
+        detail="Pending role change request already exists"
+    )
 
     # Create request entry
     role_request = RoleChangeRequest(
@@ -52,7 +64,7 @@ def submit_role_change_request(
 @router.get("/", response_model=List[RoleChangeRequestOut])
 def get_role_change_requests(
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
     # Only Admins can view requests
     admin = db.query(User).filter(User.email == current_user["email"]).first()
@@ -63,11 +75,6 @@ def get_role_change_requests(
     RoleChangeRequest.status == RoleChangeStatus.pending,
     User.company_id == admin.company_id
     ).all()
-    
-    pending_requests = db.query(models.RoleChangeRequest).filter(
-        models.RoleChangeRequest.company_id == current_user["company_id"],
-        models.RoleChangeRequest.status == models.RoleChangeStatus.pending
-        ).count()
 
     return requests
 
@@ -78,18 +85,27 @@ def update_role_change_request(
     request_id: int,
     update: RoleChangeRequestUpdate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
     # Only Admins can approve/reject
     admin = db.query(User).filter(User.email == current_user["email"]).first()
     if not admin or admin.role != "admin":
         raise HTTPException(status_code=403, detail="Only Admin accounts can approve/reject requests")
 
-    role_request = db.query(RoleChangeRequest).filter(RoleChangeRequest.id == request_id).first()
+    role_request = db.query(RoleChangeRequest).filter(
+        RoleChangeRequest.id == request_id,
+        RoleChangeRequest.company_id == current_user["company_id"]
+        ).first()
+    
     if not role_request:
         raise HTTPException(status_code=404, detail="Request not found")
 
-    role_request.status = update.status
+    if role_request.status != RoleChangeStatus.pending:
+        raise HTTPException(
+        status_code=400,
+        detail="Request already processed"
+    )
+        
     db.commit()
     db.refresh(role_request)
 

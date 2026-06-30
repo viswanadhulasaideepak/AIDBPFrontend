@@ -3,7 +3,11 @@ from sqlalchemy.orm import Session
 import crud, models
 import traceback
 from database import get_db
-from auth import get_current_user
+from auth import (
+    get_current_user,
+    require_active_user,
+    require_admin
+)
 from models import Department, AuditLog, Attendance
 from typing import Optional
 from datetime import datetime
@@ -35,10 +39,9 @@ class EmployeeUpdateRequest(BaseModel):
 @router.get("/")
 def read_employees(
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
     ):
-    if current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Not authorized")
+    
     employees = crud.get_employees(db, current_user["company_id"])
     print("CURRENT USER:", current_user)
     return [
@@ -60,10 +63,9 @@ def read_employees(
 def add_employee(
     request: EmployeeRequest,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
     ):
-    if current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Not authorized")
+    
     department = db.query(Department).filter(
         Department.name == request.department_name,
         Department.company_id == current_user["company_id"]
@@ -148,11 +150,8 @@ def update_employee(
     id: int,
     request: EmployeeUpdateRequest,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
     ):
-    
-    if current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Not authorized")
     
     emp = crud.get_employee_by_id(db, id, current_user["company_id"])
     
@@ -238,11 +237,8 @@ def update_employee(
 def delete_employee(
     id: int,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
     ):
-    
-    if current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Not authorized")
     
     emp = crud.get_employee_by_id(db, id, current_user["company_id"])    
     
@@ -284,15 +280,9 @@ def transfer_department(
     employee_id: int,
     transfer: DepartmentTransferRequest,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
     print("DATABASE PATH:", db.bind.url.database)
-    # ---------------- AUTHORIZATION ----------------
-    if current_user["role"] != "admin":
-        raise HTTPException(
-            status_code=403,
-            detail="Only admins can transfer employees."
-        )
 
     # ---------------- GET EMPLOYEE ----------------
     employee = crud.get_employee_by_id(
@@ -332,13 +322,8 @@ def transfer_department(
 @router.get("/transfer/history")
 def get_department_transfer_history(
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
-):
-    if current_user["role"] != "admin":
-        raise HTTPException(
-            status_code=403,
-            detail="Only admins can view transfer history."
-        )
+    current_user: dict = Depends(require_admin)
+    ):
 
     transfers = (
         db.query(models.DepartmentTransfer)

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 import crud
 import database
 import schema
-from auth import get_current_user
+from auth import get_current_user,require_active_user,require_admin
 
 router = APIRouter(
     prefix="/activity",
@@ -18,7 +18,7 @@ router = APIRouter(
 )
 def company_user_activity(
     db: Session = Depends(database.get_db),
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_admin),
 ):
     return crud.get_company_user_activity(
         db=db,
@@ -33,7 +33,7 @@ def company_user_activity(
 )
 def activity_history(
     db: Session = Depends(database.get_db),
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_admin),
 ):
     return crud.get_user_activity_history(
         db=db,

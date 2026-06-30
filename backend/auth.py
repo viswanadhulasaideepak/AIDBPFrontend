@@ -1,93 +1,274 @@
 import os
 from jose import jwt, JWTError
 from datetime import datetime, timedelta
-from fastapi import Depends, HTTPException
+
+from fastapi import Depends, HTTPException, Request
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
-from fastapi import Request
-
-from models import User
+from database import get_db
+from models import User, UserStatus
 
 # ---------------- CONFIG ----------------
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
-#  Load secret key from environment variable (fallback for dev)
 SECRET_KEY = os.getenv("SECRET_KEY", "dev_secret_key")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 # ---------------- PASSWORD HASHING ----------------
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+pwd_context = CryptContext(schemes=["argon2", "bcrypt"], default="argon2", deprecated="auto")
+
+def hash_password(password: str) -> str:
+    # passlib accepts str; it will encode internally
+    return pwd_context.hash(password)
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
-def hash_password(password: str)-> str:
-    print("hash_password received:", password)
-    print("Length:", len(password))
-    return pwd_context.hash(password)
-
 # ---------------- TOKEN CREATION ----------------
-def create_token(user_id: int, email: str, role: str, company_id: int, status: str):
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+
+def create_token(
+    user_id: int,
+    email: str,
+    role: str,
+    company_id: int,
+    status: str
+):
+    expire = datetime.utcnow() + timedelta(
+        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+    )
+
     payload = {
-        "id":user_id,
-        "sub": email,              #  use email consistently
+        "id": user_id,
+        "sub": email,
         "role": role,
         "company_id": company_id,
         "status": status,
         "exp": expire
     }
-    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+    return jwt.encode(
+        payload,
+        SECRET_KEY,
+        algorithm=ALGORITHM
+    )
 
 # ---------------- GET CURRENT USER ----------------
-def get_current_user(token: str = Depends(oauth2_scheme)):
+
+def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db)
+):
     if not token:
-        raise HTTPException(status_code=401, detail="Missing token")
+        raise HTTPException(
+            status_code=401,
+            detail="Missing token"
+        )
 
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        print("========== CURRENT USER ==========")
-        print(payload)
-        print("==================================")
-        email = payload.get("sub")
-        role = payload.get("role")
-        company_id = payload.get("company_id")
-        status = payload.get("status")
+        payload = jwt.decode(
+            token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM]
+        )
 
-        if not email or not role or company_id is None or status is None:
-            raise HTTPException(status_code=401, detail="Invalid token payload")
+        email = payload.get("sub")
+
+        if not email:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid token"
+            )
+
+        user = db.query(User).filter(
+            User.email == email
+        ).first()
+
+        if not user:
+            raise HTTPException(
+                status_code=401,
+                detail="User not found"
+            )
 
         return {
-            "id": payload.get("id"),
-            "email": email,
-            "role": role,
-            "company_id": company_id,
-            "status": status
-            }
+            "id": user.id,
+            "email": user.email,
+            "role": user.role,
+            "company_id": user.company_id,
+            "status": user.status.value,
+            "user": user
+        }
 
     except JWTError:
-        raise HTTPException(status_code=401, detail="Token expired or invalid")
+        raise HTTPException(
+            status_code=401,
+            detail="Token expired or invalid"
+        )
+
+# ---------------- ACTIVE USER CHECK ----------------
+
+def require_active_user(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(
+        User.id == current_user["id"],
+        User.company_id == current_user["company_id"]
+    ).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    # Suspended
+    if user.status == UserStatus.suspended:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "code": "ACCOUNT_SUSPENDED",
+                "status": user.status.value,
+                "suspended_reason": user.suspended_reason,
+                "suspended_by": user.suspended_by,
+                "suspended_at": (
+                    user.suspended_at.isoformat()
+                    if user.suspended_at
+                    else None
+                )
+            }
+        )
+
+    # Deactivated
+    if user.status == UserStatus.deactivated:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "code": "ACCOUNT_DEACTIVATED",
+                "status": user.status.value,
+                "deactivated_by": user.deactivated_by,
+                "deactivation_reason": user.deactivated_reason
+            }
+        )
+
+    return current_user
+
+#------------Suspended User------------
+
+def require_suspended_user(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(
+        User.id == current_user["id"],
+        User.company_id == current_user["company_id"]
+    ).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    if user.status not in [
+        UserStatus.suspended,
+        UserStatus.deactivated
+    ]:
+        raise HTTPException(
+            status_code=403,
+            detail="Only suspended/deactivated users can perform this action."
+        )
+
+    return current_user
+
+#--------------User Status Details--------------
+
+def get_user_status_details(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(
+        User.id == current_user["id"],
+        User.company_id == current_user["company_id"]
+    ).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    return {
+        "status": user.status.value,
+        "suspended_at": user.suspended_at,
+        "suspended_by": user.suspended_by,
+        "suspended_reason": user.suspended_reason,
+        "deactivated_by": user.deactivated_by,
+        "deactivated_reason": user.deactivated_reason
+    }
+
+# ---------------- ADMIN CHECK ----------------
+
+def require_admin(
+    current_user=Depends(require_active_user)
+):
+    if current_user["role"].lower() != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Admin access required"
+        )
+
+    return current_user
 
 # ---------------- USER VALIDATION ----------------
 
-def verify_user_identity(db: Session, email: str, password: str) -> User:
-    user = db.query(User).filter(User.email == email).first()
+def verify_user_identity(
+    db: Session,
+    email: str,
+    password: str
+) -> User:
+
+    user = db.query(User).filter(
+        User.email == email
+    ).first()
+
     if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-    if not verify_password(password, user.hashed_password):
-        raise HTTPException(status_code=401, detail="Wrong password")
+        raise HTTPException(
+            status_code=401,
+            detail="User not found"
+        )
+
+    if not verify_password(
+        password,
+        user.hashed_password
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="Wrong password"
+        )
+
     return user
 
+# ---------------- CLIENT INFO ----------------
+
 def get_client_info(request: Request):
-    forwarded = request.headers.get("X-Forwarded-For")
+
+    forwarded = request.headers.get(
+        "X-Forwarded-For"
+    )
 
     if forwarded:
         ip_address = forwarded.split(",")[0].strip()
     else:
         ip_address = request.client.host
 
-    browser = request.headers.get("User-Agent", "Unknown Browser")
+    browser = request.headers.get(
+        "User-Agent",
+        "Unknown Browser"
+    )
 
     return ip_address, browser

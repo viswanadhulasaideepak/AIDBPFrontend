@@ -22,8 +22,10 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem("user");
+      localStorage.removeItem("token");
       window.location.href = "/login";
     }
+
     return Promise.reject(error);
   }
 );
@@ -51,6 +53,55 @@ export const updateEmployee = async (id, employee) =>
 // Delete employee
 export const deleteEmployee = async (id) =>
   (await api.delete(`/employees/${id}`)).data;
+
+// Suspend
+export const suspendUser = async (userId, reason) => {
+  const res = await api.post(`/suspension/${userId}/suspend`, {reason,});
+  return res.data;
+};
+
+// ---------------- Suspension ----------------
+
+// Get suspension details
+export const fetchAccountStatus = async () =>
+  (await api.get("/suspension/account-status")).data;
+
+// Submit reinstatement request
+export const submitReinstatementRequest = async (reason) =>
+  (await api.post("/suspension/reinstatement/request", {
+      reason,
+    })
+  ).data;
+
+// Get my reinstatement request
+export const fetchMyReinstatementRequest = async () =>
+  (await api.get("/suspension/reinstatement/my-request")
+  ).data;
+
+// Admin - Get all requests
+export const fetchReinstatementRequests = async () =>
+  (await api.get("/suspension/reinstatement/requests")
+  ).data;
+
+// Approve
+export const approveReinstatement = async (id,admin_comment) =>
+  (await api.post(`/suspension/reinstatement/${id}/approve`,
+      { admin_comment })
+  ).data;
+
+// Reject
+export const rejectReinstatement = async (id,admin_comment) =>
+  (await api.post(`/suspension/reinstatement/${id}/reject`,
+      { admin_comment })
+  ).data;
+
+// Reinstate
+export const reinstateUser = async (userId) => {
+  const res = await api.post(`/suspension/${userId}/reinstate`);
+  return res.data;
+};
+
+
 
 // Departments
 export const fetchDepartments = async () =>
@@ -267,7 +318,8 @@ export const resetPassword = async (email, newPassword) => {
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error("Password reset failed");
+    const errorData = await response.json();
+    throw new Error(errorData.detail || "Password reset failed");
   }
   return data;
 };

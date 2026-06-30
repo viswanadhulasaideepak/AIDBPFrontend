@@ -2,7 +2,8 @@ import React, { useContext, useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import toast from "react-hot-toast";
 import { ThemeContext } from "../../context/ThemeContext";
-import api, { updateAttendanceAccessRequest, updateLeaveRequest} from "../../services/api";
+import api, { updateAttendanceAccessRequest, updateLeaveRequest,approveReinstatement,
+  rejectReinstatement,} from "../../services/api";
 import "./Navbar.css";
 
 const Navbar = () => {
@@ -18,6 +19,7 @@ const Navbar = () => {
 const loadNotifications = async () => {
   try {
     const response = await api.get("/notifications/");
+    console.log(response.data);
     setNotifications(response.data || []);
   } catch (error) {
     console.error("Error fetching notifications:", error);
@@ -50,19 +52,16 @@ useEffect(() => {
   }
 };
 
-  // Mark single notification as read
+  // Mark notification as read all
   const markAllAsRead = async () => {
   try {
-    await Promise.all(
-      notifications
-        .filter((n) => !n.is_read)
-        .map((n) => api.put(`/notifications/${n.id}/read`))
-    );
+    await api.put("/notifications/read-all");
+
     toast.success("All notifications marked as read");
+
     await loadNotifications();
-  } catch (error) {
-    console.error(error);
-    toast.error("Failed");
+  } catch (err) {
+    console.error(err);
   }
 };
 
@@ -114,6 +113,30 @@ useEffect(() => {
   }
 };
 
+//--------------Approve Reinstatement-----------------
+const approveReinstatementRequest = async (requestId) => {
+  try {
+    await approveReinstatement(requestId, "");
+    toast.success("Reinstatement Approved");
+    await loadNotifications();
+  } catch (err) {
+    console.error(err);
+    toast.error("Approval failed");
+  }
+};
+
+//------------------Rejct Reinstatement-----------------------
+const rejectReinstatementRequest = async (requestId) => {
+  try {
+    await rejectReinstatement(requestId, "");
+    toast.success("Reinstatement Rejected");
+    await loadNotifications();
+  } catch (err) {
+    console.error(err);
+    toast.error("Rejection failed");
+  }
+};
+
   return (
     <div className="navbar">
       <h2 className="navbar-title">Enterprise Employee Management System</h2>
@@ -140,43 +163,71 @@ useEffect(() => {
             {notifications.length === 0 ? (
               <p>No notifications</p>
             ) : (
-              <>
-                <button className="mark-all-btn" onClick={markAllAsRead}>
-                  ✔️ Mark All as Read
-                </button>
-                {notifications.map((n) => (
-                  <div key={n.id} className={n.is_read ? "read" : "unread"}>
-                    <p>{n.message}</p>
-                    {storedUser?.role === "admin" &&
-                    n.type === "attendance" && !n.is_read && (
-                      <div className="notification-actions">
-                      <button className="approve-btn"
-                      onClick={() => approveAttendance(n.request_id)}>
-                        ✓ Approve
-                      </button>
-                     <button className="reject-btn"
-                     onClick={() => rejectAttendance(n.request_id)}>
-                      ✗ Reject
-                     </button>
-                     </div>)}
-                {storedUser?.role === "admin" && n.type === "leave" &&
-                !n.is_read && (
-                  <div className="notification-actions">
-                    <button onClick={() => approveLeave(n.request_id)}>
-                      Approve
-                    </button>
-                    <button onClick={() => rejectLeave(n.request_id)}>
-                      Reject
-                    </button>
-                  </div>)}
-                    <button onClick={() => markAsRead(n.id)}>
-                     Mark Read
-                    </button>
-                  </div>))}
-              </>
-            )}
+            <>
+            <button className="mark-all-btn" onClick={markAllAsRead}>
+             ✔️ Mark All as Read
+            </button>
+
+        {notifications.map((n) => (
+          <div key={n.id} className={n.is_read ? "read" : "unread"}>
+            <p>{n.message}</p>
+
+            {/* Attendance */}
+            {storedUser?.role === "admin" &&
+              n.type === "attendance" &&
+               n.status === "pending" && (
+                <div className="notification-actions">
+                  <button className="approve-btn"
+                    onClick={() => approveAttendance(n.request_id)}>
+                    ✓ Approve
+                  </button>
+                  <button className="reject-btn"
+                    onClick={() => rejectAttendance(n.request_id)}>
+                    ✗ Reject
+                  </button>
+                </div>
+              )}
+
+            {/* Leave */}
+            {storedUser?.role === "admin" &&
+              n.type === "leave" &&
+               n.status === "pending" && (
+                <div className="notification-actions">
+                  <button className="approve-btn"
+                    onClick={() => approveLeave(n.request_id)}>
+                    ✓ Approve
+                  </button>
+                  <button className="reject-btn"
+                    onClick={() => rejectLeave(n.request_id)}>
+                    ✗ Reject
+                  </button>
+                </div>
+              )}
+
+            {/* Reinstatement */}
+            {storedUser?.role === "admin" &&
+              n.type === "reinstatement" &&
+               n.status === "pending" && (
+                <div className="notification-actions">
+                  <button className="approve-btn"
+                    onClick={() => approveReinstatementRequest(n.request_id)}>
+                    ✓ Approve
+                  </button>
+                  <button className="reject-btn"
+                    onClick={() => rejectReinstatementRequest(n.request_id)}>
+                    ✗ Reject
+                  </button>
+                </div>
+              )}
+            <button onClick={() => markAsRead(n.id)}>
+              Mark Read
+            </button>
           </div>
-        )}
+        ))}
+      </>
+    )}
+  </div>
+)}
         {/* 🌙 Theme Toggle */}
         <button className="theme-toggle" onClick={toggleTheme}>
           {theme === "dark" ? "☀️" : "🌙"}

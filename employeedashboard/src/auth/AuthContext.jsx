@@ -14,10 +14,12 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    if (user && user.status !== "active") {
-      logout();
-    }
-  }, [user]);
+  if (user?.status === "deactivated") {
+    logout();
+  }
+}, [user]);
+   
+  
 
   const login = (data) => {
     const userData = {

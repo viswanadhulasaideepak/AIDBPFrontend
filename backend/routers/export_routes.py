@@ -9,7 +9,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 import models
 import database
-from auth import get_current_user
+from auth import get_current_user,require_admin,require_active_user
 from models import (Employee, Attendance, LeaveRequest,
     Notification, AuditLog, ExportHistory)
 
@@ -124,7 +124,7 @@ def pdf_stream(title, headers, rows):
 @router.get("/employees/csv")
 def export_employees_csv(
     db: Session = Depends(database.get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
     company_id = admin_only(current_user)
     employees = (
@@ -177,7 +177,7 @@ def export_employees_csv(
 @router.get("/employees/excel")
 def export_employees_excel(
     db: Session = Depends(database.get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
     company_id = admin_only(current_user)
     employees = (
@@ -230,7 +230,7 @@ def export_employees_excel(
 @router.get("/employees/pdf")
 def export_employees_pdf(
     db: Session = Depends(database.get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
     company_id = admin_only(current_user)
     employees = (
@@ -267,7 +267,7 @@ def export_employees_pdf(
 @router.get("/attendance/csv")
 def export_attendance_csv(
     db: Session = Depends(database.get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
     company_id = admin_only(current_user)
     attendance = (
@@ -310,7 +310,7 @@ def export_attendance_csv(
 @router.get("/attendance/excel")
 def export_attendance_excel(
     db: Session = Depends(database.get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
 
     company_id = admin_only(current_user)
@@ -361,7 +361,7 @@ def export_attendance_excel(
 @router.get("/attendance/pdf")
 def export_attendance_pdf(
     db: Session = Depends(database.get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
 
     company_id = admin_only(current_user)
@@ -400,7 +400,7 @@ def export_attendance_pdf(
 @router.get("/leave/csv")
 def export_leave_csv(
     db: Session = Depends(database.get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
 
     company_id = admin_only(current_user)
@@ -451,7 +451,7 @@ def export_leave_csv(
 @router.get("/leave/excel")
 def export_leave_excel(
     db: Session = Depends(database.get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
 
     company_id = admin_only(current_user)
@@ -498,7 +498,7 @@ def export_leave_excel(
 @router.get("/leave/pdf")
 def export_leave_pdf(
     db: Session = Depends(database.get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
     company_id = admin_only(current_user)
     leaves = (
@@ -540,7 +540,7 @@ def export_leave_pdf(
 @router.get("/audit/csv")
 def export_audit_csv(
     db: Session = Depends(database.get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
 
     company_id = admin_only(current_user)
@@ -596,7 +596,7 @@ def export_audit_csv(
 @router.get("/audit/excel")
 def export_audit_excel(
     db: Session = Depends(database.get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
 
     company_id = admin_only(current_user)
@@ -652,7 +652,7 @@ def export_audit_excel(
 @router.get("/audit/pdf")
 def export_audit_pdf(
     db: Session = Depends(database.get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
 
     company_id = admin_only(current_user)
@@ -693,7 +693,7 @@ def export_audit_pdf(
 @router.get("/notifications/csv")
 def export_notifications_csv(
     db: Session = Depends(database.get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
 
     company_id = admin_only(current_user)
@@ -735,7 +735,7 @@ def export_notifications_csv(
 @router.get("/notifications/excel")
 def export_notifications_excel(
     db: Session = Depends(database.get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
 
     company_id = admin_only(current_user)
@@ -775,7 +775,7 @@ def export_notifications_excel(
 @router.get("/notifications/pdf")
 def export_notifications_pdf(
     db: Session = Depends(database.get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
 
     company_id = admin_only(current_user)
@@ -816,7 +816,7 @@ def export_notifications_pdf(
 @router.get("/analytics/pdf")
 def export_analytics_pdf(
     db: Session = Depends(database.get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
 
     company_id = admin_only(current_user)
@@ -900,7 +900,7 @@ def export_analytics_pdf(
 @router.get("/history")
 def export_history(
     db: Session = Depends(database.get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(require_admin)
 ):
 
     company_id = admin_only(current_user)

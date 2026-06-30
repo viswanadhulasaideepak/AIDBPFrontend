@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from auth import get_current_user
 import crud, schema, models
+from datetime import datetime
 
 router = APIRouter(prefix="/invitations", tags=["Invitations"])
 
@@ -15,9 +16,15 @@ def validate_token(
         models.Invitation.token == token,
         models.Invitation.status == models.InvitationStatus.pending
     ).first()
+    
+    if invitation.expires_at and invitation.expires_at < datetime.utcnow():
+        raise HTTPException(
+        status_code=400,
+        detail="Invitation expired"
+    )
 
     if not invitation:
-        raise HTTPException(400, "Invalid invitation")
+        raise HTTPException(status_code=400,detail="Invalid invitation")
 
     return invitation
 
@@ -30,7 +37,28 @@ def create_invitation(
     if current_user["role"] != "admin":
         raise HTTPException(status_code=403, detail="Not authorized")
     
-    existing = crud.get_invitations(db, current_user["company_id"])
+    existing_user = db.query(models.User).filter(
+    models.User.email == request.email,
+    models.User.company_id == current_user["company_id"]
+).first()
+
+    if existing_user:
+        raise HTTPException(
+        status_code=400,
+        detail="User already exists"
+    )
+    
+    existing = db.query(models.Invitation).filter(
+    models.Invitation.email == request.email,
+    models.Invitation.company_id == current_user["company_id"],
+    models.Invitation.status == models.InvitationStatus.pending
+).first()
+
+    if existing:
+        raise HTTPException(
+        status_code=400,
+        detail="Pending invitation already exists"
+    )
     
     for inv in existing:
         
@@ -69,7 +97,7 @@ def list_invitations(
 
 @router.delete("/{id}")
 def revoke_invitation(
-    id: int, 
+    invitation_id: int, 
     db: Session = Depends(get_db), 
     current_user: dict = Depends(get_current_user)
     ):
@@ -79,7 +107,7 @@ def revoke_invitation(
         detail="Not authorized"
     )
     invitation = db.query(models.Invitation).filter(
-        models.Invitation.id == id,
+        models.Invitation.id == invitation_id,
         models.Invitation.company_id == current_user["company_id"]
         ).first()
     if not invitation:
@@ -87,7 +115,7 @@ def revoke_invitation(
             status_code=404,
             detail="Invitation not found"
             )
-    if invitation.status.value == "revoked":\
+    if invitation.status.value == "revoked":
         raise HTTPException(
             status_code=400,
             detail="Invitation already revoked"
@@ -100,11 +128,4 @@ def revoke_invitation(
         current_user["email"]
         )   
     
-    crud.create_audit_log(
-        db, 
-        current_user["email"], 
-        "Invitation Revoked", 
-        invitation.email, 
-        current_user["company_id"]
-        )
     return {"message": "Invitation revoked"}

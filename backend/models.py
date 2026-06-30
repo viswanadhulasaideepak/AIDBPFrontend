@@ -55,9 +55,11 @@ class Employee(Base):
 # ---------------- User Status ----------------
 class UserStatus(str, enum.Enum):
     active = "active"
-    deactivated = "deactivated"    
+    suspended = "suspended"
+    deactivated = "deactivated"   
+     
 
-#-------------UserModel-----------
+#-------------UserBaseModel-----------
 class User(Base):
     __tablename__ = "users"
 
@@ -67,10 +69,19 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     role = Column(String, default="user")
     status = Column(Enum(UserStatus), default=UserStatus.active, nullable=False)
+    suspended_by = Column(String, nullable=True)
+    suspended_reason = Column(String, nullable=True)
+    suspended_at = Column(DateTime, nullable=True)
     deactivated_by = Column(String, nullable=True) 
     deactivated_reason = Column(String, nullable=True)
+    deactivated_at = Column(DateTime, nullable=True)
+    attendance_requests = relationship("AttendanceAccessRequest",back_populates="user",cascade="all, delete-orphan")
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
     company = relationship("Company", back_populates="users")
+    reinstatement_requests = relationship("ReinstatementRequest",back_populates="user",cascade="all, delete-orphan")
+    role_requests = relationship("RoleChangeRequest",back_populates="user",cascade="all, delete-orphan")
+    leave_requests = relationship("LeaveRequest",back_populates="user",cascade="all, delete-orphan")
+    reactivation_requests = relationship("ReactivationRequest",back_populates="user",cascade="all, delete-orphan")
     activity = relationship("UserActivity", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
 #---------------New User Model Activity-------------
@@ -106,7 +117,7 @@ class Attendance(Base):
     check_out = Column(DateTime, nullable=True)
     working_hours = Column(String, nullable=True)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
-    company = relationship("Company", backref="attendance_records")
+    company = relationship("Company", back_populates="attendance_records")
     
  #---------AttendanceAccessRequest------------   
     
@@ -122,12 +133,13 @@ class AttendanceAccessRequest(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
     admin_email = Column(String, nullable=False)
-    status = Column(Enum(AttendanceAccessStatus),default=AttendanceAccessStatus.pending,
-        nullable=False)
+    status = Column(Enum(AttendanceAccessStatus),default=AttendanceAccessStatus.pending,nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+    company = relationship("Company",back_populates="attendance_requests")
     approved_at = Column(DateTime, nullable=True)
     approved_by = Column(String, nullable=True)
-    user = relationship("User", backref="attendance_requests")   
+    user = relationship("User", back_populates="attendance_requests")   
+    company = relationship("Company",back_populates="attendance_requests")
     
 # ---------------- Leave Management ----------------
 
@@ -156,7 +168,7 @@ class LeaveRequest(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     reviewed_at = Column(DateTime)
     reviewed_by = Column(String)
-    user = relationship("User", backref="leave_requests")
+    user = relationship("User", back_populates="leave_requests")
     company = relationship("Company", back_populates="leave_requests")             
 
 #-----------------Notifications-----------------    
@@ -188,9 +200,9 @@ class RoleChangeRequest(Base):
     status = Column(Enum(RoleChangeStatus), default=RoleChangeStatus.pending, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
-    user = relationship("User", backref="role_requests")
+    user = relationship("User", back_populates="role_requests")
 
-#------------------CompanyModel---------    
+#------------------CompanyBaseModel---------    
 class Company(Base):
     __tablename__ = "companies"
 
@@ -205,6 +217,11 @@ class Company(Base):
     users = relationship("User", back_populates="company")
     leave_requests = relationship("LeaveRequest", back_populates="company")
     activities = relationship("UserActivity", back_populates="company")
+    
+    attendance_requests = relationship("AttendanceAccessRequest",back_populates="company")
+    reactivation_requests = relationship("ReactivationRequest",back_populates="company")
+    attendance_records = relationship("Attendance",back_populates="company")
+    reinstatement_requests = relationship("ReinstatementRequest",back_populates="company")
     export_history = relationship("ExportHistory", back_populates="company",cascade="all, delete-orphan")
 
 #--------------------AuditLog--------------------
@@ -256,17 +273,48 @@ class ReactivationRequest(Base):
     __tablename__ = "reactivation_requests"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    admin_email = Column(String, nullable=False)
+    user_id = Column(Integer,ForeignKey("users.id"),nullable=False)
+
+    admin_email = Column(String, nullable=True)
     message = Column(String, nullable=True)
+
+    status = Column(Enum(ReactivationStatus),default=ReactivationStatus.pending,nullable=False)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    reviewed_at = Column(DateTime,nullable=True)
+    reviewed_by = Column(String,nullable=True)
+
+    admin_comment = Column(Text,nullable=True)
+    company_id = Column(Integer,ForeignKey("companies.id"),nullable=False)
+
+    user = relationship("User",back_populates="reactivation_requests")
+    company = relationship("Company",back_populates="reactivation_requests")
+    
+# ---------------- Reinstatement Request ----------------
+
+class ReinstatementStatus(str, enum.Enum):
+    pending = "pending"
+    approved = "approved"
+    rejected = "rejected"
+
+
+class ReinstatementRequest(Base):
+    __tablename__ = "reinstatement_requests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column( Integer, ForeignKey("users.id"), nullable=False)
+    company_id = Column( Integer, ForeignKey("companies.id"), nullable=False)
+
+    request_reason = Column(Text, nullable=False)
+    status = Column( Enum(ReinstatementStatus), default=ReinstatementStatus.pending, nullable=False)
+    submitted_at = Column( DateTime, default=datetime.utcnow)
     reviewed_at = Column(DateTime)
     reviewed_by = Column(String)
-    admin_comment = Column(String)
-    status = Column(Enum(ReactivationStatus), default=ReactivationStatus.pending, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
-    user = relationship("User", backref="reactivation_requests")
+    admin_comment = Column(Text)
+    company = relationship("Company",back_populates="reinstatement_requests")
 
+    user = relationship("User", back_populates="reinstatement_requests")    
+    
 # -------------------Export History-----------------------
 
 class ExportHistory(Base):
