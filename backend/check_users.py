@@ -3,16 +3,23 @@ import sqlite3
 conn = sqlite3.connect("employees.db")
 cursor = conn.cursor()
 
-# Show all tables
-cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-print("Tables:")
-for table in cursor.fetchall():
-    print(table)
+columns = [
+    ("first_name", "TEXT"),
+    ("last_name", "TEXT"),
+    ("phone_number", "TEXT"),
+    ("designation", "TEXT"),
+    ("profile_picture", "TEXT"),
+    ("address", "TEXT"),
+]
 
-print("\nUsers:")
+for col, col_type in columns:
+    try:
+        cursor.execute(f"ALTER TABLE employees ADD COLUMN {col} {col_type}")
+        print(f"Added column: {col}")
+    except Exception as e:
+        print(f"Skipping {col}: {e}")
 
-cursor.execute("SELECT id, username, email, role, company_id FROM users")
-for row in cursor.fetchall():
-    print(row)
-
+conn.commit()
 conn.close()
+
+print("Migration completed safely")

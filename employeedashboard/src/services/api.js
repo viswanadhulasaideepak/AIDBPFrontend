@@ -100,8 +100,23 @@ export const reinstateUser = async (userId) => {
   const res = await api.post(`/suspension/${userId}/reinstate`);
   return res.data;
 };
+//-------------Employee Profile--------------
 
+// Get single employee profile completion
+export const fetchEmployeeProfileCompletion = async (employeeId) =>
+  (await api.get(`/employees/${employeeId}/profile-completion`)).data;
 
+// Get all employees profile completion (admin view)
+export const fetchCompanyProfileCompletion = async () =>
+  (await api.get("/employees/profile-completion/all")).data;
+
+// Employees below threshold
+export const fetchEmployeesBelowThreshold = async (threshold = 80) =>
+  (await api.get(`/employees/profile-completion/below-threshold?threshold=${threshold}`)).data;
+
+// Get unread notifications only (if backend supports filtering)
+export const fetchUnreadNotifications = async () =>
+  (await api.get("/notifications?unread=true")).data;
 
 // Departments
 export const fetchDepartments = async () =>
@@ -127,7 +142,7 @@ export const transferDepartment = async (
 
 // Get department transfer history
 export const fetchDepartmentTransferHistory = async () =>
-  (await api.get("/departments/transfer-history")).data;
+  (await api.get("/employees/transfer/history")).data;
 
 // Attendance records (array)
 export const fetchAttendanceRecords = async () =>
@@ -367,6 +382,16 @@ export const getInvitations = async () =>
 export const revokeInvitation = async (id) =>
   (await api.delete(`/invitations/${id}`)).data;
 
+// ---------------- COMPANY ----------------
+
+// Get current company details
+export const fetchCompanyDetails = async () =>
+  (await api.get("/companies/me")).data;
+
+// Get all members of current company
+export const fetchCompanyMembers = async () =>
+  (await api.get("/companies/members")).data;
+
 //----------------Members-----------------------
 export const getMembers = async () =>
   (await api.get("/members")).data;
@@ -429,5 +454,23 @@ export const downloadExport = async (dataType, format) => {
 // Export History
 export const fetchExportHistory = async () =>
   (await api.get("/exports/history")).data;
+
+// ---------------- USER PROFILE ----------------
+
+// Get logged-in user's profile
+export const fetchMyProfile = async () =>
+  (await api.get("/employees/me/profile")).data;
+
+// Update logged-in user's profile
+export const updateMyProfile = async (profile) =>
+  (await api.put("/employees/me/profile", profile)).data;
+
+// Logged-in user's completion
+export const fetchMyProfileCompletion = async () =>
+  (await api.get("/employees/me/profile-completion")).data;
+
+// Profile dashboard summary
+export const fetchProfileDashboard = async () =>
+  (await api.get("/employees/me/profile")).data;
 
 export default api;

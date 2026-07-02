@@ -23,6 +23,9 @@ class EmployeeRequest(BaseModel):
     email: str
     department_name: str
     role: str
+
+    employee_code: Optional[str] = None
+
     joined_date: Optional[str] = None
     status: str = "active"
 
@@ -33,13 +36,21 @@ class EmployeeUpdateRequest(BaseModel):
     role: Optional[str] = None
     joined_date: Optional[str] = None
     status: Optional[str] = None
+    
+    phone_number: Optional[str] = None
+    address: Optional[str] = None
+    designation: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    employee_code: Optional[str] = None
+    profile_picture: Optional[str] = None
 
 #------------------ READ EMPLOYEES ------------------
 
 @router.get("/")
 def read_employees(
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_active_user)
     ):
     
     employees = crud.get_employees(db, current_user["company_id"])
@@ -52,7 +63,8 @@ def read_employees(
             "role": emp.role,
             "status": emp.status,
             "department_name": emp.department_rel.name if emp.department_rel else None,
-            "company_id": emp.company_id
+            "company_id": emp.company_id,
+            "profile_completion": crud.calculate_profile_completion(emp)
             }
         for emp in employees
         ]
@@ -63,7 +75,7 @@ def read_employees(
 def add_employee(
     request: EmployeeRequest,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_active_user)
     ):
     
     department = db.query(Department).filter(
@@ -81,14 +93,15 @@ def add_employee(
         db.refresh(department)
     
         
+    joined_date = None
+    
     if request.joined_date:
         try:
-            joined_date = datetime.strptime(request.joined_date, "%Y-%m-%d")
-
+            joined_date = datetime.strptime(request.joined_date,"%Y-%m-%d")
+            
         except Exception:
             joined_date = None
-                
-    joined_date = None        
+                        
     new_emp = crud.create_employee(
         db=db,
         name=request.name,
@@ -97,6 +110,7 @@ def add_employee(
         role=request.role,
         joined_date=joined_date,   
         status=request.status,
+        employee_code=request.employee_code,
         company_id=current_user["company_id"]
         )
         
@@ -140,7 +154,8 @@ def add_employee(
             "role": new_emp.role,
             "status": new_emp.status,
             "department_name": department.name,
-            "company_id": new_emp.company_id
+            "company_id": new_emp.company_id,
+            "profile_completion": crud.calculate_profile_completion(new_emp)
             }
 
 #------------------ UPDATE EMPLOYEE ------------------
@@ -150,13 +165,16 @@ def update_employee(
     id: int,
     request: EmployeeUpdateRequest,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_active_user)
     ):
+    PROFILE_COMPLETION_THRESHOLD = 70
     
     emp = crud.get_employee_by_id(db, id, current_user["company_id"])
     
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
+    
+    old_score = crud.calculate_profile_completion(emp)
     
     # ... update fields ...
     if request.name is not None:
@@ -170,6 +188,27 @@ def update_employee(
 
     if request.status is not None:
         emp.status = request.status
+        
+    if request.first_name is not None:
+        emp.first_name = request.first_name
+
+    if request.last_name is not None:
+        emp.last_name = request.last_name
+
+    if request.phone_number is not None:
+        emp.phone_number = request.phone_number
+
+    if request.address is not None:
+        emp.address = request.address
+
+    if request.designation is not None:
+        emp.designation = request.designation
+
+    if request.profile_picture is not None:
+        emp.profile_picture = request.profile_picture
+
+    if request.employee_code is not None:
+        emp.employee_code = request.employee_code        
     
     if request.joined_date:
         try:
@@ -184,23 +223,68 @@ def update_employee(
     
     if request.department_name:
         department = db.query(Department).filter(
-        Department.name == request.department_name,
-        Department.company_id == current_user["company_id"]
-    ).first()
-        
+            Department.name == request.department_name,
+            Department.company_id == current_user["company_id"]
+        ).first()
+
         if not department:
             department = Department(
-            name=request.department_name,
-            company_id=current_user["company_id"]
+                name=request.department_name,
+                company_id=current_user["company_id"]
             )
+            
             db.add(department)
             db.commit()
             db.refresh(department)
 
-    emp.department_id = department.id
+    if department:
+        emp.department_id = department.id
+    
+    db.flush()
+    
+    new_score = crud.calculate_profile_completion(emp)  
+    
+    emp.profile_completion = new_score["completion_percentage"]  
     db.commit()
     db.refresh(emp)
+    
+    crud.create_audit_log(
+    db=db,
+    user_name=current_user["email"],
+    action="Profile Updated",
+    related_user=emp.email,
+    company_id=current_user["company_id"]
+)
 
+    if new_score["completion_percentage"] == 100:
+        
+        crud.create_notification(
+            db=db,
+            message="Congratulations! Your profile is now 100% complete.",
+            recipient_email=emp.email,
+            company_id=emp.company_id,
+            type="profile"
+            )
+        
+        if old_score["completion_percentage"] != new_score["completion_percentage"]:
+            crud.create_audit_log(
+                db=db,
+                user_name=current_user["email"],
+                action="Profile Completion Score Changed ",
+                details=f"{old_score['completion_percentage']}% → {new_score['completion_percentage']}%",
+                related_user=emp.email,
+                company_id=current_user["company_id"]
+                )
+
+    elif new_score["completion_percentage"] < PROFILE_COMPLETION_THRESHOLD:
+        crud.create_notification(
+            db=db,
+            message="Please complete your profile.",
+            recipient_email=emp.email,
+            company_id=emp.company_id,
+            type="profile"
+        )
+        
 # Audit log
     audit = AuditLog(
         user_name=current_user["email"],
@@ -214,13 +298,13 @@ def update_employee(
     crud.create_notification(
     db=db,
     message=f"Employee {emp.name} ({emp.email}) was updated.",
-    recipient_email=current_user["email"],   # or notify admins
+    recipient_email=current_user["email"],   
     company_id=current_user["company_id"],
     request_id=emp.id,
     type="employee"
 )
 
-    return {
+    return { 
             "id": emp.id,
             "name": emp.name,
             "email": emp.email,
@@ -228,7 +312,8 @@ def update_employee(
             "status": emp.status,
             "department_name": emp.department_rel.name if emp.department_rel else None,
             "joined_date": emp.joined_date,
-            "company_id": emp.company_id
+            "company_id": emp.company_id,
+            "profile_completion": new_score
             }
 
 #------------------ DELETE EMPLOYEE ------------------
@@ -237,7 +322,7 @@ def update_employee(
 def delete_employee(
     id: int,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_active_user)
     ):
     
     emp = crud.get_employee_by_id(db, id, current_user["company_id"])    
@@ -322,7 +407,7 @@ def transfer_department(
 @router.get("/transfer/history")
 def get_department_transfer_history(
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_admin)
+    current_user: dict = Depends(require_active_user)
     ):
 
     transfers = (
@@ -360,3 +445,178 @@ def get_department_transfer_history(
         })
 
     return history
+    
+# ---------------- USER PROFILE COMPLETION ----------------    
+@router.get("/me/profile")
+def get_my_profile(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+
+    emp = db.query(models.Employee).filter(
+        models.Employee.email == current_user["email"],
+        models.Employee.company_id == current_user["company_id"]
+    ).first()
+
+    if not emp:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    
+    score = crud.calculate_profile_completion(emp)
+
+    return {
+        "id": emp.id,
+        "first_name": emp.first_name,
+        "last_name": emp.last_name,
+        "email": emp.email,
+        "phone_number": emp.phone_number,
+        "department_name": emp.department_rel.name if emp.department_rel else None,
+        "designation": emp.designation,
+        "profile_picture": emp.profile_picture,
+        "address": emp.address,
+        "joined_date": emp.joined_date.strftime("%Y-%m-%d") if emp.joined_date else "",
+        "employee_code": emp.employee_code,
+    }
+    
+@router.put("/me/profile")
+def update_my_profile(
+    request: EmployeeUpdateRequest,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    print("===== UPDATE PROFILE =====")
+    print(request)
+    print(request.dict())
+
+    emp = db.query(models.Employee).filter(
+        models.Employee.email == current_user["email"],
+        models.Employee.company_id == current_user["company_id"]
+    ).first()
+
+    if not emp:
+        raise HTTPException(status_code=404, detail="Employee not found")
+
+    if request.first_name is not None:
+        emp.first_name = request.first_name
+
+    if request.last_name is not None:
+        emp.last_name = request.last_name
+
+    if request.email is not None:
+        emp.email = request.email
+
+    if request.department_name:
+        dept = db.query(Department).filter(
+            Department.name == request.department_name,
+            Department.company_id == current_user["company_id"]
+        ).first()
+
+        if dept:
+            emp.department_id = dept.id
+
+    if request.phone_number is not None:
+        emp.phone_number = request.phone_number
+
+    if request.designation is not None:
+        emp.designation = request.designation
+
+    if request.address is not None:
+        emp.address = request.address
+
+    if request.profile_picture is not None:
+        emp.profile_picture = request.profile_picture
+
+    db.commit()
+    db.refresh(emp)
+
+    score = crud.calculate_profile_completion(emp)
+
+    emp.profile_completion = score["completion_percentage"]
+    
+    if request.joined_date:
+        try:
+            emp.joined_date = datetime.strptime(
+                request.joined_date,
+                "%Y-%m-%d"
+                )
+        except Exception:
+            pass
+    
+    print("Before Commit")
+    print(emp.first_name)
+    print(emp.last_name)
+    print(emp.phone_number)
+    print(emp.designation)
+    print(emp.address)
+
+    db.commit()
+    db.refresh(emp)
+
+    return {
+        "message": "Profile updated successfully",
+        "profile_completion": score["completion_percentage"],
+        **{k: v for k, v in score.items() if k != "completion_percentage"}
+    }    
+    
+@router.get("/me/profile-completion")
+def user_profile_completion(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_active_user)
+):
+    emp = db.query(models.Employee).filter(
+        models.Employee.email == current_user["email"],
+        models.Employee.company_id == current_user["company_id"]
+    ).first()
+
+    if not emp:
+        raise HTTPException(status_code=404, detail="Employee not found")
+
+    return crud.calculate_profile_completion(emp)    
+
+#-----------------Profile admin view-------------------
+
+@router.get("/{employee_id}/profile-completion")
+def get_profile_completion(
+    employee_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_active_user)
+):
+    """
+    Returns the profile completion percentage and missing fields
+    for the requested employee.
+    """
+
+    result = crud.get_employee_profile_completion(
+        db=db,
+        employee_id=employee_id,
+        company_id=current_user["company_id"]
+    )
+
+    if result is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Employee not found"
+        )
+
+    return result
+
+@router.get("/profile-completion/below-threshold")
+def employees_below_threshold(
+    threshold: int = 80,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_active_user)
+):
+    return crud.get_profile_completion_below_threshold(
+        db=db,
+        company_id=current_user["company_id"],
+        threshold=threshold
+    )
+
+@router.get("/profile-completion/all")
+def company_profile_completion(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_active_user)
+):
+    return crud.get_company_profile_completion(
+        db=db,
+        company_id=current_user["company_id"]
+    )

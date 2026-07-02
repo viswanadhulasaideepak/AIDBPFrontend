@@ -10,18 +10,22 @@ router = APIRouter(prefix="/notifications", tags=["Notifications"])
 
 @router.get("/")
 def get_notifications(
+    unread: bool = False,
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_active_user)
 ):
-    notes = (
-        db.query(Notification)
-        .filter(
-            Notification.company_id == current_user["company_id"],
-            Notification.recipient_email == current_user["email"]
-        )
-        .order_by(Notification.created_at.desc())
-        .all()
+    query = db.query(Notification).filter(
+    Notification.company_id == current_user["company_id"],
+    Notification.recipient_email == current_user["email"]
     )
+
+    if unread:
+        query = query.filter(Notification.is_read == False)
+
+    notes = (
+        query.order_by(Notification.created_at.desc())
+        .all()
+        )
 
     result = []
 
@@ -104,19 +108,34 @@ def mark_all_notifications_as_read(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_active_user)
 ):
-    updated = db.query(Notification).filter(
+
+    notifications = db.query(Notification).filter(
         Notification.company_id == current_user["company_id"],
         Notification.recipient_email == current_user["email"],
         Notification.is_read == False
-    ).update(
-        {"is_read": True},
-        synchronize_session=False
-    )
+    ).all()
+
+    count = 0
+
+    for notification in notifications:
+        notification.is_read = True
+        db.add(notification)
+        count += 1
 
     db.commit()
 
+    audit = AuditLog(
+        user_name=current_user["email"],
+        action="All Notifications Marked as Read",
+        related_user=current_user["email"],
+        company_id=current_user["company_id"]
+    )
+
+    db.add(audit)
+    db.commit()
+
     return {
-        "message": f"{updated} notifications marked as read"
+        "message": f"{count} notifications marked as read"
     }
     
 # ---------------- MARK AS READ ----------------
@@ -132,9 +151,10 @@ def mark_notification_as_read(
     print("Notification ID:", id)
     
     note = db.query(Notification).filter(
-    Notification.id == id,
-    Notification.company_id == current_user["company_id"]
-    ).first()
+        Notification.id == id,
+        Notification.company_id == current_user["company_id"],
+        Notification.recipient_email == current_user["email"]
+        ).first()
     
     print("FOUND",note)
     if not note:
@@ -145,11 +165,11 @@ def mark_notification_as_read(
     
     print("Before:", note.is_read)
     note.is_read = True
-
+    db.add(note)
     db.commit()
- 
-    print("After:", note.is_read)
     db.refresh(note)
+
+    print("After:", note.is_read)
 
     # Audit log entry
     audit = AuditLog(

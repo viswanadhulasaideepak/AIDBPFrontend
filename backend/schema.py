@@ -19,27 +19,76 @@ class UserCreate(BaseModel):
 
 class EmployeeBase(BaseModel):
     name: str
-    email: str
+    first_name: str | None = None
+    last_name: str | None = None
+
+    email: EmailStr
     role: str
+
+    phone_number: str | None = None
+    designation: str | None = None
+    profile_picture: str | None = None
+    address: str | None = None
+
     status: StatusEnum = StatusEnum.active
 
 class EmployeeCreate(EmployeeBase):
     company_id: int
+    employee_code: str | None = None
+    joined_date: datetime | None = None
      
 class EmployeeOut(EmployeeBase):
     id: int
     company_id: int
+
+    employee_code: str | None = None
+    joined_date: datetime | None = None
+
+    profile_completion: int = 0
 
     class Config:
         orm_mode = True
 
 class EmployeeUpdate(BaseModel):
     name: str | None = None
+    first_name: str | None = None
+    last_name: str | None = None
+    
     email: EmailStr | None = None
     role: str | None = None
+
+    phone_number: str | None = None
+    designation: str | None = None
+    profile_picture: str | None = None
+    address: str | None = None
+
     department_name: str | None = None
     joined_date: datetime | None = None
     status: StatusEnum | None = None
+    employee_code: str | None = None
+    
+class ProfileCompletionOut(BaseModel):
+    employee_id: int
+    employee_name: str
+
+    completion_percentage: int
+    completed_fields: int
+    total_fields: int
+
+    missing_fields: list[str]
+    recommendation: str
+    
+class EmployeeProfileCompletionOut(BaseModel):
+    employee_id: int
+
+    employee_name: str
+    role: str
+
+    company_id: int
+    completion_percentage: int
+
+    department: str | None = None
+    designation: str | None = None        
 
 # Role change request status
 class RoleChangeStatus(str, Enum):

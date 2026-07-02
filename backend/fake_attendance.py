@@ -1,16 +1,9 @@
-import sqlite3
+from sqlalchemy import create_engine, text
 
-conn = sqlite3.connect("employees.db")
-cursor = conn.cursor()
+engine = create_engine("sqlite:///./employees.db")
 
-print("\nEMPLOYEES TABLE")
-cursor.execute("""
-SELECT id,name,email,company_id
-FROM employees
-ORDER BY id
-""")
+with engine.connect() as conn:
+    result = conn.execute(text("PRAGMA table_info(employees)"))
 
-for row in cursor.fetchall():
-    print(row)
-
-conn.close()
+    for row in result:
+        print(row)

@@ -375,3 +375,42 @@
   gap: 12px;
   margin-top: 22px;
 }
+
+/* ---------------- Profile Completion ---------------- */
+
+.profile-cell {
+  min-width: 180px;
+}
+
+.profile-bar {
+  width: 100%;
+  height: 10px;
+  background: #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.profile-fill {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.4s ease-in-out;
+}
+
+.profile-score {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.missing-fields {
+  font-size: 12px;
+  color: #dc2626;
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+.low-profile-row {
+  background-color: #fff7f7;
+}

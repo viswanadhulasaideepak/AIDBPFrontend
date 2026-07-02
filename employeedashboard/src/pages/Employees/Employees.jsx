@@ -8,6 +8,7 @@ import EditEmployeeForm from "./EditEmployeeForm";
 import {fetchEmployees,fetchDepartments,transferDepartment,updateEmployee,
   deleteEmployee,suspendUser,reinstateUser} from "../../services/api";
 import "./Employees.css";
+import EmployeeProfile from "./EmployeeProfile";
 
 const Employees = () => {
   const [employees, setEmployees] = useState([]);
@@ -95,6 +96,10 @@ const Employees = () => {
   const handleStatusChange = async (id, newStatus) => {
     try {
       const emp = employees.find((e) => e.id === id);
+      if (!emp) {
+        toast.error("Employee not found");
+        return;
+      }
 
       const payload = {
         name: emp.name,
@@ -105,12 +110,11 @@ const Employees = () => {
         status: newStatus,
       };
       await updateEmployee(id, payload);
-      const updated = employees.map((e) =>
-        e.id === id ? { ...e, status: newStatus } : e
-      );
 
-      setEmployees(updated);
-      setFilteredEmployees(updated);
+      const data = await fetchEmployees();
+
+      setEmployees(data);
+      setFilteredEmployees(data);
 
       toast.success("Status updated");
     } catch (err) {
@@ -134,12 +138,14 @@ const Employees = () => {
   };
 
   /* ---------------- ADD EMPLOYEE ---------------- */
-  const handleAddEmployee = (newEmp) => {
-    const updated = [...employees, newEmp];
-    setEmployees(updated);
-    setFilteredEmployees(updated);
+  const handleAddEmployee = async () => {
+    const data = await fetchEmployees();
+
+    setEmployees(data);
+    setFilteredEmployees(data);
+
     toast.success("Employee added");
-  };
+};
 
   /* ---------------- EDIT EMPLOYEE ---------------- */
   const handleEditEmployee = async (updatedEmp) => {
@@ -154,14 +160,9 @@ const Employees = () => {
       };
 
       await updateEmployee(updatedEmp.id, payload);
-
-      const updated = employees.map((e) =>
-        e.id === updatedEmp.id ? updatedEmp : e
-      );
-
-      setEmployees(updated);
-      setFilteredEmployees(updated);
-
+      const data = await fetchEmployees();
+      setEmployees(data);
+      setFilteredEmployees(data);
       toast.success("Employee updated");
       setEditEmployee(null);
     } catch (err) {
@@ -312,6 +313,7 @@ const handleReinstate = async (userId) => {
                   <th>Name</th>
                   <th>Role</th>
                   <th>Department</th>
+                  <th>Profile</th>
                   <th>Status</th>
                   <th>Joined</th>
                   <th>Actions</th>
@@ -320,14 +322,18 @@ const handleReinstate = async (userId) => {
 
               <tbody>
                 {currentEmployees.map((emp) => (
-                  <tr key={emp.id}>
-
+                  <tr key={emp.id} className={
+                    (emp.profile_completion?.completion_percentage ?? 0) < 70
+                    ? "low-profile-row" : ""}>
                     <td>
                       <b>{emp.name}</b>
                       <div>{emp.email}</div>
                     </td>
                     <td>{emp.role}</td>
-                    <td>{emp.department_name}</td>
+                    <td>{emp.department_name || "N/A"}</td>
+                      <td>
+                         <EmployeeProfile profile={emp.profile_completion}/>
+                      </td>
 
                     <td>
                       <select value={emp.status}

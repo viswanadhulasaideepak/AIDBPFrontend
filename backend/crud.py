@@ -44,7 +44,8 @@ def create_employee(
     role: str,
     company_id: int,
     joined_date: datetime | None = None,
-    status: str = "active"
+    status: str = "active",
+    employee_code: str = None
 ):
     new_emp = models.Employee(
         name=name,
@@ -53,9 +54,16 @@ def create_employee(
         role=role,
         joined_date=joined_date or datetime.utcnow(),
         status=status,
-        company_id=company_id
+        employee_code=employee_code,
+        company_id=company_id,
+        profile_completion=0
     )
     db.add(new_emp)
+    db.commit()
+    db.refresh(new_emp)
+    
+    new_emp.employee_code = f"EMP{new_emp.id:03d}"
+
     db.commit()
     db.refresh(new_emp)
     
@@ -94,9 +102,12 @@ def update_employee(
     joined_date: datetime | None = None,
     status: str = "active"
 ):
+    PROFILE_COMPLETION_THRESHOLD = 70
     emp = get_employee_by_id(db, id, company_id)
     if not emp:
         return None
+    
+    old_score = calculate_profile_completion(emp)
 
     emp.name = name
     emp.email = email
@@ -104,12 +115,63 @@ def update_employee(
     emp.department_id = department_id
     emp.joined_date = joined_date or emp.joined_date
     emp.status = status
+    
+    emp.last_profile_update = datetime.utcnow()
+
+    db.commit()
+    db.refresh(emp)
+
+    new_score = calculate_profile_completion(emp)
+    
+    emp.profile_completion = new_score["completion_percentage"]
+
+    if old_score["completion_percentage"] != new_score["completion_percentage"]:
+        create_audit_log(
+            db=db,
+            user_name=emp.name,
+            action="Profile Completion Score Changed",
+            related_user=emp.email,
+            company_id=emp.company_id,
+            details=f"{old_score['completion_percentage']}% -> {new_score['completion_percentage']}%"
+    )
+
+    admins = db.query(models.User).filter(
+        models.User.company_id == emp.company_id,
+        models.User.role == "admin"
+    ).all()
+
+    if new_score["completion_percentage"] == 100:
+        for admin in admins:
+            create_notification(
+                db=db,
+                message=f"{emp.name} completed their profile.",
+                recipient_email=admin.email,
+                company_id=emp.company_id,
+                type="profile"
+            )
+
+        create_audit_log(
+            db=db,
+            user_name=emp.name,
+            action="Profile Reached 100% Completion",
+            related_user=emp.email,
+            company_id=emp.company_id
+        )
+
+    elif new_score["completion_percentage"] < PROFILE_COMPLETION_THRESHOLD:
+        create_notification(
+            db=db,
+            message="Your profile completion is below 70%. Please complete your profile.",
+            recipient_email=emp.email,
+            company_id=emp.company_id,
+            type="profile"
+        )
 
     db.commit()
 
     admins = db.query(models.User).filter(
-    models.User.company_id == emp.company_id,
-    models.User.role == "admin"
+        models.User.company_id == emp.company_id,
+        models.User.role == "admin"
     ).all()
     
     for admin in admins:
@@ -1428,7 +1490,7 @@ def update_reinstatement_request(
     if not user:
         return None
 
-    # APPROVE
+    #----- APPROVE-----
     if status == ReinstatementStatus.approved:
 
         user.status = UserStatus.active
@@ -1452,7 +1514,7 @@ def update_reinstatement_request(
             type="reinstatement"
         )
 
-    # REJECT
+    # --REJECT----
     elif status == ReinstatementStatus.rejected:
 
         create_audit_log(
@@ -1572,7 +1634,6 @@ def get_export_employees(
         .all()
     )
 
-
 # ----------------Export Attendance ----------------
 
 def get_export_attendance(
@@ -1587,7 +1648,6 @@ def get_export_attendance(
         .all()
     )
 
-
 # ----------------Export Leave Requests ----------------
 
 def get_export_leave_requests(
@@ -1601,7 +1661,6 @@ def get_export_leave_requests(
         )
         .all()
     )
-
 
 # ----------------Export Audit Logs ----------------
 
@@ -1618,7 +1677,6 @@ def get_export_audit_logs(
         .all()
     )
 
-
 # ----------------Export Notifications ----------------
 
 def get_export_notifications(
@@ -1633,3 +1691,147 @@ def get_export_notifications(
         .order_by(models.Notification.created_at.desc())
         .all()
     )    
+    #---------Calculate Profile Completion--------------
+    
+def calculate_profile_completion(employee):
+    """
+    Calculates employee profile completion percentage.
+    """
+
+    required_fields = {
+        "First Name": getattr(employee, "first_name", None),
+        "Last Name": getattr(employee, "last_name", None),
+        "Email": getattr(employee, "email", None),
+        "Department": getattr(employee, "department_id", None),
+        "Date of Joining": getattr(employee, "joined_date", None),
+        "Employee ID": getattr(employee, "employee_code", None),
+        "Phone Number": getattr(employee, "phone_number", None),
+        "Designation": getattr(employee, "designation", None),
+        "Profile Picture": getattr(employee, "profile_picture", None),
+        "Address": getattr(employee, "address", None),
+    }
+
+    total_fields = len(required_fields)
+    completed = 0
+    missing_fields = []
+
+    for field_name, value in required_fields.items():
+        if value not in (None, "", []):
+            completed += 1
+        else:
+            missing_fields.append(field_name)
+
+    percentage = round((completed / total_fields) * 100)
+
+    recommendation = (
+    "Your profile is complete."
+    if percentage == 100
+    else "Complete your profile to improve account readiness."
+    )
+
+    return {
+        "completion_percentage": percentage,
+        "completed_fields": completed,
+        "total_fields": total_fields,
+        "missing_fields": missing_fields,
+        "recommendation": recommendation,
+        }    
+    
+def get_employee_profile_completion(
+    db: Session,
+    employee_id: int,
+    company_id: int
+):
+    employee = db.query(models.Employee).filter(
+        models.Employee.id == employee_id,
+        models.Employee.company_id == company_id
+    ).first()
+
+    if not employee:
+        return None
+
+    score = calculate_profile_completion(employee)
+
+    return {
+        "employee_id": employee.id,
+        "employee_name": employee.name,
+        "completion_percentage": score["completion_percentage"],
+        "completed_fields": score["completed_fields"],
+        "total_fields": score["total_fields"],
+        "missing_fields": score["missing_fields"],
+        "recommendation": score["recommendation"],
+        }
+
+def get_company_profile_completion(
+    db: Session,
+    company_id: int,
+    threshold: int | None = None
+):
+    employees = db.query(models.Employee).filter(
+        models.Employee.company_id == company_id
+    ).all()
+
+    results = []
+
+    for employee in employees:
+        score = calculate_profile_completion(employee)
+        
+        print(employee.name, employee.role)
+
+        if threshold is None or score["completion_percentage"] < threshold:
+            results.append({
+                "employee_id": employee.id,
+                "employee_name": employee.name,
+                "role": employee.role,
+                "company_id": employee.company_id,
+                "department": (
+                    employee.department_rel.name
+                    if employee.department_rel
+                    else None
+                    ),
+                "designation": employee.designation,
+                "completion_percentage": score["completion_percentage"],
+                "missing_fields": score["missing_fields"],
+                })
+
+    admins = db.query(models.User).filter(
+    models.User.company_id == company_id,
+    models.User.role == "admin"
+    ).count()
+
+    users = db.query(models.User).filter(
+        models.User.company_id == company_id,
+    models.User.role == "user"
+    ).count()
+
+    return {
+        "members": results,
+        "admin_count": admins,
+        "user_count": users
+        }    
+
+
+def get_profile_completion_below_threshold(
+    db: Session,
+    company_id: int,
+    threshold: int
+):
+    employees = db.query(models.Employee).filter(
+        models.Employee.company_id == company_id
+    ).all()
+
+    result = []
+
+    for emp in employees:
+        completion = calculate_profile_completion(emp)  
+
+        if threshold is None or completion["completion_percentage"] < threshold:
+            result.append({
+                "employee_id": emp.id,
+                "employee_name": emp.name,
+                "email": emp.email,
+                "completion_percentage": completion["completion_percentage"],
+                "missing_fields": completion["missing_fields"]
+            })
+
+    return result

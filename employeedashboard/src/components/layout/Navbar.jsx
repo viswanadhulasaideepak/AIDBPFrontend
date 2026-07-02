@@ -142,8 +142,8 @@ const rejectReinstatementRequest = async (requestId) => {
       <h2 className="navbar-title">Enterprise Employee Management System</h2>
 
       <div className="navbar-links">
-        <NavLink to="/employees" className="nav-item">Employees</NavLink>
-        <NavLink to="/departments" className="nav-item">Departments</NavLink>
+        <NavLink to="/my-profile" className="nav-item">Profile</NavLink>
+        <NavLink to="/company" className="nav-item">Company</NavLink>
         <NavLink to="/attendance" className="nav-item">Attendance</NavLink>
       </div>
 

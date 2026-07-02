@@ -17,6 +17,8 @@ const Dashboard = () => {
   const [employees, setEmployees] = useState([]);
   const [stats, setStats] = useState(null);
   const { user } = useContext(AuthContext);
+  const [profile, setProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(true);
 
   // Load departments
   useEffect(() => {
@@ -119,6 +121,37 @@ useEffect(() => {
       },
     ],
   };
+  // ---------- Profile Completion (USER ONLY) ----------
+useEffect(() => {
+  const loadProfile = async () => {
+    try {
+      const token = localStorage.getItem("token");
+  
+      const res = await fetch(
+        "http://localhost:8000/employees/me/profile-completion",
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch profile");
+      }
+
+      const data = await res.json();
+      setProfile(data);
+    } catch (err) {
+      console.error("Profile load failed", err);
+      setProfile(null);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  loadProfile();
+}, []);
   
   // Attendance percentage
   const totalEmployees = employees.length;
@@ -172,6 +205,51 @@ useEffect(() => {
   <p>{stats?.active_employees}</p>
 </div>
 </div>
+{/* PROFILE COMPLETION WIDGET (USER ONLY) */}
+{user?.role !== "admin" && (
+  <>
+    {profileLoading ? (
+      <div className="profile-card">
+        <p>Loading profile...</p>
+      </div>
+    ) : profile ? (
+      <div className="profile-card">
+        <h3>Profile Completion</h3>
+
+        <div className="progress-bar">
+          <div
+            className="progress-fill"
+            style={{ width: `${profile.completion_percentage}%` }}
+          />
+        </div>
+
+        <p>{profile.completion_percentage}% completed</p>
+
+        <p className="insight-text">
+          {profile.completion_percentage < 100
+            ? "Complete your profile to improve account readiness."
+            : "Profile fully completed 🎉"}
+        </p>
+
+        {Array.isArray(profile.missing_fields) &&
+          profile.missing_fields.length > 0 && (
+            <div className="missing-box">
+              <h4>Missing Fields</h4>
+              <ul>
+                {profile.missing_fields.map((f, i) => (
+                  <li key={i}>{f}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+      </div>
+    ) : (
+      <div className="profile-card">
+        <p>No profile data found</p>
+      </div>
+    )}
+  </>
+)}
 
 {/* Charts */}
 <div className="dashboard-grid">

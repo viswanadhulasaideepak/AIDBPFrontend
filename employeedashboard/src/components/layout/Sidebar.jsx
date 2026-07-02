@@ -7,7 +7,19 @@ const Sidebar = () => {
   const { user, logout } = useContext(AuthContext);
   const isSuspended = user?.status === "suspended";
   const isDeactivated = user?.status === "deactivated";
+  
   const navigate = useNavigate();
+
+  if (isDeactivated) {
+  return (
+    <aside className="sidebar">
+      <h2 className="sidebar-title">EEMS</h2>
+      <p style={{ color: "red", padding: "10px" }}>
+        Account Deactivated
+      </p>
+    </aside>
+  );
+}
 
   const handleLogout = () => {
     logout();               
@@ -15,6 +27,7 @@ const Sidebar = () => {
   };
 
   const menuItems = [
+    { id: "myprofile", label: "👤 My Profile", path: "/my-profile", roles: ["user"]},
     { id: "dashboard", label: "📊 Dashboard", path: "/dashboard", roles: ["admin", "user"] },
     { id: "employees", label: "👥 Employees", path: "/employees", roles: ["admin"] },
     { id: "departments", label: "🏢 Departments", path: "/departments", roles: ["admin"] },
@@ -23,7 +36,7 @@ const Sidebar = () => {
     { id: "activity", label: "🟢 User Activity", path: "/activity", roles: ["admin"] },
     { id: "dataexport", label: "📤 Data Export Center", path: "/data-export", roles: ["admin"]},
     { id: "invitations", label: "📩 Invitations", path: "/invitations", roles: ["admin"] },
-    { id: "settings", label: "⚙️ Settings", path: "/settings", roles: ["admin", "user"] },
+    { id: "settings", label: "⚙️ Settings", path: "/settings", roles: ["admin", "user"] }
   ];
 
   return (

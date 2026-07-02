@@ -14,6 +14,8 @@ import DataExportCenter from "../pages/DataExportCenter/DataExportCenter";
 import InvitationsPage from "../components/invitations/InvitationsPage";
 import AccountDeactivated from "../components/AccountDeactivated";
 import AccountSuspended from "../components/AccountSuspended";
+import Profile from "../pages/Profile/Profile";
+import Company from "../pages/Company/Company";
 
 import { AuthContext } from "../auth/AuthContext";
 
@@ -57,6 +59,36 @@ const AppRoutes = () => {
           )
         }
       />
+      {/* Profile */}
+      <Route
+        path="/my-profile"
+        element={
+          !user ? (
+          <Navigate to="/login" />
+        ) : isDeactivated ? (
+          <Navigate to="/account-deactivated" />
+        ) : isSuspended ? (
+          <Navigate to="/account-suspended" />
+        ) : (
+          <Profile />
+        )
+      }
+     />
+      {/* Company */}
+      <Route
+        path="/company"
+        element={
+          !user ? (
+          <Navigate to="/login" />
+        ) : isDeactivated ? (
+          <Navigate to="/account-deactivated" />
+        ) : isSuspended ? (
+          <Navigate to="/account-suspended" />
+        ) : (
+          <Company />
+       )
+     }
+     />
 
       {/* Employees */}
       <Route
