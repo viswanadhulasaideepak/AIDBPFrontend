@@ -435,6 +435,10 @@ class ForgotPasswordRequest(BaseModel):
 @app.post("/forgot-password")
 def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
     user = db.query(models.User).filter_by(email=request.email).first()
+    
+    print("Forgot password endpoint hit")
+    print(request)
+    
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 

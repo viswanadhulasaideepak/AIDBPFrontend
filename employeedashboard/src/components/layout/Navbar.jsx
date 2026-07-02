@@ -20,7 +20,7 @@ const loadNotifications = async () => {
   try {
     const response = await api.get("/notifications/");
     console.log(response.data);
-    setNotifications(response.data || []);
+    setNotifications((response.data || []).slice(0, 10));
   } catch (error) {
     console.error("Error fetching notifications:", error);
     setNotifications([]);
@@ -45,7 +45,10 @@ useEffect(() => {
     await api.put(`/notifications/${id}/read`);
     toast.success("Notification marked as read");
 
-    await loadNotifications();
+    setNotifications((prev) =>
+      prev.filter((notification) => 
+        notification.id !== id)
+);
   } catch (error) {
     console.error(error);
     toast.error("Unable to mark notification");
@@ -159,7 +162,8 @@ const rejectReinstatementRequest = async (requestId) => {
             )}
         </div>
         {showDropdown && (
-          <div className="notification-dropdown">
+          <div className="notification-dropdown"
+          style={{ maxHeight: "500px", overflowY: "auto"}}>
             {notifications.length === 0 ? (
               <p>No notifications</p>
             ) : (

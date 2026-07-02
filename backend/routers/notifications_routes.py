@@ -24,6 +24,7 @@ def get_notifications(
 
     notes = (
         query.order_by(Notification.created_at.desc())
+        .limit(10)          # show only latest 10
         .all()
         )
 
@@ -118,11 +119,11 @@ def mark_all_notifications_as_read(
     count = 0
 
     for notification in notifications:
-        notification.is_read = True
-        db.add(notification)
+        db.delete(notification)
         count += 1
 
     db.commit()
+
 
     audit = AuditLog(
         user_name=current_user["email"],
@@ -163,13 +164,8 @@ def mark_notification_as_read(
     if note.is_read:
         return {"message": "Already read"}
     
-    print("Before:", note.is_read)
-    note.is_read = True
-    db.add(note)
+    db.delete(note)
     db.commit()
-    db.refresh(note)
-
-    print("After:", note.is_read)
 
     # Audit log entry
     audit = AuditLog(

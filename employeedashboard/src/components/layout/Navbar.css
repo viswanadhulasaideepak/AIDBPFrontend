@@ -249,3 +249,16 @@ body.dark-theme .navbar {
   color: #6b7280;
 }
 
+.notification-dropdown {
+    position: absolute;
+    top: 60px;
+    right: 10px;
+    width: 350px;
+    max-height: 500px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    z-index: 1000;
+}

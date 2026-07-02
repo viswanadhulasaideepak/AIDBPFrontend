@@ -281,14 +281,25 @@ def transfer_employee_department(
 
 # ---------------- NOTIFICATIONS ----------------
 def create_notification(
-    db: Session, 
-    message: str, 
-    recipient_email: str, 
-    company_id: int, 
+    db: Session,
+    message: str,
+    recipient_email: str,
+    company_id: int,
     request_id: int | None = None,
     type: str = "general"
-    ):
-    
+):
+
+    # Don't create duplicate unread notification
+    existing = db.query(Notification).filter(
+        Notification.recipient_email == recipient_email,
+        Notification.company_id == company_id,
+        Notification.message == message,
+        Notification.is_read == False
+    ).first()
+
+    if existing:
+        return existing
+
     note = Notification(
         message=message,
         recipient_email=recipient_email,
@@ -297,11 +308,12 @@ def create_notification(
         type=type,
         is_read=False
     )
+
     db.add(note)
     db.commit()
     db.refresh(note)
-    return note
 
+    return note
 # ---------------- ATTENDANCE ----------------
 def create_attendance(db: Session, employee_id: int, date: datetime, status: str, company_id: int):
     record = models.Attendance(

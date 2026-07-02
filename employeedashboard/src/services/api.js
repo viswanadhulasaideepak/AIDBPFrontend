@@ -326,16 +326,21 @@ export const validateInvitation = async (token) => {
 export const resetPassword = async (email, newPassword) => {
   const response = await fetch(`${API_BASE}/forgot-password`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, new_password: newPassword }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email,
+      new_password: newPassword,
+    }),
   });
 
   const data = await response.json();
 
   if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.detail || "Password reset failed");
+    throw new Error(data.detail || "Password reset failed");
   }
+
   return data;
 };
 
