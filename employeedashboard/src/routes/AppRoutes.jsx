@@ -11,7 +11,7 @@ import AuditLogs from "../pages/AuditLogs/AuditLogs";
 import Activity from "../pages/Activity/Activity";
 import DataExportCenter from "../pages/DataExportCenter/DataExportCenter";
 import HolidayManagement from "../pages/HolidayManagement/HolidayManagement";
-import HolidayCalender from "../pages/HolidayManagement/HolidayCalender";
+import HolidayCalenderPage from "../pages/HolidayManagement/HolidayCalenderPage";
 import InvitationsPage from "../components/invitations/InvitationsPage";
 import AccountDeactivated from "../components/AccountDeactivated";
 import AccountSuspended from "../components/AccountSuspended";
@@ -155,7 +155,7 @@ const AppRoutes = () => {
           ) : isSuspended ? (
             <Navigate to="/account-suspended" />
           ) : (
-            <HolidayCalender />
+            <HolidayCalenderPage />
           )
         }
       />
