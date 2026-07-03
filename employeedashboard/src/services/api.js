@@ -227,6 +227,28 @@ export const getCompanyLeaveRequests = async () =>
 export const updateLeaveRequest = async (id, status) =>
   (await api.put(`/leave/${id}`, { status })).data;
 
+/* ---------------- HOLIDAY MANAGEMENT ---------------- */
+
+// Get all holidays
+export const fetchHolidays = async () =>
+  (await api.get("/holidays")).data;
+
+// Get single holiday
+export const fetchHolidayById = async (id) =>
+  (await api.get(`/holidays/${id}`)).data;
+
+// Create holiday (Admin)
+export const createHoliday = async (holiday) =>
+  (await api.post("/holidays", holiday)).data;
+
+// Update holiday (Admin)
+export const updateHoliday = async (id, holiday) =>
+  (await api.put(`/holidays/${id}`, holiday)).data;
+
+// Delete holiday (Admin)
+export const deleteHoliday = async (id) =>
+  (await api.delete(`/holidays/${id}`)).data;
+
 
 /* ---------------- LOGIN ---------------- */
 export const loginUser = async (email, password, role) => {

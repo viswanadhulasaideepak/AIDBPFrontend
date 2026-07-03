@@ -12,6 +12,7 @@ const Navbar = () => {
   const [showDropdown, setShowDropdown] = useState(false);
 
   const storedUser = JSON.parse(localStorage.getItem("user"));
+  const isAdmin = storedUser?.role?.toLowerCase() === "admin";
   const userName = storedUser?.fullName || "Admin User";
   const initials = userName.charAt(0).toUpperCase();
 
@@ -147,7 +148,9 @@ const rejectReinstatementRequest = async (requestId) => {
       <div className="navbar-links">
         <NavLink to="/my-profile" className="nav-item">Profile</NavLink>
         <NavLink to="/company" className="nav-item">Company</NavLink>
-        <NavLink to="/attendance" className="nav-item">Attendance</NavLink>
+        {isAdmin && (
+        <NavLink to="/holidays" className="nav-item">Holiday Management</NavLink>
+        )}
       </div>
 
       <div className="navbar-actions">

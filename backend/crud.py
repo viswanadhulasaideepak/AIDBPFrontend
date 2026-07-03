@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, date
 import models
 from models import (
     Notification,
@@ -314,6 +314,7 @@ def create_notification(
     db.refresh(note)
 
     return note
+
 # ---------------- ATTENDANCE ----------------
 def create_attendance(db: Session, employee_id: int, date: datetime, status: str, company_id: int):
     record = models.Attendance(
@@ -517,6 +518,23 @@ def is_attendance_access_approved(
    
    return request is not None
 
+# ---------------- HOLIDAY CHECK ----------------
+
+def is_today_holiday(db: Session, company_id: int):
+    today = datetime.utcnow().date()
+
+    holiday = (
+        db.query(models.Holiday)
+        .filter(
+            models.Holiday.company_id == company_id,
+            models.Holiday.holiday_date >= datetime.combine(today, datetime.min.time()),
+            models.Holiday.holiday_date <= datetime.combine(today, datetime.max.time())
+        )
+        .first()
+    )
+
+    return holiday
+
 # ----------ATTENDANCE CHECK-IN / CHECK-OUT--------------
 def calculate_working_hours(check_in: datetime, check_out: datetime):
     """
@@ -534,6 +552,14 @@ def calculate_working_hours(check_in: datetime, check_out: datetime):
 def check_in(db: Session, employee_id: int, company_id: int):
 
     today = datetime.utcnow().date()
+    
+    holiday = is_today_holiday(db, company_id)
+
+    if holiday:
+        return {
+            "holiday": True,
+            "message": f"Today is '{holiday.name}'. Check-In is not required."
+    }
 
     attendance = db.query(models.Attendance).filter(
         models.Attendance.employee_id == employee_id,
@@ -589,7 +615,17 @@ def check_out(db: Session, employee_id: int, company_id: int):
     """
     Employee Check-Out
     """
+    
     today = datetime.utcnow().date()
+    
+    holiday = is_today_holiday(db, company_id)
+
+    if holiday:
+        return {
+            "holiday": True,
+            "message": f"Today is '{holiday.name}'. Check-Out is not required."
+            }
+    
     attendance = db.query(models.Attendance).filter(
         models.Attendance.employee_id == employee_id,
         models.Attendance.company_id == company_id,
@@ -640,6 +676,15 @@ def get_today_attendance(
     """
 
     today = datetime.utcnow().date()
+    
+    holiday = is_today_holiday(db, company_id)
+
+    if holiday:
+        return {
+            "holiday": True,
+            "holiday_name": holiday.name,
+            "description": holiday.description
+            }
 
     attendance = db.query(models.Attendance).filter(
         models.Attendance.employee_id == employee_id,
@@ -1847,3 +1892,155 @@ def get_profile_completion_below_threshold(
             })
 
     return result
+
+def create_holiday(
+    db: Session,
+    name: str,
+    description: str,
+    holiday_date: datetime,
+    holiday_type: str,
+    recurring: bool,
+    company_id: int,
+    created_by: str
+):
+    existing = (
+        db.query(models.Holiday).filter(
+            models.Holiday.company_id == company_id,
+            models.Holiday.holiday_date == holiday_date
+            ).first()
+        )
+
+    if existing:
+        raise ValueError("Holiday already exists for this date.")
+    
+    holiday = models.Holiday(
+        name=name,
+        description=description,
+        holiday_date=holiday_date,
+        holiday_type=holiday_type,
+        recurring=recurring,
+        company_id=company_id,
+        created_by=created_by
+    )
+
+    db.add(holiday)
+    db.commit()
+    db.refresh(holiday)
+
+    create_audit_log(
+        db=db,
+        user_name=created_by,
+        action="Holiday Created",
+        related_user=None,
+        company_id=company_id,
+        details=name
+    )
+
+    return holiday
+
+def get_holidays(
+    db: Session,
+    company_id: int
+):
+    return (
+        db.query(models.Holiday)
+        .filter(models.Holiday.company_id == company_id)
+        .order_by(models.Holiday.holiday_date)
+        .all()
+    )
+    
+def update_holiday(
+    db: Session,
+    holiday_id: int,
+    company_id: int,
+    updated_by,
+    **kwargs
+):
+    holiday = (
+        db.query(models.Holiday).filter(
+            models.Holiday.id == holiday_id,
+            models.Holiday.company_id == company_id
+        )
+        .first()
+    )
+
+    if not holiday:
+        return None
+    
+    new_date = kwargs.get("holiday_date")
+
+    if new_date:
+        duplicate = (
+            db.query(models.Holiday).filter(
+                models.Holiday.company_id == company_id,
+                models.Holiday.holiday_date == new_date,
+                models.Holiday.id != holiday_id
+                ).first()
+            )
+
+    if duplicate:
+        raise ValueError("Holiday already exists for this date.")
+
+    for key, value in kwargs.items():
+        if value is not None:
+            setattr(holiday, key, value)
+
+    db.commit()
+    db.refresh(holiday)
+    
+    create_audit_log(
+        db=db,
+        user_name=updated_by,
+        action="Holiday Updated",
+        related_user=None,
+        company_id=company_id,
+        details=holiday.name
+        )
+
+    return holiday
+
+def delete_holiday(
+    db: Session,
+    holiday_id: int,
+    company_id: int,
+    deleted_by : str
+):
+    holiday = (
+        db.query(models.Holiday)
+        .filter(
+            models.Holiday.id == holiday_id,
+            models.Holiday.company_id == company_id
+        )
+        .first()
+    )
+
+    if not holiday:
+        return None
+
+    create_audit_log(
+        db=db,
+        user_name=deleted_by,
+        action="Holiday Deleted",
+        related_user=None,
+        company_id=company_id,
+        details=holiday.name
+        )
+
+    db.delete(holiday)
+    db.commit()
+
+    return holiday    
+
+def get_holiday(
+    db: Session,
+    holiday_id: int,
+    company_id: int
+):
+    return (
+        db.query(models.Holiday)
+        .filter(
+            models.Holiday.id == holiday_id,
+            models.Holiday.company_id == company_id
+        )
+        .first()
+    )

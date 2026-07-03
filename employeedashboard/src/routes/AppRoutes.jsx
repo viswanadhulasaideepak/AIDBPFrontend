@@ -10,7 +10,8 @@ import Settings from "../pages/Settings/Settings";
 import AuditLogs from "../pages/AuditLogs/AuditLogs";
 import Activity from "../pages/Activity/Activity";
 import DataExportCenter from "../pages/DataExportCenter/DataExportCenter";
-
+import HolidayManagement from "../pages/HolidayManagement/HolidayManagement";
+import HolidayCalender from "../pages/HolidayManagement/HolidayCalender";
 import InvitationsPage from "../components/invitations/InvitationsPage";
 import AccountDeactivated from "../components/AccountDeactivated";
 import AccountSuspended from "../components/AccountSuspended";
@@ -122,6 +123,39 @@ const AppRoutes = () => {
             <Departments />
           ) : (
             <Navigate to="/dashboard" />
+          )
+        }
+      />
+      {/* Holiday Management */}
+      <Route
+        path="/holidays"
+        element={
+          !user ? (
+            <Navigate to="/login" />
+          ) : isDeactivated ? (
+            <Navigate to="/account-deactivated" />
+          ) : isSuspended ? (
+            <Navigate to="/account-suspended" />
+          ) : user.role === "admin" ? (
+            <HolidayManagement />
+          ) : (
+            <Navigate to="/dashboard" />
+          )
+        }
+      />
+
+      {/* Holiday Calendar */}
+      <Route
+        path="/holiday-calendar"
+        element={
+          !user ? (
+            <Navigate to="/login" />
+          ) : isDeactivated ? (
+            <Navigate to="/account-deactivated" />
+          ) : isSuspended ? (
+            <Navigate to="/account-suspended" />
+          ) : (
+            <HolidayCalender />
           )
         }
       />

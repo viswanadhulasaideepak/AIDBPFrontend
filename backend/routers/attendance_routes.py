@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 import io
-from datetime import datetime
+from datetime import datetime, date
 from openpyxl import Workbook
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
@@ -181,6 +181,39 @@ def check_in(
         status_code=404,
         detail="Employee profile not found."
     )
+        
+    # ---------------- HOLIDAY CHECK ----------------
+
+    today = date.today()
+
+    holidays = (
+        db.query(models.Holiday)
+        .filter(
+            models.Holiday.company_id == current_user["company_id"]
+            ).all()
+        )
+
+    holiday = None
+
+    for h in holidays:
+        if h.recurring:
+            if (
+                h.holiday_date.month == today.month and
+                h.holiday_date.day == today.day
+                ):
+                holiday = h
+                break
+
+        else:
+            if h.holiday_date.date() == today:
+                holiday = h
+                break
+
+    if holiday:
+        return {
+        "message": f"Today is '{holiday.name}'. Check-In is not required.",
+        "holiday": True
+    }    
     
     print("========== CHECK IN ==========")
     print("Current User:", current_user)
@@ -234,6 +267,39 @@ def check_out(
         status_code=404,
         detail="Employee profile not found."
     )
+        
+    # ---------------- HOLIDAY CHECK ----------------
+
+    today = date.today()
+
+    holidays = (
+        db.query(models.Holiday)
+        .filter(
+            models.Holiday.company_id == current_user["company_id"]
+            ).all()
+        )
+
+    holiday = None
+
+    for h in holidays:
+        if h.recurring:
+            if (
+                h.holiday_date.month == today.month and
+                h.holiday_date.day == today.day
+                ):
+                holiday = h
+                break
+
+        else:
+            if h.holiday_date.date() == today:
+                holiday = h
+                break
+
+    if holiday:
+        return {
+            "message": f"Today is '{holiday.name}'. Check-Out is not required.",
+            "holiday": True
+            }    
     
     attendance = crud.check_out(
     db=db,
@@ -247,7 +313,12 @@ def check_out(
         detail="Please Check In."
     )
 
-    return attendance
+    return {
+        "id": attendance.id,
+        "check_in": attendance.check_in,
+        "check_out": attendance.check_out,
+        "working_hours": attendance.working_hours,
+        }
 
 # ---------------- TODAY ----------------
 @router.get("/today")
@@ -275,6 +346,46 @@ def today(
         status_code=404,
         detail="Employee profile not found."
     )
+        
+    # ---------------- HOLIDAY CHECK ----------------
+
+    today = date.today()
+
+    holidays = (
+        db.query(models.Holiday)
+        .filter(
+            models.Holiday.company_id == current_user["company_id"]
+            ).all()
+        )
+
+    holiday = None
+
+    for h in holidays:
+        if h.recurring:
+            if (
+                h.holiday_date.month == today.month and
+                h.holiday_date.day == today.day
+                ):
+                holiday = h
+                break
+
+        else:
+            if h.holiday_date.date() == today:
+                holiday = h
+                break
+
+    if holiday:
+        return {
+            "holiday": True,
+            "status": "Holiday",
+            "holiday_name": holiday.name,
+            "description": holiday.description,
+            "check_in": None,
+            "check_out": None,
+            "holiday_type": holiday.holiday_type,
+            "recurring": holiday.recurring,
+            "working_hours": None
+            }    
 
     attendance = crud.get_today_attendance(
         db=db,

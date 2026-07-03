@@ -1,0 +1,168 @@
+.holiday-page {
+  padding: 25px;
+}
+
+.holiday-page h2 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.holiday-form {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin-bottom: 25px;
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+
+.holiday-form input {
+  flex: 1;
+  min-width: 180px;
+  padding: 10px;
+  border: 1px solid #dcdcdc;
+  border-radius: 6px;
+  outline: none;
+}
+
+.holiday-form input:focus {
+  border-color: #1976d2;
+}
+
+.holiday-form button {
+  padding: 10px 22px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #1976d2;
+  color: white;
+  font-weight: 600;
+}
+
+.holiday-form button:hover {
+  background: #1565c0;
+}
+
+.holiday-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.holiday-table th {
+  background: #1976d2;
+  color: white;
+  padding: 14px;
+  text-align: left;
+}
+
+.holiday-table td {
+  padding: 14px;
+  border-bottom: 1px solid #eee;
+}
+
+.holiday-table tr:hover {
+  background: #f8f9fa;
+}
+
+.holiday-table button {
+  padding: 7px 15px;
+  margin-right: 8px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.holiday-table button:first-child {
+  background: #ff9800;
+  color: white;
+}
+
+.holiday-table button:last-child {
+  background: #e53935;
+  color: white;
+}
+
+.holiday-table button:hover {
+  opacity: .9;
+}
+
+/* Holiday Type */
+
+.holiday-type {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: #eef4ff;
+    color: #2456c3;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Recurring */
+
+.recurring-yes {
+    color: #16a34a;
+    font-weight: 600;
+}
+
+.recurring-no {
+    color: #6b7280;
+}
+
+.holiday-filters {
+    display: flex;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.holiday-filters button {
+    border: none;
+    background: #1976d2;
+    color: white;
+    padding: 8px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: .3s;
+}
+
+.holiday-filters button:hover {
+    background: #1258a5;
+}
+
+.holiday-form select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+    font-weight: 500;
+}
+
+.checkbox-label input {
+    width: 18px;
+    height: 18px;
+}
+
+.holiday-form button[type="button"] {
+    background: #6b7280;
+    color: white;
+    margin-left: 10px;
+}
+
+.holiday-form button[type="button"]:hover {
+    background: #4b5563;
+}

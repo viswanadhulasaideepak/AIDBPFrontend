@@ -178,7 +178,31 @@ class LeaveRequest(Base):
     reviewed_at = Column(DateTime)
     reviewed_by = Column(String)
     user = relationship("User", back_populates="leave_requests")
-    company = relationship("Company", back_populates="leave_requests")             
+    company = relationship("Company", back_populates="leave_requests")    
+    
+# ---------------- Holiday Management ----------------
+
+class HolidayType(str, enum.Enum):
+    public = "Public Holiday"
+    company = "Company Holiday"
+    optional = "Optional Holiday"             
+    
+# ---------------- Holiday ----------------
+
+class Holiday(Base):
+    __tablename__ = "holidays"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    created_by = Column(String, nullable=False)
+    holiday_date = Column(DateTime, nullable=False)
+    description = Column(Text, nullable=True)
+    holiday_type = Column(Enum(HolidayType),nullable=False)
+    recurring = Column(Boolean,default=False)
+    
+    company_id = Column(Integer,ForeignKey("companies.id"),nullable=False)
+    created_at = Column(DateTime,default=datetime.utcnow)
+    company = relationship("Company",back_populates="holidays")    
 
 #-----------------Notifications-----------------    
 class Notification(Base):
@@ -232,6 +256,7 @@ class Company(Base):
     attendance_records = relationship("Attendance",back_populates="company")
     reinstatement_requests = relationship("ReinstatementRequest",back_populates="company")
     export_history = relationship("ExportHistory", back_populates="company",cascade="all, delete-orphan")
+    holidays = relationship("Holiday",back_populates="company",cascade="all, delete-orphan")
 
 #--------------------AuditLog--------------------
 class AuditLog(Base):

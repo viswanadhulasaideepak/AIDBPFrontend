@@ -1,0 +1,172 @@
+/* ===========================
+   HOLIDAY CALENDAR
+=========================== */
+
+.holiday-calendar {
+  margin-top: 40px;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+}
+
+.holiday-calendar h3 {
+  text-align: center;
+  margin-bottom: 25px;
+  color: #2c3e50;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.calendar-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: #1976d2;
+  color: white;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.calendar-header div {
+  padding: 14px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+}
+
+.calendar-cell {
+  min-height: 110px;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  background: #fafafa;
+  padding: 10px;
+  transition: 0.25s ease;
+  position: relative;
+}
+
+.calendar-cell:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.calendar-cell.empty {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.calendar-date {
+  font-weight: bold;
+  font-size: 18px;
+  color: #333;
+}
+
+.calendar-cell.holiday {
+  background: #e8f5e9;
+  border: 2px solid #4caf50;
+}
+
+.holiday-name {
+  margin-top: 12px;
+  font-weight: 600;
+  color: #2e7d32;
+  font-size: 15px;
+}
+
+.holiday-description {
+  margin-top: 6px;
+  color: #555;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* Responsive */
+
+@media (max-width: 992px) {
+
+  .calendar-cell {
+    min-height: 90px;
+    padding: 8px;
+  }
+
+  .holiday-name {
+    font-size: 13px;
+  }
+
+  .holiday-description {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+
+  .calendar-header div {
+    padding: 8px;
+    font-size: 12px;
+  }
+
+  .calendar-cell {
+    min-height: 70px;
+    padding: 5px;
+  }
+
+  .calendar-date {
+    font-size: 15px;
+  }
+
+  .holiday-name {
+    font-size: 11px;
+  }
+}
+
+.holiday-type {
+    font-size: 11px;
+    margin-top: 4px;
+    color: #1976d2;
+    font-weight: 600;
+}
+
+.holiday-recurring {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: #d1fae5;
+    color: #047857;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.calendar-cell.today {
+    border: 2px solid #1976d2;
+    box-shadow: 0 0 8px rgba(25,118,210,.3);
+}
+
+.calendar-cell.holiday {
+    background: #fff7ed;
+    border: 2px solid #f59e0b;
+}
+
+.holiday-name {
+    font-weight: 600;
+    margin-top: 6px;
+    color: #b45309;
+}
+
+.holiday-description {
+    font-size: 11px;
+    margin-top: 4px;
+    color: #555;
+}
+
+.holiday-description {
+    font-size: 11px;
+    margin-top: 4px;
+    color: #555;
+}

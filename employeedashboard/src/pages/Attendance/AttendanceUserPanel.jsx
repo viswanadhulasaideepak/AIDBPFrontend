@@ -135,8 +135,21 @@ const AttendanceUserPanel = () => {
   return (
     <>
       {/* CHECK IN / OUT */}
-      <div className="attendance-actions">
-        {!today?.check_in && (
+      {today?.holiday ? (
+        <div className="attendance-card holiday-card">
+          <h3>🎉 Today is a Holiday</h3>
+          <p>
+            <strong>{today.holiday_name}</strong>
+          </p>
+
+          <p>{today.description}</p>
+
+          <p>Attendance is not required today.</p>
+
+        </div>
+        ) : (
+        <div className="attendance-actions">
+          {!today?.check_in && (
           <button onClick={handleCheckIn}>
             Check In
           </button>
@@ -147,8 +160,7 @@ const AttendanceUserPanel = () => {
             Check Out
           </button>
         )}
-      </div>
-
+      </div>)}
       {/* TODAY */}
       <div className="attendance-card">
         <h3>Today's Attendance</h3>
@@ -164,8 +176,8 @@ const AttendanceUserPanel = () => {
         </p>
 
         <p>
-          <strong>Working Hours:</strong>{" "}
-          {today?.working_hours || "-"}
+          <strong>Working Hours:</strong>
+          {today?.holiday ? "Holiday" : today?.working_hours || "-"}
         </p>
       </div>
 
@@ -192,7 +204,7 @@ const AttendanceUserPanel = () => {
                   <td>{formatDate(item.date)}</td>
                   <td>{formatTime(item.check_in)}</td>
                   <td>{formatTime(item.check_out)}</td>
-                  <td>{item.working_hours || "-"}</td>
+                  <td>{item.status === "Holiday" ? "Holiday" : item.working_hours || "-"}</td>
                 </tr>
               ))}
             </tbody>

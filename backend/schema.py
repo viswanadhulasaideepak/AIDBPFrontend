@@ -502,3 +502,40 @@ class ExportHistoryOut(BaseModel):
 
     class Config:
         orm_mode = True        
+        
+# ---------------- Holiday Management ----------------
+
+class HolidayType(str, Enum):
+    public = "Public Holiday"
+    company = "Company Holiday"
+    optional = "Optional Holiday"
+
+
+class HolidayCreate(BaseModel):
+    name: str
+    holiday_date: datetime
+    description: str | None = None
+    holiday_type: HolidayType
+    recurring: bool = False
+
+
+class HolidayUpdate(BaseModel):
+    name: str | None = None
+    holiday_date: datetime | None = None
+    description: str | None = None
+    holiday_type: HolidayType | None = None
+    recurring: bool | None = None
+
+
+class HolidayOut(BaseModel):
+    id: int
+    name: str
+    holiday_date: datetime
+    description: str | None = None
+    holiday_type: HolidayType
+    recurring: bool
+    company_id: int
+    created_at: datetime
+
+    class Config:
+        orm_mode = True                    

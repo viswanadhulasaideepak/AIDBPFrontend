@@ -5,6 +5,7 @@ import {fetchDepartments,fetchAttendanceReport,fetchEmployees,fetchDashboardStat
   downloadAttendanceReportExcel,downloadAttendanceReportPDF  } from "../../services/api";
 import toast from "react-hot-toast";
 import "./Dashboard.css";
+import UpcomingHolidays from "./UpcomingHolidays";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import { AuthContext } from "../../auth/AuthContext";
 
@@ -272,6 +273,7 @@ useEffect(() => {
         />
       </div>
     ) : <p>Loading role distribution...</p>}
+    
   </div>
 
   {/* Attendance Analytics */}
@@ -362,7 +364,7 @@ useEffect(() => {
     </div>
   )}
 </div>
-
+<UpcomingHolidays />
       </div>
     </DashboardLayout>
   );
