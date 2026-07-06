@@ -21,12 +21,12 @@
 
 .devices-table th,
 .devices-table td{
-    border:1px solid #ddd;
+    border:1px solid #dddddd;
     padding:12px;
 }
 
 .devices-table th{
-    background:#f4f4f4;
+    background:#3151f5;
 }
 
 .devices-table button{
