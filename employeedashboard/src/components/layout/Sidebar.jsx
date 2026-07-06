@@ -28,6 +28,7 @@ const Sidebar = () => {
 
   const menuItems = [
     { id: "myprofile", label: "👤 My Profile", path: "/my-profile", roles: ["user"]},
+    { id: "logindevices", label: "💻 Login Devices", path: "/login-devices", roles: ["admin", "user"]},
     { id: "dashboard", label: "📊 Dashboard", path: "/dashboard", roles: ["admin", "user"] },
     { id: "employees", label: "👥 Employees", path: "/employees", roles: ["admin"] },
     { id: "departments", label: "🏢 Departments", path: "/departments", roles: ["admin"] },
@@ -35,6 +36,7 @@ const Sidebar = () => {
     { id: "holidaycalendar", label: "🎉 Holiday Calendar", path: "/holiday-calendar", roles: ["admin", "user"] },
     { id: "auditlogs", label: "📜 Audit Logs", path: "/audit-logs", roles: ["admin"] },
     { id: "activity", label: "🟢 User Activity", path: "/activity", roles: ["admin"] },
+    { id: "devicemonitor", label: "🖥 Device Monitoring", path: "/admin/login-devices", roles: ["admin"] },
     { id: "dataexport", label: "📤 Data Export Center", path: "/data-export", roles: ["admin"] },
     { id: "invitations", label: "📩 Invitations", path: "/invitations", roles: ["admin"] },
     { id: "settings", label: "⚙️ Settings", path: "/settings", roles: ["admin", "user"] }

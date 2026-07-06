@@ -92,6 +92,51 @@ class User(Base):
     leave_requests = relationship("LeaveRequest",back_populates="user",cascade="all, delete-orphan")
     reactivation_requests = relationship("ReactivationRequest",back_populates="user",cascade="all, delete-orphan")
     activity = relationship("UserActivity", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    login_sessions = relationship("LoginSession",back_populates="user",cascade="all, delete-orphan")
+    
+#--------------------SessionActivity-----------------
+class SessionStatus(str, enum.Enum):
+    active = "active"
+    logged_out = "logged_out"
+    revoked = "revoked"
+    expired = "expired"
+
+
+class SessionTerminationReason(str, enum.Enum):
+    user_logout = "User Logout"
+    force_logout = "Force Logout"
+    session_expired = "Session Expired"
+    revoked = "Revoked"
+    
+class LoginSession(Base):
+    __tablename__ = "login_sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    session_identifier = Column(String, unique=True, nullable=False, index=True)
+
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
+
+    device_name = Column(String(255), nullable=False)
+    browser = Column(String(255), nullable=True)
+    ip_address = Column(String(100), nullable=True)
+
+    login_time = Column(DateTime, default=datetime.utcnow)
+    last_activity = Column(DateTime, default=datetime.utcnow)
+
+    status = Column(Enum(SessionStatus),default=SessionStatus.active,nullable=False)
+    termination_reason = Column(Enum(SessionTerminationReason),nullable=True)
+
+    is_trusted = Column(Boolean, default=False)
+    is_current = Column(Boolean, default=False)
+
+    logged_out_at = Column(DateTime, nullable=True)
+    revoked_at = Column(DateTime, nullable=True)
+    expires_at = Column(DateTime, nullable=True)
+
+    user = relationship("User", back_populates="login_sessions")
+    company = relationship("Company", back_populates="login_sessions")    
 
 #---------------New User Model Activity-------------
 
@@ -257,6 +302,7 @@ class Company(Base):
     reinstatement_requests = relationship("ReinstatementRequest",back_populates="company")
     export_history = relationship("ExportHistory", back_populates="company",cascade="all, delete-orphan")
     holidays = relationship("Holiday",back_populates="company",cascade="all, delete-orphan")
+    login_sessions = relationship("LoginSession",back_populates="company",cascade="all, delete-orphan")
 
 #--------------------AuditLog--------------------
 class AuditLog(Base):

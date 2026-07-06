@@ -18,6 +18,9 @@ import AccountSuspended from "../components/AccountSuspended";
 import Profile from "../pages/Profile/Profile";
 import Company from "../pages/Company/Company";
 
+import LoginDevices from "../pages/LoginDevices/LoginDevices";
+import AdminLoginDevices from "../pages/AdminLoginDevices/AdminLoginDevices";
+
 import { AuthContext } from "../auth/AuthContext";
 
 const Logout = () => {
@@ -75,6 +78,21 @@ const AppRoutes = () => {
         )
       }
      />
+     {/* Login Devices */}
+      <Route
+        path="/login-devices"
+        element={
+          !user ? (
+          <Navigate to="/login" />
+        ) : isDeactivated ? (
+          <Navigate to="/account-deactivated" />
+        ) : isSuspended ? (
+          <Navigate to="/account-suspended" />
+        ) : (
+          <LoginDevices />
+        )
+     }
+    />
       {/* Company */}
       <Route
         path="/company"
@@ -242,6 +260,24 @@ const AppRoutes = () => {
             <Activity />
           ) : (
             <Navigate to="/dashboard" />
+          )
+        }
+      />
+
+      {/* Admin Login Devices */}
+      <Route
+        path="/admin/login-devices"
+        element={
+          !user ? (
+            <Navigate to="/login" />
+          ) : isDeactivated ? (
+            <Navigate to="/account-deactivated" />
+          ) : isSuspended ? (
+            <Navigate to="/account-suspended" />
+          ) : user.role === "admin" ? (
+           <AdminLoginDevices />
+          ) : (
+           <Navigate to="/dashboard" />
           )
         }
       />

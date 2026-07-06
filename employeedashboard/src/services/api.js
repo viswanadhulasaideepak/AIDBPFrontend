@@ -500,4 +500,66 @@ export const fetchMyProfileCompletion = async () =>
 export const fetchProfileDashboard = async () =>
   (await api.get("/employees/me/profile")).data;
 
+// ---------------- LOGIN DEVICE MANAGEMENT ---------------- 
+
+// -------------------- USER -----------------
+
+// Get all my login devices
+export const fetchMyLoginDevices = async () =>
+  (await api.get("/login-devices")).data;
+
+// Rename trusted device
+export const renameTrustedDevice = async (
+  sessionId,
+  deviceName
+) =>
+  (
+    await api.patch(`/login-devices/${sessionId}/rename`, {
+      device_name: deviceName,
+    })
+  ).data;
+
+// Remove trusted device
+export const removeTrustedDevice = async (sessionId) =>
+  (
+    await api.delete(`/login-devices/${sessionId}/trusted`)
+  ).data;
+
+// Logout selected device
+export const logoutDevice = async (sessionId) =>
+  (
+    await api.post(`/login-devices/${sessionId}/logout`)
+  ).data;
+
+// Logout every device except current
+export const logoutAllDevices = async () =>
+  (
+    await api.post("/login-devices/logout-all")
+  ).data;
+
+
+// ----------------- ADMIN ------------------
+
+// View all company sessions
+export const fetchCompanyLoginSessions = async () =>
+  (
+    await api.get("/admin/login-devices")
+  ).data;
+
+// Force logout
+export const forceLogoutSession = async (sessionId) =>
+  (
+    await api.post(
+      `/admin/login-devices/${sessionId}/force-logout`
+    )
+  ).data;
+
+// Revoke session
+export const revokeLoginSession = async (sessionId) =>
+  (
+    await api.post(
+      `/admin/login-devices/${sessionId}/revoke`
+    )
+  ).data;
+
 export default api;

@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from datetime import datetime, date
+from datetime import datetime, date,timedelta
 import models
 from models import (
     Notification,
@@ -11,7 +11,10 @@ from models import (
     LeaveType,
     ReinstatementRequest,
     ReinstatementStatus,
-    ExportHistory
+    ExportHistory,
+    LoginSession,
+    SessionStatus,
+    SessionTerminationReason
 )
 import uuid
 from models import Invitation, User, ReactivationRequest
@@ -956,6 +959,7 @@ def record_user_logout(
     db: Session,
     user: models.User,
     ip_address: str,
+    session_identifier: str,
     browser: str
 ):
     print("LOGOUT CALLED FOR:", user.email)
@@ -972,6 +976,19 @@ def record_user_logout(
         activity.ip_address = ip_address
         
         print("LAST LOGOUT SAVED:", activity.last_logout)
+        
+    session = (
+    db.query(LoginSession)
+    .filter(
+        LoginSession.session_identifier == session_identifier,
+        LoginSession.status == SessionStatus.active,
+    ).first()
+    )
+
+    if session:
+        session.status = SessionStatus.logged_out
+        session.logged_out_at = datetime.utcnow()
+        session.termination_reason = SessionTerminationReason.user_logout    
 
         
     db.commit()
@@ -2044,3 +2061,378 @@ def get_holiday(
         )
         .first()
     )
+    
+# Login Device & Session Management
+
+def create_login_session(
+    db: Session,
+    user: models.User,
+    session_identifier: str,
+    device_name: str,
+    browser: str,
+    ip_address: str,
+    is_current: bool = True,
+):
+    """
+    Creates a new login session whenever a user logs in.
+    """
+
+    session = LoginSession(
+        session_identifier=session_identifier,
+        user_id=user.id,
+        company_id=user.company_id,
+        device_name=device_name,
+        browser=browser,
+        ip_address=ip_address,
+        login_time=datetime.utcnow(),
+        last_activity=datetime.utcnow(),
+        status=SessionStatus.active,
+        is_trusted=False,
+        is_current=is_current,
+    )
+
+    db.add(session)
+    db.commit()
+    db.refresh(session)
+
+    return session
+
+def update_session_activity(
+    db: Session,
+    session_identifier: str
+):
+    """
+    Updates the last activity time for an active session.
+    """
+
+    session = (
+        db.query(LoginSession)
+        .filter(
+            LoginSession.session_identifier == session_identifier,
+            LoginSession.status == SessionStatus.active
+        )
+        .first()
+    )
+
+    if not session:
+        return None
+
+    session.last_activity = datetime.utcnow()
+
+    db.commit()
+    db.refresh(session)
+
+    return session
+
+def get_user_sessions(
+    db: Session,
+    user_id: int
+):
+    """
+    Returns all login sessions for the current user.
+    """
+
+    return (
+        db.query(LoginSession)
+        .filter(
+            LoginSession.user_id == user_id
+        )
+        .order_by(LoginSession.login_time.desc())
+        .all()
+    )
+    
+def rename_trusted_device(
+    db: Session,
+    session_id: int,
+    user_id: int,
+    device_name: str
+):
+    """
+    Rename a trusted device.
+    """
+
+    session = (
+        db.query(LoginSession)
+        .filter(
+            LoginSession.id == session_id,
+            LoginSession.user_id == user_id,
+            LoginSession.is_trusted == True
+        )
+        .first()
+    )
+
+    if not session:
+        return None
+
+    session.device_name = device_name
+
+    db.commit()
+    db.refresh(session)
+
+    create_audit_log(
+        db=db,
+        user_name=str(user_id),
+        action="Trusted Device Renamed",
+        related_user=None,
+        company_id=session.company_id,
+        browser=session.browser,
+        ip_address=session.ip_address,
+        details=device_name
+    )
+
+    return session
+
+def logout_session(
+    db: Session,
+    session_identifier: str,
+    user_id: int
+):
+    """
+    Logout a single session belonging to the current user.
+    """
+
+    session = (
+        db.query(LoginSession)
+        .filter(
+            LoginSession.session_identifier == session_identifier,
+            LoginSession.user_id == user_id
+        )
+        .first()
+    )
+
+    if not session:
+        return None
+
+    if session.status != SessionStatus.active:
+        return None
+
+    session.status = SessionStatus.logged_out
+    session.termination_reason = SessionTerminationReason.user_logout
+    session.logged_out_at = datetime.utcnow()
+    session.last_activity = datetime.utcnow()
+
+    db.commit()
+    db.refresh(session)
+
+    create_audit_log(
+        db=db,
+        user_name=str(user_id),
+        action="User Logout",
+        related_user=None,
+        company_id=session.company_id,
+        browser=session.browser,
+        ip_address=session.ip_address,
+        details=session.device_name
+    )
+
+    return session
+
+def logout_other_sessions(
+    db: Session,
+    user_id: int,
+    current_session_identifier: str
+):
+    """
+    Logout every session except the current one.
+    """
+
+    sessions = (
+        db.query(LoginSession)
+        .filter(
+            LoginSession.user_id == user_id,
+            LoginSession.status == SessionStatus.active,
+            LoginSession.session_identifier != current_session_identifier
+        )
+        .all()
+    )
+
+    count = 0
+
+    for session in sessions:
+
+        session.status = SessionStatus.logged_out
+        session.logged_out_at = datetime.utcnow()
+        session.last_activity = datetime.utcnow()
+        session.termination_reason = SessionTerminationReason.user_logout
+
+        count += 1
+
+    db.commit()
+
+    return count
+
+def get_company_sessions(
+    db: Session,
+    company_id: int
+):
+    """
+    Returns every session inside the current company.
+    """
+
+    sessions = (
+        db.query(LoginSession, User)
+        .join(User, User.id == LoginSession.user_id)
+        .filter(
+            LoginSession.company_id == company_id
+        )
+        .order_by(LoginSession.login_time.desc())
+        .all()
+    )
+
+    result = []
+
+    for session, user in sessions:
+        result.append({
+            "id": session.id,
+            "session_identifier": session.session_identifier,
+            "user_id": session.user_id,
+            "user_name": user.username,
+            "user_email": user.email,
+            "device_name": session.device_name,
+            "browser": session.browser,
+            "ip_address": session.ip_address,
+            "login_time": session.login_time,
+            "last_activity": session.last_activity,
+            "logged_out_at": session.logged_out_at,
+            "status": session.status,
+            "is_trusted": session.is_trusted,
+            "termination_reason": session.termination_reason,
+        })
+
+    return result
+    
+def force_logout_session(
+    db: Session,
+    session_id: int,
+    company_id: int,
+    performed_by: str
+):
+    """
+    Admin force logout.
+    """
+
+    session = (
+        db.query(LoginSession)
+        .filter(
+            LoginSession.id == session_id,
+            LoginSession.company_id == company_id
+        )
+        .first()
+    )
+
+    if not session:
+        return None
+
+    if session.status != SessionStatus.active:
+        return None
+
+    session.status = SessionStatus.revoked
+    session.logged_out_at = datetime.utcnow()
+    session.revoked_at = datetime.utcnow()
+    session.termination_reason = SessionTerminationReason.force_logout
+
+    db.commit()
+    db.refresh(session)
+
+    create_audit_log(
+        db=db,
+        user_name=performed_by,
+        action="Force Logout Initiated",
+        related_user=None,
+        company_id=company_id,
+        browser=session.browser,
+        ip_address=session.ip_address,
+        details=session.device_name,
+        performed_by=performed_by
+    )
+
+    return session
+
+def revoke_session(
+    db: Session,
+    session_id: int,
+    company_id: int,
+    performed_by: str
+):
+    """
+    Permanently revoke a session.
+    """
+
+    session = (
+        db.query(LoginSession)
+        .filter(
+            LoginSession.id == session_id,
+            LoginSession.company_id == company_id
+        )
+        .first()
+    )
+
+    if not session:
+        return None
+
+    if session.status in (
+        SessionStatus.revoked,
+        SessionStatus.expired
+    ):
+        return None
+
+    session.status = SessionStatus.revoked
+    session.revoked_at = datetime.utcnow()
+    session.termination_reason = SessionTerminationReason.revoked
+
+    db.commit()
+    db.refresh(session)
+
+    create_audit_log(
+        db=db,
+        user_name=performed_by,
+        action="Session Revoked",
+        related_user=None,
+        company_id=company_id,
+        browser=session.browser,
+        ip_address=session.ip_address,
+        details=session.device_name,
+        performed_by=performed_by
+    )
+
+    return session
+
+def expire_inactive_sessions(
+    db: Session,
+    timeout_minutes: int = 30
+):
+    """
+    Mark inactive sessions as expired.
+    """
+
+    expiry_time = datetime.utcnow() - timedelta(minutes=timeout_minutes)
+
+    sessions = (
+        db.query(LoginSession)
+        .filter(
+            LoginSession.status == SessionStatus.active,
+            LoginSession.last_activity < expiry_time
+        )
+        .all()
+    )
+
+    for session in sessions:
+
+        session.status = SessionStatus.expired
+        session.termination_reason = SessionTerminationReason.session_expired
+        session.logged_out_at = datetime.utcnow()
+
+        create_audit_log(
+            db=db,
+            user_name=str(session.user_id),
+            action="Session Expired",
+            related_user=None,
+            company_id=session.company_id,
+            browser=session.browser,
+            ip_address=session.ip_address,
+            details=session.device_name,
+        )
+
+    db.commit()
+
+    return len(sessions)            

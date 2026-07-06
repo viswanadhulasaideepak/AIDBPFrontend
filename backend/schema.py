@@ -539,3 +539,80 @@ class HolidayOut(BaseModel):
 
     class Config:
         orm_mode = True                    
+        
+# ---------------- Login Session ----------------
+
+class SessionStatus(str, Enum):
+    active = "active"
+    logged_out = "logged_out"
+    revoked = "revoked"
+    expired = "expired"
+
+
+class SessionTerminationReason(str, Enum):
+    user_logout = "User Logout"
+    force_logout = "Force Logout"
+    session_expired = "Session Expired"
+    revoked = "Revoked"        
+    
+class LoginSessionOut(BaseModel):
+    id: int
+    session_identifier: str
+    
+    user_email: str | None = None
+
+    user_id: int
+    company_id: int
+
+    device_name: str
+    browser: str | None = None
+    ip_address: str | None = None
+
+    login_time: datetime
+    last_activity: datetime
+
+    status: SessionStatus
+
+    termination_reason: SessionTerminationReason | None = None
+
+    is_trusted: bool
+    is_current: bool
+
+    logged_out_at: datetime | None = None
+    revoked_at: datetime | None = None
+    expires_at: datetime | None = None
+
+    class Config:
+        orm_mode = True
+        
+class LoginSessionAdminOut(BaseModel):
+    id: int
+
+    session_identifier: str
+
+    username: str
+    email: EmailStr
+
+    company_id: int
+
+    device_name: str
+    browser: str | None = None
+    ip_address: str | None = None
+
+    login_time: datetime
+    last_activity: datetime
+
+    status: SessionStatus
+    termination_reason: SessionTerminationReason | None = None
+
+    is_trusted: bool
+    is_current: bool
+
+    class Config:
+        orm_mode = True
+        
+class RenameTrustedDeviceRequest(BaseModel):
+    device_name: str
+    
+class SessionActionRequest(BaseModel):
+    pass                        

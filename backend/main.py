@@ -1,4 +1,5 @@
 import requests
+import uuid
 from fastapi import FastAPI, HTTPException, Depends, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -23,7 +24,8 @@ from routers.suspension_routes import router as suspension_router
 from routers import (
     employees_routes, departments_routes, attendance_routes, dashboard_routes,
     notifications_routes, auditlogs_routes, invitations_routes,  members_routes, 
-    reactivation_routes, leave_routes, activity_routes, export_routes,holiday_routes)
+    reactivation_routes, leave_routes, activity_routes, export_routes,holiday_routes,
+    login_devices_routes)
 
 app = FastAPI()
 # ---------------- CORS ----------------
@@ -55,6 +57,8 @@ app.include_router(activity_routes.router)
 app.include_router(export_routes.router)
 app.include_router(suspension_router)
 app.include_router(holiday_routes.router)
+app.include_router(login_devices_routes.router)
+app.include_router(login_devices_routes.admin_router)
 
 for route in app.routes:
     print(route.path)
@@ -225,21 +229,38 @@ def login(
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
+    # Get client details
     ip_address, browser = get_client_info(request)
-    
+
+    # Generate unique session id
+    session_identifier = str(uuid.uuid4())
+
+    # Record normal login activity (existing functionality)
     crud.record_user_login(
         db=db,
         user=user,
         ip_address=ip_address,
-        browser= browser
-    )
+        browser=browser
+        )
 
+    # Create login session (new functionality)
+    crud.create_login_session(
+        db=db,
+        user=user,
+        session_identifier=session_identifier,
+        device_name=browser,     
+        browser=browser,
+        ip_address=ip_address
+        )
+
+# Create JWT containing session id
     token = create_token(
         user.id,
-        user.email, 
-        user.role, 
-        user.company_id, 
-        user.status.value
+        user.email,
+        user.role,
+        user.company_id,
+        user.status.value,
+        session_identifier=session_identifier
         )
 
     return {
@@ -277,10 +298,17 @@ def logout(
     ip_address, browser = get_client_info(request)
 
     crud.record_user_logout(
-        db=db,
-        user=user,
-        ip_address=ip_address,
-        browser=browser
+    db=db,
+    user=user,
+    ip_address=ip_address,
+    browser=browser,
+    session_identifier=current_user["session_identifier"]
+    )
+
+    crud.logout_session(
+    db=db,
+    session_identifier=current_user["session_identifier"],
+    user_id=current_user["id"]
     )
 
     return {

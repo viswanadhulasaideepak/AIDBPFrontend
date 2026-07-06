@@ -1,4 +1,5 @@
 import os
+import uuid
 from jose import jwt, JWTError
 from datetime import datetime, timedelta
 
@@ -7,7 +8,7 @@ from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 from database import get_db
-from models import User, UserStatus
+from models import User, UserStatus,LoginSession,SessionStatus
 
 # ---------------- CONFIG ----------------
 
@@ -36,7 +37,8 @@ def create_token(
     email: str,
     role: str,
     company_id: int,
-    status: str
+    status: str,
+    session_identifier: str | None = None
 ):
     expire = datetime.utcnow() + timedelta(
         minutes=ACCESS_TOKEN_EXPIRE_MINUTES
@@ -48,6 +50,9 @@ def create_token(
         "role": role,
         "company_id": company_id,
         "status": status,
+        "session_identifier": (
+        session_identifier or str(uuid.uuid4())
+        ),
         "exp": expire
     }
 
@@ -75,39 +80,65 @@ def get_current_user(
             SECRET_KEY,
             algorithms=[ALGORITHM]
         )
-
-        email = payload.get("sub")
-
-        if not email:
-            raise HTTPException(
-                status_code=401,
-                detail="Invalid token"
-            )
-
-        user = db.query(User).filter(
-            User.email == email
-        ).first()
-
-        if not user:
-            raise HTTPException(
-                status_code=401,
-                detail="User not found"
-            )
-
-        return {
-            "id": user.id,
-            "email": user.email,
-            "role": user.role,
-            "company_id": user.company_id,
-            "status": user.status.value,
-            "user": user
-        }
-
+        
     except JWTError:
         raise HTTPException(
             status_code=401,
             detail="Token expired or invalid"
-        )
+        )    
+
+    email = payload.get("sub")
+    session_identifier = payload.get("session_identifier")
+        
+    session = (db.query(LoginSession).filter(
+        LoginSession.session_identifier == session_identifier
+    ).first()
+               )
+
+    if not session:
+        raise HTTPException(
+            status_code=401,
+            detail="Session not found"
+            )
+
+    if session.status != SessionStatus.active:
+        raise HTTPException(
+            status_code=401,
+            detail="Session has expired or has been revoked. Please login again."
+            )
+
+    if not email:
+        raise HTTPException(
+                status_code=401,
+                detail="Invalid token"
+            )
+
+    user = db.query(User).filter(
+        User.email == email
+        ).first()
+    
+    session.last_activity = datetime.utcnow()
+    
+    db.commit()
+
+    if not user:
+        raise HTTPException(
+                status_code=401,
+                detail="User not found"
+            )
+
+    return {
+        "id": user.id,
+        "email": user.email,
+        "role": user.role,
+        "company_id": user.company_id,
+        "status": user.status.value,
+        "session_identifier": session_identifier, 
+        
+        "user": user
+        }
+
+    
 
 # ---------------- ACTIVE USER CHECK ----------------
 

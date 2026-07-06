@@ -1,0 +1,102 @@
+.admin-device-page{
+    padding:20px;
+}
+
+.admin-device-toolbar{
+    display:flex;
+    gap:15px;
+    margin:20px 0;
+}
+
+.admin-device-toolbar input{
+    padding:8px;
+    width:250px;
+}
+
+.admin-device-toolbar select{
+    padding:8px;
+}
+
+.admin-device-table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.admin-device-table th,
+.admin-device-table td{
+    border:1px solid #ddd;
+    padding:12px;
+}
+
+.admin-device-table th{
+    background:#f3f3f3;
+}
+
+.admin-device-table button{
+    margin-right:8px;
+    padding:6px 12px;
+    cursor:pointer;
+}
+
+.session-summary{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:20px;
+margin:20px 0;
+}
+
+.summary-card{
+background:white;
+padding:18px;
+border-radius:10px;
+box-shadow:0 2px 8px rgba(0,0,0,.08);
+text-align:center;
+}
+
+.summary-card h3{
+margin-bottom:10px;
+}
+
+.badge{
+padding:4px 10px;
+border-radius:15px;
+font-size:12px;
+margin-left:8px;
+}
+
+.current{
+background:#4caf50;
+color:white;
+}
+
+.trusted{
+background:#2196f3;
+color:white;
+}
+
+.status{
+padding:6px 12px;
+border-radius:12px;
+font-size:13px;
+font-weight:600;
+}
+
+.status.active{
+background:#d4edda;
+color:#155724;
+}
+
+.status.logged_out{
+background:#fff3cd;
+color:#856404;
+}
+
+.status.revoked{
+background:#f8d7da;
+color:#721c24;
+}
+
+.status.expired{
+background:#e2e3e5;
+color:#383d41;
+}
