@@ -13,11 +13,13 @@ const AdminLoginDevices = () => {
   const [statusFilter, setStatusFilter] = useState("All");
   const [browserFilter, setBrowserFilter] = useState("All");
   const [loginDateFilter, setLoginDateFilter] = useState("");
+  const [selectedSessions,setSelectedSessions]=useState([]);
 
   const loadSessions = async () => {
     try {
       setLoading(true);
       const data = await fetchCompanyLoginSessions();
+      console.log(data);
       setSessions(data);
       setFilteredSessions(data);
 
@@ -33,13 +35,27 @@ const AdminLoginDevices = () => {
   }, []);
 
   useEffect(() => {
+
+  const interval = setInterval(() => {
+    loadSessions();
+  }, 45000);
+
+  return () => clearInterval(interval);
+
+}, []);
+
+  useEffect(() => {
     let data = [...sessions];
     if (search.trim()) {
         data = data.filter(session =>
-            session.user_name
-                ?.toLowerCase()
-                .includes(search.toLowerCase())
-        );
+    session.user_name
+        ?.toLowerCase()
+        .includes(search.toLowerCase()) ||
+
+    session.user_email
+        ?.toLowerCase()
+        .includes(search.toLowerCase())
+);
     }
 
     if (statusFilter !== "All") {
@@ -78,23 +94,29 @@ const AdminLoginDevices = () => {
     sessions
 ]);
 
+//-------------------Force Logout-----------------
+
   const handleForceLogout = async (id) => {
     if (!window.confirm("Force logout this session?")) return;
     try {
       await forceLogoutSession(id);
       toast.success("Session logged out.");
+      setSelectedSessions([]);
       loadSessions();
     } catch {
       toast.error("Operation failed.");
     }
 
   };
+
+  //-------------------HandleRevoke-----------------
 
   const handleRevoke = async (id) => {
     if (!window.confirm("Revoke this session?")) return;
     try {
       await revokeLoginSession(id);
       toast.success("Session revoked.");
+      setSelectedSessions([]);
       loadSessions();
     } catch {
       toast.error("Operation failed.");
@@ -102,12 +124,61 @@ const AdminLoginDevices = () => {
 
   };
 
+  //---------------Bulk Handle Revoke-----------------
+
+  const handleBulkRevoke = async () => {
+
+  if (selectedSessions.length === 0) {
+    toast.error("No sessions selected");
+    return;
+  }
+
+  if (!window.confirm("Revoke selected sessions?")) {
+    return;
+  }
+
+  try {
+
+    for (const id of selectedSessions) {
+      await revokeLoginSession(id);
+    }
+
+    toast.success("Selected sessions revoked");
+
+    setSelectedSessions([]);
+
+    loadSessions();
+
+  } catch {
+
+    toast.error("Bulk revoke failed");
+
+  }
+
+};
+
   return (
     <DashboardLayout>
       <div className="admin-device-page">
-        <h2>Device Monitoring</h2>
+        <h2>User Session Monitoring</h2>
+
+        <div style={{ marginBottom: "15px" }}>
+          <button className="bulk-revoke-btn"
+           disabled={selectedSessions.length === 0}
+           onClick={handleBulkRevoke}>
+            Revoke Selected ({selectedSessions.length})
+          </button>
+        </div>
+
+        <button className="refresh-btn" onClick={loadSessions}>
+          Refresh
+        </button>
 
         <div className="session-summary">
+          <div className="summary-card">
+            <h3>Total Sessions</h3>
+            <p>{sessions.length}</p>
+          </div>
           <div className="summary-card">
             <h3>Active</h3>
             <p>{sessions.filter(s=>s.status==="active").length}</p>
@@ -155,14 +226,35 @@ const AdminLoginDevices = () => {
            onChange={(e)=>setLoginDateFilter(e.target.value)}/>
         </div>
         {loading ? (
-          <p>Loading...</p>
+          <div className="loading">
+            Loading user sessions...
+          </div>
 
         ) : (
 
           <table className="admin-device-table">
             <thead>
               <tr>
+                <th>
+                  <input type="checkbox"
+                   checked={
+                    filteredSessions.length > 0 &&
+                    selectedSessions.length ===
+                    filteredSessions.filter(
+                       s => s.status === "active"
+                      ).length
+                    }
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedSessions(
+                          filteredSessions.filter(s => s.status === "active").map(s => s.id));
+                        } else {
+                          setSelectedSessions([]);
+                        }
+                      }}/>
+                </th>
                 <th>User</th>
+                <th>Email</th>
                 <th>Device</th>
                 <th>Browser</th>
                 <th>IP</th>
@@ -170,57 +262,104 @@ const AdminLoginDevices = () => {
                 <th>Last Activity</th>
                 <th>Status</th>
                 <th>Termination</th>
+                <th>Logged Out</th>
                 <th>Actions</th>
               </tr>
             </thead>
-
             <tbody>
-              {filteredSessions.map((session) => (
-                <tr key={session.id}>
-                  <td>{session.user_name}</td>
-                  <td>
-                    <div>{session.device_name}
-                      {session.is_current && (
-                        <span className="badge current">
-                          Current
-                        </span>
-                      )}
-                      {session.is_trusted && (
-                        <span className="badge trusted">
-                          Trusted
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td>{session.browser}</td>
-                  <td>{session.ip_address}</td>
-                  <td>{new Date(session.login_time).toLocaleString()}</td>
-                  <td>{new Date(session.last_activity).toLocaleString()}</td>
-                  <td>
-                    <span className={`status ${session.status}`}>
-                      {session.status}
-                    </span>
-                  </td>
-                  <td>{session.termination_reason ? session.termination_reason : "-"}</td>
-                  <td>
-
-                    {session.status === "active" && (
-
-                      <>
-
-                        <button onClick={() => handleForceLogout(session.id)}>
-                          Force Logout
-                        </button>
-
-                        <button onClick={() => handleRevoke(session.id)}>
-                          Revoke
-                        </button>
-                      </>
-                    )}
+              {filteredSessions.length === 0 ? (
+                <tr>
+                  <td colSpan="12" style={{ textAlign: "center" }}>
+                   No sessions found.
                   </td>
                 </tr>
-              ))}
-            </tbody>
+                ) : (
+                  filteredSessions.map((session) => (
+                  <tr key={session.id}>
+                    <td>
+                      <input type="checkbox" disabled={session.status !== "active"}
+                      checked={selectedSessions.includes(session.id)}
+                       onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedSessions([
+                            ...selectedSessions,
+                            session.id,
+                          ]);
+                        } else {
+                          setSelectedSessions(
+                            selectedSessions.filter(
+                              (id) => id !== session.id
+                            )
+                          );
+                        }
+                      }}/>
+                    </td>
+
+                    <td>{session.user_name}</td>
+                    <td>{session.user_email}</td>
+                    <td>
+                      <div>{session.device_name}
+                        {session.is_current && (
+                          <span className="badge current">
+                           Current
+                          </span>
+                        )}
+                        {session.is_trusted && (
+                          <span className="badge trusted">
+                           Trusted
+                          </span>
+                        )}
+                      </div>
+                    </td>
+
+        <td>{session.browser}</td>
+        <td>{session.ip_address}</td>
+
+        <td>
+          {new Date(session.login_time).toLocaleString()}
+        </td>
+
+        <td>
+          {new Date(session.last_activity).toLocaleString()}
+        </td>
+
+        <td>
+          <span className={`status ${session.status}`}>
+           {session.status}
+          </span>
+        </td>
+
+        <td>{session.termination_reason || "-"}</td>
+
+        <td>
+          {session.logged_out_at
+            ? new Date(session.logged_out_at).toLocaleString()
+            : "-"}
+        </td>
+
+        <td>
+          {session.status === "active" ? (
+            <>
+              <button disabled={loading}
+                onClick={() =>
+                  handleForceLogout(session.id)}>
+                Force Logout
+              </button>
+
+              <button disabled={loading}
+                onClick={() =>
+                  handleRevoke(session.id)}>
+                Revoke
+              </button>
+            </>
+          ) : (
+            <span>No Actions</span>
+          )}
+        </td>
+      </tr>
+    ))
+  )}
+</tbody>
           </table>
         )}
       </div>

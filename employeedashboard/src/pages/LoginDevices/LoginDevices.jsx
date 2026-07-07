@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import {fetchMyLoginDevices,renameTrustedDevice,removeTrustedDevice,
-  logoutDevice,logoutAllDevices,} from "../../services/api";
+  logoutDevice,logoutAllDevices,trustDevice} from "../../services/api";
 import "./LoginDevices.css";
 
 const LoginDevices = () => {
@@ -24,6 +24,16 @@ const LoginDevices = () => {
   useEffect(() => {
     loadDevices();
   }, []);
+
+const handleTrust = async (device) => {
+  try {
+    await trustDevice(device.id);
+    toast.success("Device marked as trusted");
+    loadDevices();
+  } catch {
+    toast.error("Unable to trust device");
+  }
+};  
 
   const handleRename = async (device) => {
     const name = prompt(
@@ -122,33 +132,43 @@ const LoginDevices = () => {
                     {new Date(device.last_activity).toLocaleString()}
                   </td>
 
-                  <td>{device.status}</td>
-
                   <td>
-                    {device.is_trusted ? "Yes" : "No"}
+                    <span className={`status ${device.status}`}>
+                     {device.status}
+                    </span>
                   </td>
 
-                  <td>
+                 <td>
+                  {device.is_trusted ? "Yes" : "No"}
+                </td>
+                <td>
+                  {!device.is_trusted && (
+                    <button onClick={() => handleTrust(device)}>
+                      Trust
+                    </button>
+                  )}
 
-                    {device.is_trusted && (
-                      <>
-                        <button onClick={() => handleRename(device)}>
-                          Rename
-                        </button>
+                  {device.is_trusted && (
+                    <>
+                   {device.is_trusted && (
+                    <button onClick={() => handleRename(device)}>
+                      Rename
+                    </button>
+                  )}
 
-                        <button onClick={() => handleRemove(device)}>
-                          Remove
-                        </button>
-                      </>
-                    )}
+                    <button onClick={() => handleRemove(device)}>
+                      Remove Trusted
+                    </button>
+                    </>
+                  )}
 
-                    {device.status === "active" && (
-                      <button onClick={() => handleLogout(device)}>
-                        Logout
-                      </button>
-                    )}
-                  </td>
-                </tr>
+              {device.status === "active" && (
+                <button onClick={() => handleLogout(device)}>
+                  Logout
+                </button>
+              )}
+              </td>
+              </tr>
               ))}
             </tbody>
           </table>

@@ -1765,7 +1765,8 @@ def get_export_notifications(
         .order_by(models.Notification.created_at.desc())
         .all()
     )    
-    #---------Calculate Profile Completion--------------
+    
+#------------------Calculate Profile Completion-----------------------------------
     
 def calculate_profile_completion(employee):
     """
@@ -1909,6 +1910,8 @@ def get_profile_completion_below_threshold(
             })
 
     return result
+
+#---------------------Holidays Section---------------------
 
 def create_holiday(
     db: Session,
@@ -2062,7 +2065,7 @@ def get_holiday(
         .first()
     )
     
-# Login Device & Session Management
+# -----------------------Login Device & Session Management------------------------------
 
 def create_login_session(
     db: Session,
@@ -2182,6 +2185,84 @@ def rename_trusted_device(
 
     return session
 
+def trust_device(
+    db: Session,
+    session_id: int,
+    user_id: int
+):
+    """
+    Mark a device as trusted.
+    """
+
+    session = (
+        db.query(LoginSession)
+        .filter(
+            LoginSession.id == session_id,
+            LoginSession.user_id == user_id
+        )
+        .first()
+    )
+
+    if not session:
+        return None
+
+    session.is_trusted = True
+
+    db.commit()
+    db.refresh(session)
+
+    create_audit_log(
+        db=db,
+        user_name=str(user_id),
+        action="Trusted Device Added",
+        related_user=None,
+        company_id=session.company_id,
+        browser=session.browser,
+        ip_address=session.ip_address,
+        details=session.device_name,
+    )
+
+    return session
+
+def remove_trusted_device(
+    db: Session,
+    session_id: int,
+    user_id: int
+):
+    """
+    Remove trusted device.
+    """
+
+    session = (
+        db.query(LoginSession)
+        .filter(
+            LoginSession.id == session_id,
+            LoginSession.user_id == user_id
+        )
+        .first()
+    )
+
+    if not session:
+        return None
+
+    session.is_trusted = False
+
+    db.commit()
+    db.refresh(session)
+
+    create_audit_log(
+        db=db,
+        user_name=str(user_id),
+        action="Trusted Device Removed",
+        related_user=None,
+        company_id=session.company_id,
+        browser=session.browser,
+        ip_address=session.ip_address,
+        details=session.device_name,
+    )
+
+    return session
+
 def logout_session(
     db: Session,
     session_identifier: str,
@@ -2266,14 +2347,16 @@ def get_company_sessions(
     company_id: int
 ):
     """
-    Returns every session inside the current company.
+    Returns every login session belonging only
+    to the current company.
+    Includes user information for admin monitoring.
     """
 
     sessions = (
         db.query(LoginSession, User)
         .join(User, User.id == LoginSession.user_id)
         .filter(
-            LoginSession.company_id == company_id
+            User.company_id == company_id
         )
         .order_by(LoginSession.login_time.desc())
         .all()
@@ -2282,22 +2365,35 @@ def get_company_sessions(
     result = []
 
     for session, user in sessions:
+
         result.append({
             "id": session.id,
             "session_identifier": session.session_identifier,
+  
             "user_id": session.user_id,
+            "company_id": session.company_id,
+
             "user_name": user.username,
             "user_email": user.email,
+
             "device_name": session.device_name,
             "browser": session.browser,
             "ip_address": session.ip_address,
+
             "login_time": session.login_time,
             "last_activity": session.last_activity,
-            "logged_out_at": session.logged_out_at,
+
             "status": session.status,
-            "is_trusted": session.is_trusted,
+
             "termination_reason": session.termination_reason,
-        })
+
+            "is_trusted": session.is_trusted,
+            "is_current": session.is_current,
+
+            "logged_out_at": session.logged_out_at,
+            "revoked_at": session.revoked_at,
+            "expires_at": session.expires_at,
+            })
 
     return result
     
@@ -2396,6 +2492,58 @@ def revoke_session(
     )
 
     return session
+
+def revoke_multiple_sessions(
+    db: Session,
+    session_ids: list[int],
+    company_id: int,
+    performed_by: str
+):
+    """
+    Revoke multiple sessions belonging to the current company.
+    """
+
+    sessions = (
+        db.query(LoginSession)
+        .filter(
+            LoginSession.id.in_(session_ids),
+            LoginSession.company_id == company_id
+        )
+        .all()
+    )
+
+    count = 0
+
+    for session in sessions:
+
+        if session.status in (
+            SessionStatus.revoked,
+            SessionStatus.expired
+        ):
+            continue
+
+        session.status = SessionStatus.revoked
+        session.revoked_at = datetime.utcnow()
+        session.logged_out_at = datetime.utcnow()
+        session.termination_reason = SessionTerminationReason.revoked
+
+        create_audit_log(
+            db=db,
+            user_name=performed_by,
+            action="Session Revoked",
+            related_user=None,
+            company_id=company_id,
+            browser=session.browser,
+            ip_address=session.ip_address,
+            details=session.device_name,
+            performed_by=performed_by
+        )
+
+        count += 1
+
+    db.commit()
+
+    return count
 
 def expire_inactive_sessions(
     db: Session,

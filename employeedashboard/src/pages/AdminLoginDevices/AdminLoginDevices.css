@@ -100,3 +100,54 @@ color:#721c24;
 background:#e2e3e5;
 color:#383d41;
 }
+
+.status {
+    padding:6px 12px;
+    border-radius:20px;
+    color:white;
+    font-size:13px;
+    font-weight:600;
+}
+
+.status.active{
+    background:#28a745;
+}
+
+.status.logged_out{
+    background:#6c757d;
+}
+
+.status.revoked{
+    background:#dc3545;
+}
+
+.status.expired{
+    background:#ffc107;
+    color:#000;
+}
+
+.refresh-btn{
+    padding:8px 16px;
+    cursor:pointer;
+}
+
+.bulk-revoke-btn{
+    background:#dc3545;
+    color:white;
+    border:none;
+    padding:8px 16px;
+    border-radius:6px;
+    cursor:pointer;
+    margin-bottom:15px;
+}
+
+.bulk-revoke-btn:disabled{
+    background:#999;
+    cursor:not-allowed;
+}
+
+.loading{
+    padding:20px;
+    text-align:center;
+    font-weight:600;
+}

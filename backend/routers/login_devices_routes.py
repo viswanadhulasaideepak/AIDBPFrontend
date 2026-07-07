@@ -132,20 +132,18 @@ def logout_all_devices(
         "message": f"{count} session(s) logged out."
     }           
     
-    
-         
-    
 #---------------Admin Sessions-----------------
 
-@admin_router.get("/")
+@admin_router.get("/",response_model=list[schema.LoginSessionAdminOut])
+
 def company_sessions(
     current_user=Depends(require_admin),
     db: Session = Depends(get_db)
 ):
 
     return crud.get_company_sessions(
-        db,
-        current_user["company_id"]
+        db=db,
+        company_id=current_user["company_id"]
     )
     
 #---------------Force Logout-----------------
@@ -197,4 +195,49 @@ def revoke_session(
 
     return {
         "message": "Session revoked successfully."
-    }            
+    }        
+    
+#-----------------Bulk Revoke Sessions-------------------
+
+@admin_router.post("/bulk-revoke")
+def bulk_revoke_sessions(
+    request: schema.BulkRevokeRequest,
+    current_user=Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+
+    count = crud.revoke_multiple_sessions(
+        db=db,
+        session_ids=request.session_ids,
+        company_id=current_user["company_id"],
+        performed_by=current_user["email"]
+    )
+
+    return {
+        "message": f"{count} session(s) revoked successfully."
+    }
+   
+#-------------------Trust Device-------------------                
+    
+@router.post("/{session_id}/trust")
+def trust_device(
+    session_id: int,
+    current_user=Depends(require_active_user),
+    db: Session = Depends(get_db)
+):
+
+    session = crud.trust_device(
+        db=db,
+        session_id=session_id,
+        user_id=current_user["id"]
+    )
+
+    if not session:
+        raise HTTPException(
+            status_code=404,
+            detail="Device not found."
+        )
+
+    return {
+        "message": "Device marked as trusted."
+    }    

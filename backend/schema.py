@@ -586,13 +586,15 @@ class LoginSessionOut(BaseModel):
         orm_mode = True
         
 class LoginSessionAdminOut(BaseModel):
+
     id: int
 
     session_identifier: str
 
-    username: str
-    email: EmailStr
+    user_name: str
+    user_email: EmailStr
 
+    user_id: int
     company_id: int
 
     device_name: str
@@ -608,6 +610,10 @@ class LoginSessionAdminOut(BaseModel):
     is_trusted: bool
     is_current: bool
 
+    logged_out_at: datetime | None = None
+    revoked_at: datetime | None = None
+    expires_at: datetime | None = None
+
     class Config:
         orm_mode = True
         
@@ -615,4 +621,7 @@ class RenameTrustedDeviceRequest(BaseModel):
     device_name: str
     
 class SessionActionRequest(BaseModel):
-    pass                        
+    session_id: int
+
+class BulkRevokeRequest(BaseModel):
+    session_ids: list[int]

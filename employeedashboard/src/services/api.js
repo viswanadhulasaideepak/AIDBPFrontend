@@ -500,6 +500,8 @@ export const fetchMyProfileCompletion = async () =>
 export const fetchProfileDashboard = async () =>
   (await api.get("/employees/me/profile")).data;
 
+
+
 // ---------------- LOGIN DEVICE MANAGEMENT ---------------- 
 
 // -------------------- USER -----------------
@@ -560,6 +562,11 @@ export const revokeLoginSession = async (sessionId) =>
     await api.post(
       `/admin/login-devices/${sessionId}/revoke`
     )
+  ).data;
+
+export const trustDevice = async (sessionId) =>
+  (
+    await api.post(`/login-devices/${sessionId}/trust`)
   ).data;
 
 export default api;
