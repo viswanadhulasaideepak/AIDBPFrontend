@@ -569,4 +569,143 @@ export const trustDevice = async (sessionId) =>
     await api.post(`/login-devices/${sessionId}/trust`)
   ).data;
 
+// EMPLOYEE SKILLS
+
+export const fetchMySkills = async () => {
+  const res = await api.get("/skills/my-skills");
+  return res.data;
+};
+
+export const addSkill = async (data) => {
+  const res = await api.post("/skills/my-skills", data);
+  return res.data;
+};
+
+export const updateSkill = async (id, data) => {
+  const res = await api.put(`/skills/my-skills/${id}`, data);
+  return res.data;
+};
+
+export const deleteSkill = async (id) => {
+  const res = await api.delete(`/skills/my-skills/${id}`);
+  return res.data;
+};  
+
+// EMPLOYEE CERTIFICATIONS
+
+export const fetchMyCertifications = async () => {
+  const res = await api.get("/skills/my-certifications");
+  return res.data;
+};
+
+export const addCertification = async (formData) => {
+  const res = await api.post(
+    "/skills/my-certifications",
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+
+  return res.data;
+};
+
+export const updateCertification = async (id,formData) => {
+    const res = await api.put(`/skills/my-certifications/${id}`,
+        formData,
+        {
+            headers:{
+                "Content-Type":
+                "multipart/form-data"
+            }
+        }
+    );
+    return res.data;
+};
+
+export const deleteCertification = async (id) => {
+  const res = await api.delete(
+    `/skills/my-certifications/${id}`
+  );
+
+  return res.data;
+};
+
+export const fetchActiveCertifications = async () =>(
+  await api.get("/skills/my-certifications/active")
+).data;
+
+export const fetchExpiredCertifications = async () =>
+(
+    await api.get(
+        "/skills/my-certifications/expired"
+    )
+).data;
+
+export const fetchExpiringCertifications = async () =>
+(
+    await api.get(
+        "/skills/admin/expiring"
+    )
+).data;
+// ---------------- SKILL SUMMARY ----------------
+
+export const fetchSkillSummary = async () => {
+  const res = await api.get("/skills/my-summary");
+  return res.data;
+};
+
+export const searchEmployeesBySkill = async (skill) =>
+(
+    await api.get(
+        `/skills/admin/search?skill=${skill}`
+    )
+).data;
+
+// ---------------- ADMIN COMPETENCIES ----------------
+
+// Employee Competency Profile
+export const fetchCompetencyProfile = async (employeeId) =>
+(
+    await api.get(
+        `/skills/admin/profile/${employeeId}`
+    )
+).data;
+
+// Search & Filter employee competencies
+export const filterCompetencies = async (filters) =>
+  (
+    await api.post(
+    "/skills/admin/filter-competencies",
+    filters,
+    {
+        headers: {
+            "Content-Type": "application/json",
+        },
+    }
+)
+  ).data;
+
+// Export competency report
+export const downloadCompetencyReport = async () => {
+
+    const response = await api.get(
+        "/skills/admin/export",
+        {
+            responseType: "blob",
+        }
+    );
+    const blob = new Blob([response.data]);
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "competency_report.xlsx";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+};  
+
 export default api;

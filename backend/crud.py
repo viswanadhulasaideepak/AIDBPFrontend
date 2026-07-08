@@ -1,25 +1,12 @@
 from sqlalchemy.orm import Session
-from datetime import datetime, date,timedelta
+from datetime import datetime, date, timedelta
 import models
-from models import (
-    Notification,
-    InvitationStatus,
-    UserStatus,
-    ReactivationStatus,
-    LeaveRequest,
-    LeaveStatus,
-    LeaveType,
-    ReinstatementRequest,
-    ReinstatementStatus,
-    ExportHistory,
-    LoginSession,
-    SessionStatus,
-    SessionTerminationReason
-)
+from models import (Notification,InvitationStatus,UserStatus,ReactivationStatus,LeaveRequest,
+    LeaveStatus,LeaveType,ReinstatementRequest,ReinstatementStatus,ExportHistory,LoginSession,
+    SessionStatus,SessionTerminationReason)
 import uuid
 from models import Invitation, User, ReactivationRequest
 from hashlib import sha256
-
 
 # ---------------- EMPLOYEES ----------------
 def get_employees(db: Session, company_id: int):
@@ -38,6 +25,20 @@ def get_employee(db: Session, employee_id: int, company_id: int):
         models.Employee.id == employee_id,
         models.Employee.company_id == company_id
     ).first()    
+    
+def get_employee_by_email(
+    db: Session,
+    email: str,
+    company_id: int
+):
+    return (
+        db.query(models.Employee)
+        .filter(
+            models.Employee.email == email,
+            models.Employee.company_id == company_id
+        )
+        .first()
+    )    
 
 def create_employee(
     db: Session,
@@ -2048,7 +2049,6 @@ def delete_holiday(
 
     db.delete(holiday)
     db.commit()
-
     return holiday    
 
 def get_holiday(
@@ -2097,7 +2097,6 @@ def create_login_session(
     db.add(session)
     db.commit()
     db.refresh(session)
-
     return session
 
 def update_session_activity(
@@ -2124,7 +2123,6 @@ def update_session_activity(
 
     db.commit()
     db.refresh(session)
-
     return session
 
 def get_user_sessions(
@@ -2339,7 +2337,6 @@ def logout_other_sessions(
         count += 1
 
     db.commit()
-
     return count
 
 def get_company_sessions(
@@ -2542,7 +2539,6 @@ def revoke_multiple_sessions(
         count += 1
 
     db.commit()
-
     return count
 
 def expire_inactive_sessions(
@@ -2584,3 +2580,927 @@ def expire_inactive_sessions(
     db.commit()
 
     return len(sessions)            
+
+#---------------------EMPLOYEE SKILLS & CERTIFICATIONS----------------------
+#--------------EMPLOYEE SKILLS MANAGEMENT----------------
+
+def get_employee_skills(
+    db: Session,
+    employee_id: int,
+    company_id: int
+):
+    """
+    Returns all skills for an employee.
+    """
+    return (
+        db.query(models.EmployeeSkill)
+        .filter(
+            models.EmployeeSkill.employee_id == employee_id,
+            models.EmployeeSkill.company_id == company_id
+        )
+        .order_by(
+            models.EmployeeSkill.is_primary.desc(),
+            models.EmployeeSkill.skill_name.asc()
+        )
+        .all()
+    )
+
+
+def get_employee_skill(
+    db: Session,
+    skill_id: int,
+    company_id: int
+):
+    """
+    Returns a single skill.
+    """
+
+    return (
+        db.query(models.EmployeeSkill)
+        .filter(
+            models.EmployeeSkill.id == skill_id,
+            models.EmployeeSkill.company_id == company_id
+        )
+        .first()
+    )
+
+def create_employee_skill(
+    db: Session,
+    employee_id: int,
+    company_id: int,
+    skill_name: str,
+    proficiency,
+    years_experience: float,
+    is_primary: bool,
+    performed_by: str
+):
+    """
+    Add a new employee skill.
+    """
+
+    employee = db.query(models.Employee).filter(
+        models.Employee.id == employee_id,
+        models.Employee.company_id == company_id
+    ).first()
+
+    if not employee:
+        return None
+
+    skill_name = skill_name.strip()
+
+    if not skill_name:
+        raise ValueError("Skill name is required.")
+
+    if years_experience < 0:
+        raise ValueError("Years of experience cannot be negative.")
+
+    duplicate = (
+        db.query(models.EmployeeSkill)
+        .filter(
+            models.EmployeeSkill.employee_id == employee_id,
+            models.EmployeeSkill.company_id == company_id,
+            models.EmployeeSkill.skill_name.ilike(skill_name)
+        )
+        .first()
+    )
+
+    if duplicate:
+        raise ValueError("Skill already exists.")
+
+    if is_primary:
+        db.query(models.EmployeeSkill).filter(
+            models.EmployeeSkill.employee_id == employee_id
+        ).update(
+            {"is_primary": False},
+            synchronize_session=False
+        )
+
+    skill = models.EmployeeSkill(
+        employee_id=employee_id,
+        company_id=company_id,
+        skill_name=skill_name,
+        proficiency=proficiency,
+        years_experience=years_experience,
+        is_primary=is_primary
+    )
+
+    db.add(skill)
+    db.commit()
+    db.refresh(skill)
+
+    create_audit_log(
+        db=db,
+        user_name=employee.name,
+        action="Skill Added",
+        related_user=employee.email,
+        company_id=company_id,
+        details=skill.skill_name,
+        performed_by=performed_by
+    )
+
+    return skill
+
+def update_employee_skill(
+    db: Session,
+    skill_id: int,
+    company_id: int,
+    skill_name: str,
+    proficiency,
+    years_experience: float,
+    is_primary: bool,
+    performed_by: str
+):
+    """
+    Update employee skill.
+    """
+
+    skill = get_employee_skill(db,skill_id,company_id)
+
+    if not skill:
+        return None
+
+    if years_experience < 0:
+        raise ValueError(
+            "Years of experience cannot be negative."
+        )
+
+    skill_name = skill_name.strip() if skill_name else skill.skill_name
+
+    duplicate = (
+        db.query(models.EmployeeSkill)
+        .filter(
+            models.EmployeeSkill.employee_id == skill.employee_id,
+            models.EmployeeSkill.company_id == company_id,
+            models.EmployeeSkill.skill_name.ilike(skill_name),
+            models.EmployeeSkill.id != skill_id
+        )
+        .first()
+    )
+
+    if duplicate:
+        raise ValueError("Duplicate skill.")
+
+    if is_primary:
+
+        db.query(models.EmployeeSkill).filter(
+            models.EmployeeSkill.employee_id == skill.employee_id
+        ).update(
+            {"is_primary": False},
+            synchronize_session=False
+        )
+
+    skill.skill_name = skill_name
+    skill.proficiency = proficiency
+    skill.years_experience = years_experience
+    skill.is_primary = is_primary
+
+    db.commit()
+    db.refresh(skill)
+
+    employee = db.query(models.Employee).filter(
+        models.Employee.id == skill.employee_id
+    ).first()
+
+    create_audit_log(
+        db=db,
+        user_name=employee.name,
+        action="Skill Updated",
+        related_user=employee.email,
+        company_id=company_id,
+        details=skill.skill_name,
+        performed_by=performed_by
+    )
+
+    return skill
+
+def delete_employee_skill(
+    db: Session,
+    skill_id: int,
+    company_id: int,
+    performed_by: str
+):
+    """
+    Delete employee skill.
+    """
+
+    skill = get_employee_skill(db,skill_id,company_id)
+
+    if not skill:
+        return None
+
+    employee = db.query(models.Employee).filter(
+        models.Employee.id == skill.employee_id
+    ).first()
+
+    skill_name = skill.skill_name
+
+    db.delete(skill)
+    db.commit()
+
+    create_audit_log(
+        db=db,
+        user_name=employee.name,
+        action="Skill Deleted",
+        related_user=employee.email,
+        company_id=company_id,
+        details=skill_name,
+        performed_by=performed_by
+    )
+
+    return True
+
+def get_primary_skills(
+    db: Session,
+    employee_id: int,
+    company_id: int
+):
+    """
+    Returns only primary/core skills.
+    """
+
+    return (
+        db.query(models.EmployeeSkill)
+        .filter(
+            models.EmployeeSkill.employee_id == employee_id,
+            models.EmployeeSkill.company_id == company_id,
+            models.EmployeeSkill.is_primary == True
+        )
+        .all()
+    )
+    
+#-----------------EMPLOYEE CERTIFICATIONS MANAGEMENT-----------------------
+
+def get_employee_certifications(
+    db: Session,
+    employee_id: int,
+    company_id: int
+):
+    """
+    Returns all certifications for an employee.
+    """
+
+    return (
+        db.query(models.EmployeeCertification)
+        .filter(
+            models.EmployeeCertification.employee_id == employee_id,
+            models.EmployeeCertification.company_id == company_id
+        )
+        .order_by(
+            models.EmployeeCertification.issue_date.desc()
+        )
+        .all()
+    )
+
+
+def get_employee_certification(
+    db: Session,
+    certification_id: int,
+    company_id: int
+):
+    """
+    Returns a single certification.
+    """
+
+    return (
+        db.query(models.EmployeeCertification)
+        .filter(
+            models.EmployeeCertification.id == certification_id,
+            models.EmployeeCertification.company_id == company_id
+        )
+        .first()
+    )
+
+def create_employee_certification(
+    db: Session,
+    employee_id: int,
+    company_id: int,
+    certification_name: str,
+    issuing_organization: str,
+    issue_date: date,
+    expiry_date: date | None,
+    document_path: str | None,
+    performed_by: str
+):
+    """
+    Add employee certification.
+    """
+
+    employee = (
+        db.query(models.Employee)
+        .filter(
+            models.Employee.id == employee_id,
+            models.Employee.company_id == company_id
+        )
+        .first()
+    )
+
+    if not employee:
+        return None
+
+    certification_name = certification_name.strip()
+    issuing_organization = issuing_organization.strip()
+
+    if not certification_name:
+        raise ValueError("Certification name is required.")
+
+    if not issuing_organization:
+        raise ValueError("Issuing organization is required.")
+
+    if expiry_date and expiry_date < issue_date:
+        raise ValueError(
+            "Expiry date cannot be earlier than issue date."
+        )
+
+    duplicate = (
+        db.query(models.EmployeeCertification)
+        .filter(
+            models.EmployeeCertification.employee_id == employee_id,
+            models.EmployeeCertification.company_id == company_id,
+            models.EmployeeCertification.certification_name.ilike(certification_name),
+            models.EmployeeCertification.issuing_organization.ilike(
+                issuing_organization
+            )
+        )
+        .first()
+    )
+
+    if duplicate:
+        raise ValueError(
+            "Certification already exists."
+        )
+
+    certification = models.EmployeeCertification(
+        employee_id=employee_id,
+        company_id=company_id,
+        certification_name=certification_name,
+        issuing_organization=issuing_organization,
+        issue_date=issue_date,
+        expiry_date=expiry_date,
+        document_path=document_path
+    )
+
+    db.add(certification)
+    db.commit()
+    db.refresh(certification)
+
+    create_audit_log(
+        db=db,
+        user_name=employee.name,
+        action="Certification Added",
+        related_user=employee.email,
+        company_id=company_id,
+        details=certification_name,
+        performed_by=performed_by
+    )
+
+    return certification
+
+def update_employee_certification(
+    db: Session,
+    certification_id: int,
+    company_id: int,
+    certification_name: str,
+    issuing_organization: str,
+    issue_date: date,
+    expiry_date: date | None,
+    document_path: str | None,
+    performed_by: str
+):
+    """
+    Update certification.
+    """
+
+    certification = get_employee_certification(db,certification_id,company_id)
+
+    if not certification:
+        return None
+
+    certification_name = certification_name.strip()
+    issuing_organization = issuing_organization.strip()
+
+    if expiry_date and expiry_date < issue_date:
+        raise ValueError(
+            "Expiry date cannot be earlier than issue date."
+        )
+
+    duplicate = (
+        db.query(models.EmployeeCertification)
+        .filter(
+            models.EmployeeCertification.employee_id == certification.employee_id,
+            models.EmployeeCertification.company_id == company_id,
+            models.EmployeeCertification.certification_name.ilike(certification_name),
+            models.EmployeeCertification.issuing_organization.ilike(
+                issuing_organization
+            ),
+            models.EmployeeCertification.id != certification_id
+        )
+        .first()
+    )
+
+    if duplicate:
+        raise ValueError(
+            "Duplicate certification."
+        )
+
+    certification.certification_name = certification_name
+    certification.issuing_organization = issuing_organization
+    certification.issue_date = issue_date
+    certification.expiry_date = expiry_date
+
+    if document_path is not None:
+        certification.document_path = document_path
+
+    db.commit()
+    db.refresh(certification)
+
+    employee = (
+        db.query(models.Employee)
+        .filter(
+            models.Employee.id == certification.employee_id
+        )
+        .first()
+    )
+
+    create_audit_log(
+        db=db,
+        user_name=employee.name,
+        action="Certification Updated",
+        related_user=employee.email,
+        company_id=company_id,
+        details=certification_name,
+        performed_by=performed_by
+    )
+
+    return certification
+
+def delete_employee_certification(
+    db: Session,
+    certification_id: int,
+    company_id: int,
+    performed_by: str
+):
+    """
+    Delete certification.
+    """
+
+    certification = get_employee_certification(db,certification_id,company_id)
+
+    if not certification:
+        return None
+
+    employee = (
+        db.query(models.Employee)
+        .filter(
+            models.Employee.id == certification.employee_id
+        )
+        .first()
+    )
+
+    cert_name = certification.certification_name
+
+    db.delete(certification)
+    db.commit()
+
+    create_audit_log(
+        db=db,
+        user_name=employee.name,
+        action="Certification Deleted",
+        related_user=employee.email,
+        company_id=company_id,
+        details=cert_name,
+        performed_by=performed_by
+    )
+
+    return True
+
+#------------------CERTIFICATION STATUS HELPERS------------------
+
+def get_active_certifications(
+    db: Session,
+    employee_id: int,
+    company_id: int
+):
+    """
+    Returns active certifications.
+    """
+
+    today = date.today()
+
+    return (
+        db.query(models.EmployeeCertification)
+        .filter(
+            models.EmployeeCertification.employee_id == employee_id,
+            models.EmployeeCertification.company_id == company_id,
+            (
+                (models.EmployeeCertification.expiry_date == None)
+                |
+                (models.EmployeeCertification.expiry_date >= today)
+            )
+        )
+        .all()
+    )
+
+def get_expired_certifications(
+    db: Session,
+    employee_id: int,
+    company_id: int
+):
+    """
+    Returns expired certifications.
+    """
+    today = date.today()
+
+    return (
+        db.query(models.EmployeeCertification)
+        .filter(
+            models.EmployeeCertification.employee_id == employee_id,
+            models.EmployeeCertification.company_id == company_id,
+            models.EmployeeCertification.expiry_date != None,
+            models.EmployeeCertification.expiry_date < today
+        )
+        .all()
+    )
+
+def get_expiring_certifications(
+    db: Session,
+    company_id: int,
+    days: int = 30
+):
+    """
+    Returns certifications expiring within X days.
+    """
+
+    today = date.today()
+    target = today + timedelta(days=days)
+
+    return (
+        db.query(models.EmployeeCertification)
+        .filter(
+            models.EmployeeCertification.company_id == company_id,
+            models.EmployeeCertification.expiry_date != None,
+            models.EmployeeCertification.expiry_date >= today,
+            models.EmployeeCertification.expiry_date <= target
+        )
+        .all()
+    )
+
+def mark_expired_certifications(
+    db: Session,
+    company_id: int,
+    performed_by="System"
+):
+    """
+    Audit expired certifications.
+    Intended for scheduled jobs.
+    """
+
+    today = date.today()
+
+    certifications = (
+        db.query(models.EmployeeCertification)
+        .filter(
+            models.EmployeeCertification.company_id == company_id,
+            models.EmployeeCertification.expiry_date != None,
+            models.EmployeeCertification.expiry_date < today
+        )
+        .all()
+    )
+
+    for cert in certifications:
+
+        employee = (
+            db.query(models.Employee)
+            .filter(
+                models.Employee.id == cert.employee_id
+            )
+            .first()
+        )
+
+        create_audit_log(
+            db=db,
+            user_name=employee.name,
+            action="Certification Expired",
+            related_user=employee.email,
+            company_id=company_id,
+            details=cert.certification_name,
+            performed_by=performed_by
+        )
+
+    return len(certifications)    
+
+#-----------------ADMIN SKILL / CERTIFICATION SEARCH-----------------------
+
+def search_employees_by_skill(
+    db: Session,
+    company_id: int,
+    skill_name: str
+):
+    """
+    Search employees by skill.
+    """
+
+    return (
+        db.query(models.Employee)
+        .join(
+            models.EmployeeSkill,
+            models.Employee.id == models.EmployeeSkill.employee_id
+        )
+        .filter(
+            models.Employee.company_id == company_id,
+            models.EmployeeSkill.skill_name.ilike(f"%{skill_name}%")
+        )
+        .distinct()
+        .all()
+    )
+
+def filter_employee_competencies(
+    db: Session,
+    company_id: int,
+    skill: str | None = None,
+    skill_level=None,
+    min_years_experience: float | None = None,
+    certification_name: str |None = None,
+    certification_status: str | None = None,
+):
+
+    query = db.query(models.Employee).filter(
+        models.Employee.company_id == company_id
+    )
+
+    if skill or skill_level or min_years_experience is not None:
+        query = query.join(
+            models.EmployeeSkill,
+            models.Employee.id == models.EmployeeSkill.employee_id,
+            isouter=True
+        )
+
+    if certification_name or certification_status:
+        query = query.join(
+            models.EmployeeCertification,
+            models.Employee.id == models.EmployeeCertification.employee_id,
+            isouter=True
+        )
+
+    if skill:
+        query = query.filter(
+            models.EmployeeSkill.skill_name.ilike(f"%{skill}%")
+        )
+
+    if skill_level:
+        query = query.filter(
+            models.EmployeeSkill.proficiency == skill_level
+        )
+
+    if min_years_experience is not None:
+        query = query.filter(
+            models.EmployeeSkill.years_experience >= min_years_experience
+        )
+
+    if certification_name:
+        query = query.filter(
+            models.EmployeeCertification.certification_name.ilike(
+                f"%{certification_name}%"
+            )
+        )
+
+    today = date.today()
+
+    if certification_status == "Valid":
+        query = query.filter(
+            (models.EmployeeCertification.expiry_date == None) |
+            (models.EmployeeCertification.expiry_date >= today)
+        )
+
+    elif certification_status == "Expired":
+        query = query.filter(
+            models.EmployeeCertification.expiry_date < today
+        )
+
+    elif certification_status == "Expiring Soon":
+        limit = today + timedelta(days=30)
+
+        query = query.filter(
+            models.EmployeeCertification.expiry_date >= today,
+            models.EmployeeCertification.expiry_date <= limit
+        )
+
+    employees = query.distinct().all()
+
+    result = []
+
+    for employee in employees:
+
+        skills = employee.skills or []
+        certifications = employee.certifications or []
+
+        active_certifications = 0
+
+        for cert in certifications:
+            if cert.expiry_date is None or cert.expiry_date >= today:
+                active_certifications += 1
+
+        result.append({
+
+            "employee": {
+                "id": employee.id,
+                "name": employee.name,
+                "email": employee.email,
+                "department_name":
+                    employee.department_rel.name
+                    if employee.department_rel else "-"
+            },
+
+            "summary": {
+                "total_skills": len(skills),
+                "active_certifications": active_certifications
+            },
+
+            "skills": [
+                {
+                    "id": s.id,
+                    "skill_name": s.skill_name,
+                    "proficiency":
+                        s.proficiency.value
+                        if hasattr(s.proficiency, "value")
+                        else s.proficiency,
+                    "years_experience": s.years_experience
+                }
+                for s in skills
+            ],
+
+            "certifications": [
+                {
+                    "id": c.id,
+                    "certification_name": c.certification_name,
+                    "issuing_organization": c.issuing_organization,
+                    "expiry_date": c.expiry_date
+                }
+                for c in certifications
+            ]
+
+        })
+
+    return result
+
+#-------------------EMPLOYEE DASHBOARD SUMMARY-----------------
+
+def get_employee_skill_summary(
+    db: Session,
+    employee_id: int,
+    company_id: int
+):
+    """
+    Dashboard statistics.
+    """
+
+    total_skills = (
+        db.query(models.EmployeeSkill)
+        .filter(
+            models.EmployeeSkill.employee_id == employee_id,
+            models.EmployeeSkill.company_id == company_id
+        )
+        .count()
+    )
+
+    primary_skills = (
+        db.query(models.EmployeeSkill)
+        .filter(
+            models.EmployeeSkill.employee_id == employee_id,
+            models.EmployeeSkill.company_id == company_id,
+            models.EmployeeSkill.is_primary == True
+        )
+        .count()
+    )
+
+    today = date.today()
+
+    active_certifications = (
+        db.query(models.EmployeeCertification)
+        .filter(
+            models.EmployeeCertification.employee_id == employee_id,
+            models.EmployeeCertification.company_id == company_id,
+            (
+                (models.EmployeeCertification.expiry_date == None)
+                |
+                (models.EmployeeCertification.expiry_date >= today)
+            )
+        )
+        .count()
+    )
+
+    expired_certifications = (
+        db.query(models.EmployeeCertification)
+        .filter(
+            models.EmployeeCertification.employee_id == employee_id,
+            models.EmployeeCertification.company_id == company_id,
+            models.EmployeeCertification.expiry_date != None,
+            models.EmployeeCertification.expiry_date < today
+        )
+        .count()
+    )
+
+    profile = get_employee_profile_completion(db, employee_id, company_id)
+
+    return {
+
+        "total_skills": total_skills,
+        "primary_skills": primary_skills,
+        "active_certifications": active_certifications,
+        "expired_certifications": expired_certifications,
+        "profile_completion":
+            profile["completion_percentage"]
+            if profile
+            else 0
+    }
+    
+#---------------------EMPLOYEE COMPETENCY PROFILE------------------
+
+def get_employee_competency_profile(
+    db: Session,
+    employee_id: int,
+    company_id: int
+):
+    """
+    Complete competency profile.
+    """
+
+    employee = (
+        db.query(models.Employee)
+        .filter(
+            models.Employee.id == employee_id,
+            models.Employee.company_id == company_id
+        )
+        .first()
+    )
+
+    if not employee:
+        return None
+
+    return {
+
+        "employee": employee,
+        "skills": get_employee_skills(db,employee_id,company_id),
+        "certifications":
+            get_employee_certifications(db,employee_id,company_id),
+        "summary":
+            get_employee_skill_summary(db,employee_id,company_id)
+    }    
+    
+#----------------------EXPORT COMPETENCY REPORT------------------------
+
+def get_competency_export(
+    db: Session,
+    company_id: int
+):
+    """
+    Export employee competency report.
+    """
+
+    employees = (
+        db.query(models.Employee)
+        .filter(
+            models.Employee.company_id == company_id
+        )
+        .all()
+    )
+
+    report = []
+
+    for emp in employees:
+
+        skills = get_employee_skills(db,emp.id,company_id)
+        certifications = get_employee_certifications(db,emp.id,company_id)
+
+        report.append({
+
+            "employee_id": emp.id,
+            "employee_name": emp.name,
+            "email": emp.email,
+            "department": (
+                emp.department_rel.name
+                if emp.department_rel
+                else None
+            ),
+
+            "skills": [
+                {
+                    "skill": s.skill_name,
+                    "level": s.proficiency,
+                    "experience": s.years_experience,
+                    "primary": s.is_primary
+                }
+                for s in skills
+            ],
+
+            "certifications": [
+                {
+                    "name": c.certification_name,
+                    "organization": c.issuing_organization,
+                    "issue_date": c.issue_date,
+                    "expiry_date": c.expiry_date
+                }
+                for c in certifications
+            ]
+        })
+
+    return report    

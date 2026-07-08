@@ -1,6 +1,6 @@
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import BaseModel, EmailStr, ConfigDict, Field, model_validator
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional
 
 model_config = ConfigDict(from_attributes=True)
@@ -625,3 +625,134 @@ class SessionActionRequest(BaseModel):
 
 class BulkRevokeRequest(BaseModel):
     session_ids: list[int]
+    
+class SkillProficiency(str, Enum):
+    beginner = "Beginner"
+    intermediate = "Intermediate"
+    advanced = "Advanced"
+    expert = "Expert"
+    
+# ---------------- Employee Skills ----------------
+
+class EmployeeSkillCreate(BaseModel):
+    skill_name: str = Field(..., min_length=1)
+    proficiency: SkillProficiency
+    years_experience: float = Field(0, ge=0)
+    is_primary: bool = False
+
+
+class EmployeeSkillUpdate(BaseModel):
+    skill_name: str | None = None
+    proficiency: SkillProficiency | None = None
+    years_experience: float | None = Field(None, ge=0)
+    is_primary: bool | None = None
+
+
+class EmployeeSkillOut(BaseModel):
+    id: int
+    employee_id: int
+    company_id: int
+
+    skill_name: str
+    proficiency: SkillProficiency
+
+    years_experience: float
+    is_primary: bool
+
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+        
+# ---------------- Employee Certifications ----------------
+
+class EmployeeCertificationCreate(BaseModel):
+
+    certification_name: str = Field(..., min_length=1)
+    issuing_organization: str = Field(..., min_length=1)
+    issue_date: date
+    expiry_date: date | None = None
+
+    @model_validator(mode="after")
+    def validate_dates(self):
+
+        if (
+            self.expiry_date
+            and self.expiry_date < self.issue_date
+        ):
+            raise ValueError(
+                "Expiry date cannot be earlier than issue date."
+            )
+
+        return self
+
+class EmployeeCertificationUpdate(BaseModel):
+
+    certification_name: str | None = None
+    issuing_organization: str | None = None
+    issue_date: date | None = None
+    expiry_date: date | None = None
+
+    @model_validator(mode="after")
+    def validate_dates(self):
+
+        if (
+            self.issue_date
+            and self.expiry_date
+            and self.expiry_date < self.issue_date
+        ):
+            raise ValueError(
+                "Expiry date cannot be earlier than issue date."
+            )
+
+        return self
+
+class EmployeeCertificationOut(BaseModel):
+    id: int
+
+    employee_id: int
+    company_id: int
+
+    certification_name: str
+    issuing_organization: str
+
+    issue_date: date
+    expiry_date: date | None = None
+
+    document_path: str | None = None
+
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+        
+# ---------------- Competency Filter ----------------
+
+class CompetencyFilter(BaseModel):
+    skill: str | None = None
+
+    skill_level: SkillProficiency | None = None
+    
+    min_years_experience: float | None = Field(None, ge=0)
+    
+    certification_name: str | None = None
+    certification_status: str | None = None       
+    
+class EmployeeCompetencyOut(BaseModel):
+
+    employee_id: int
+    employee_name: str
+    employee_email: str
+    department: str | None = None
+    skills: list[EmployeeSkillOut]
+    certifications: list[EmployeeCertificationOut]
+
+    model_config = ConfigDict(from_attributes=True)                     
+        
+class SkillDashboardSummary(BaseModel):
+
+    total_skills: int
+    primary_skills: int
+    active_certifications: int
+    expired_certifications: int        
+        

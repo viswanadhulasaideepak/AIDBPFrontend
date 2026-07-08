@@ -21,6 +21,10 @@ import Company from "../pages/Company/Company";
 import LoginDevices from "../pages/LoginDevices/LoginDevices";
 import AdminLoginDevices from "../pages/AdminLoginDevices/AdminLoginDevices";
 
+import EmployeeSkills from "../pages/Skills/EmployeeSkills";
+import EmployeeCertifications from "../pages/Certifications/EmployeeCertifications";
+import AdminCompetencies from "../pages/Admin/AdminCompetencies";
+
 import { AuthContext } from "../auth/AuthContext";
 
 const Logout = () => {
@@ -194,6 +198,38 @@ const AppRoutes = () => {
         }
       />
 
+      {/* Employee Skills */}
+      <Route
+       path="/skills"
+       element={
+         !user ? (
+            <Navigate to="/login" />
+          ) : isDeactivated ? (
+            <Navigate to="/account-deactivated" />
+          ) : isSuspended ? (
+            <Navigate to="/account-suspended" />
+          ) : (
+            <EmployeeSkills />
+          )
+        }
+      />
+
+      {/* Employee Certifications */}
+      <Route
+       path="/certifications"
+       element={
+         !user ? (
+            <Navigate to="/login" />
+          ) : isDeactivated ? (
+            <Navigate to="/account-deactivated" />
+          ) : isSuspended ? (
+            <Navigate to="/account-suspended" />
+          ) : (
+            <EmployeeCertifications />
+          )
+        }
+      />
+
       {/* Settings */}
       <Route
         path="/settings"
@@ -281,6 +317,24 @@ const AppRoutes = () => {
           )
         }
       />
+
+      {/* Admin Competencies */}
+      <Route
+        path="/competencies"
+        element={
+          !user ? (
+            <Navigate to="/login" />
+          ) : isDeactivated ? (
+            <Navigate to="/account-deactivated" />
+          ) : isSuspended ? (
+            <Navigate to="/account-suspended" />
+          ) : user.role === "admin" ? (
+            <AdminCompetencies />
+          ) : (
+            <Navigate to="/dashboard" />
+          )
+        }
+      /> 
 
       {/* Data Export */}
       <Route

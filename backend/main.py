@@ -25,7 +25,7 @@ from routers import (
     employees_routes, departments_routes, attendance_routes, dashboard_routes,
     notifications_routes, auditlogs_routes, invitations_routes,  members_routes, 
     reactivation_routes, leave_routes, activity_routes, export_routes,holiday_routes,
-    login_devices_routes)
+    login_devices_routes, skills_certifications_routes)
 
 app = FastAPI()
 # ---------------- CORS ----------------
@@ -37,8 +37,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
 
 # ---------------- ROUTERS ----------------
 app.include_router(employees_routes.router)
@@ -59,6 +57,7 @@ app.include_router(suspension_router)
 app.include_router(holiday_routes.router)
 app.include_router(login_devices_routes.router)
 app.include_router(login_devices_routes.admin_router)
+app.include_router(skills_certifications_routes.router)
 
 for route in app.routes:
     print(route.path)

@@ -20,7 +20,9 @@ const Navbar = () => {
 const loadNotifications = async () => {
   try {
     const response = await api.get("/notifications/");
-    console.log(response.data);
+    console.log("Notifications:", response.data);
+    console.log("Type:", typeof response.data);
+    console.log("Is Array:", Array.isArray(response.data));
     setNotifications((response.data || []).slice(0, 10));
   } catch (error) {
     console.error("Error fetching notifications:", error);
@@ -146,12 +148,26 @@ const rejectReinstatementRequest = async (requestId) => {
       <h2 className="navbar-title">Enterprise Employee Management System</h2>
 
       <div className="navbar-links">
-        <NavLink to="/my-profile" className="nav-item">Profile</NavLink>
-        <NavLink to="/company" className="nav-item">Company</NavLink>
-        {isAdmin && (
-        <NavLink to="/holidays" className="nav-item">Holiday Management</NavLink>
-        )}
-      </div>
+  <NavLink to="/my-profile" className="nav-item">
+    Profile
+  </NavLink>
+
+  <NavLink to="/company" className="nav-item">
+    Company
+  </NavLink>
+
+  {isAdmin && (
+    <>
+      <NavLink to="/competencies" className="nav-item">
+        Competencies
+      </NavLink>
+
+      <NavLink to="/holidays" className="nav-item">
+        Holiday Management
+      </NavLink>
+    </>
+  )}
+</div>
 
       <div className="navbar-actions">
         {/* 🔔 Notification Bell */}

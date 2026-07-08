@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Enum, ForeignKey, DateTime, Boolean, Text
+from sqlalchemy import DateTime, Boolean, Text, Date, Float, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Enum, ForeignKey
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime
@@ -60,6 +61,59 @@ class Employee(Base):
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
     department_rel = relationship("Department", back_populates="employees")
     company = relationship("Company", back_populates="employees") 
+    skills = relationship("EmployeeSkill",back_populates="employee",cascade="all, delete-orphan")
+    certifications = relationship("EmployeeCertification",back_populates="employee",cascade="all, delete-orphan")
+    
+#-------------------Employee Skill-------------------
+    
+class EmployeeSkill(Base):
+    __tablename__ = "employee_skills"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "employee_id",
+            "skill_name",
+            name="uq_employee_skill"
+            ),
+        )
+    
+    id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer,ForeignKey("employees.id", ondelete="CASCADE"),nullable=False)
+    company_id = Column(Integer,ForeignKey("companies.id", ondelete="CASCADE"),nullable=False)
+    skill_name = Column(String(150), nullable=False)
+    proficiency = Column(Enum("Beginner","Intermediate","Advanced","Expert",name="skill_proficiency"),nullable=False)
+    years_experience = Column(Float, default=0)
+    is_primary = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime,default=datetime.utcnow,onupdate=datetime.utcnow,)
+    employee = relationship("Employee", back_populates="skills")
+    company = relationship("Company", back_populates="employee_skills")    
+    
+    
+#--------------------Employee Cerification-------------------------    
+class EmployeeCertification(Base):
+    __tablename__ = "employee_certifications"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "employee_id",
+            "certification_name",
+            "issuing_organization",
+            name="uq_employee_certification"
+        ),
+    )
+    id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer,ForeignKey("employees.id", ondelete="CASCADE"),nullable=False,)
+    company_id = Column(Integer,ForeignKey("companies.id", ondelete="CASCADE"),nullable=False)
+    certification_name = Column(String(200), nullable=False)
+    issuing_organization = Column(String(200), nullable=False)
+    issue_date = Column(Date, nullable=False)
+    expiry_date = Column(Date, nullable=True)
+    document_path = Column(String(500), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime,default=datetime.utcnow,onupdate=datetime.utcnow,)
+    employee = relationship("Employee",back_populates="certifications")
+    company = relationship("Company",back_populates="employee_certifications",)    
     
 # ---------------- User Status ----------------
 class UserStatus(str, enum.Enum):
@@ -67,7 +121,6 @@ class UserStatus(str, enum.Enum):
     suspended = "suspended"
     deactivated = "deactivated"   
      
-
 #-------------UserBaseModel-----------
 class User(Base):
     __tablename__ = "users"
@@ -295,7 +348,6 @@ class Company(Base):
     users = relationship("User", back_populates="company")
     leave_requests = relationship("LeaveRequest", back_populates="company")
     activities = relationship("UserActivity", back_populates="company")
-    
     attendance_requests = relationship("AttendanceAccessRequest",back_populates="company")
     reactivation_requests = relationship("ReactivationRequest",back_populates="company")
     attendance_records = relationship("Attendance",back_populates="company")
@@ -303,6 +355,8 @@ class Company(Base):
     export_history = relationship("ExportHistory", back_populates="company",cascade="all, delete-orphan")
     holidays = relationship("Holiday",back_populates="company",cascade="all, delete-orphan")
     login_sessions = relationship("LoginSession",back_populates="company",cascade="all, delete-orphan")
+    employee_skills = relationship("EmployeeSkill",back_populates="company",cascade="all, delete-orphan")
+    employee_certifications = relationship("EmployeeCertification",back_populates="company",cascade="all, delete-orphan",)
 
 #--------------------AuditLog--------------------
 class AuditLog(Base):

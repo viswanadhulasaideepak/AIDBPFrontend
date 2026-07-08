@@ -8,7 +8,7 @@ import EditEmployeeForm from "./EditEmployeeForm";
 import {fetchEmployees,fetchDepartments,transferDepartment,updateEmployee,
   deleteEmployee,suspendUser,reinstateUser} from "../../services/api";
 import "./Employees.css";
-import EmployeeProfile from "./EmployeeProfile";
+//import EmployeeProfile from "./EmployeeProfile";
 
 const Employees = () => {
   const [employees, setEmployees] = useState([]);
@@ -313,7 +313,7 @@ const handleReinstate = async (userId) => {
                   <th>Name</th>
                   <th>Role</th>
                   <th>Department</th>
-                  <th>Profile</th>
+                  {/*<th>Profile</th>*/}
                   <th>Status</th>
                   <th>Joined</th>
                   <th>Actions</th>
@@ -331,9 +331,9 @@ const handleReinstate = async (userId) => {
                     </td>
                     <td>{emp.role}</td>
                     <td>{emp.department_name || "N/A"}</td>
-                      <td>
+                      {/*<td>
                          <EmployeeProfile profile={emp.profile_completion}/>
-                      </td>
+                      </td>*/}
 
                     <td>
                       <select value={emp.status}
