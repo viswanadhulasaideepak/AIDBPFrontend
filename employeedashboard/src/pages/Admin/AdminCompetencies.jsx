@@ -17,6 +17,10 @@ const [filters, setFilters] = useState({
 
 const [selectedEmployee,setSelectedEmployee]=useState(null);
 
+// Pagination
+const [currentPage, setCurrentPage] = useState(1);
+const rowsPerPage = 10;
+
 const loadEmployees = async () => {
     try {
         setLoading(true);
@@ -41,9 +45,10 @@ useEffect(()=>{
     loadEmployees();
 },[]);
 
-useEffect(()=>{
+useEffect(() => {
+    setCurrentPage(1);  
     loadEmployees();
-},[filters]);
+}, [filters]);
 
 const handleChange = (e) => {
     const { name, value } = e.target;
@@ -79,6 +84,14 @@ const handleExport=async()=>{
         toast.error("Export failed.");
     }
 };
+
+// Pagination calculations
+const totalPages = Math.ceil(employees.length / rowsPerPage);
+
+const startIndex = (currentPage - 1) * rowsPerPage;
+const endIndex = startIndex + rowsPerPage;
+
+const currentEmployees = employees.slice(startIndex, endIndex);
 
 return(
 <DashboardLayout>
@@ -148,7 +161,7 @@ return(
                     
                 ):(
 
-                    employees.map((emp , index)=>(
+                    currentEmployees.map((emp , index)=>(
                     <tr key={emp.employee?.id || index}>
                         <td>{emp.employee?.name || "-"}</td>
                         <td>{emp.employee?.email || "-"}</td>
@@ -166,6 +179,27 @@ return(
             </tbody>
         </table>
     )}
+    <div className="pagination">
+
+    <button disabled={currentPage === 1}
+        onClick={() => setCurrentPage(currentPage - 1)}>
+        Previous
+    </button>
+
+    {[...Array(totalPages)].map((_, index) => (
+        <button key={index} className={currentPage === index + 1 ? "active-page" : ""}
+            onClick={() => setCurrentPage(index + 1)}>
+            {index + 1}
+        </button>
+    ))}
+
+    <button
+        disabled={currentPage === totalPages || totalPages === 0}
+        onClick={() => setCurrentPage(currentPage + 1)}>
+        Next
+    </button>
+
+</div>
     {selectedEmployee && (
         <div className="modal-overlay">
             <div className="profile-modal">

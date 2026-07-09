@@ -6,6 +6,9 @@ import "./AuditLogs.css"
 const AuditLogs = () => {
   const [logs, setLogs] = useState([]);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 10;
+
   useEffect(() => {
     loadLogs();
   }, []);
@@ -14,10 +17,20 @@ const AuditLogs = () => {
     try {
       const data = await fetchAuditLogs();
       setLogs(data);
+      setCurrentPage(1);
     } catch (err) {
       console.error(err);
     }
   };
+  // Pagination
+const totalPages = Math.ceil(logs.length / rowsPerPage);
+
+const startIndex = (currentPage - 1) * rowsPerPage;
+
+const currentLogs = logs.slice(
+  startIndex,
+  startIndex + rowsPerPage
+);
 
   return (
     <DashboardLayout>
@@ -35,7 +48,7 @@ const AuditLogs = () => {
       </thead>
 
       <tbody>
-        {logs.map((log) => (
+        {currentLogs.map((log) => (
           <tr key={log.id}>
             <td className="audit-user">{log.user_name}</td>
             <td className="audit-action">{log.action}</td>
@@ -47,6 +60,26 @@ const AuditLogs = () => {
         ))}
       </tbody>
     </table>
+    <div className="pagination">
+
+  <button disabled={currentPage === 1}
+    onClick={() => setCurrentPage(currentPage - 1)}>
+    Previous
+  </button>
+
+  {[...Array(totalPages)].map((_, index) => (
+    <button key={index} className={currentPage === index + 1 ? "active-page" : ""}
+      onClick={() => setCurrentPage(index + 1)}>
+      {index + 1}
+    </button>
+  ))}
+
+  <button disabled={currentPage === totalPages || totalPages === 0}
+    onClick={() => setCurrentPage(currentPage + 1)}>
+    Next
+  </button>
+
+</div>
     </div>
   </DashboardLayout>
   )

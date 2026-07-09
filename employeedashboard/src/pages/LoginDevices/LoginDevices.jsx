@@ -9,11 +9,15 @@ const LoginDevices = () => {
   const [devices, setDevices] = useState([]);
   const [loading, setLoading] = useState(true);
 
+const [currentPage, setCurrentPage] = useState(1);
+const rowsPerPage = 10;
+
   const loadDevices = async () => {
     try {
       setLoading(true);
       const data = await fetchMyLoginDevices();
       setDevices(data);
+      setCurrentPage(1);
     } catch (err) {
       toast.error("Failed to load devices.");
     } finally {
@@ -76,6 +80,16 @@ const handleTrust = async (device) => {
     }
   };
 
+  // Pagination
+const totalPages = Math.ceil(devices.length / rowsPerPage);
+
+const startIndex = (currentPage - 1) * rowsPerPage;
+
+const currentDevices = devices.slice(
+  startIndex,
+  startIndex + rowsPerPage
+);
+
   const handleLogoutAll = async () => {
     if (!window.confirm("Logout all other devices?")) return;
 
@@ -118,7 +132,7 @@ const handleTrust = async (device) => {
 
             <tbody>
 
-              {devices.map((device) => (
+              {currentDevices.map((device) => (
 
                 <tr key={device.id}>
                   <td>{device.device_name}</td>
@@ -173,6 +187,26 @@ const handleTrust = async (device) => {
             </tbody>
           </table>
         )}
+        <div className="pagination">
+
+  <button disabled={currentPage === 1}
+    onClick={() => setCurrentPage(currentPage - 1)}>
+    Previous
+  </button>
+
+  {[...Array(totalPages)].map((_, index) => (
+    <button key={index} className={currentPage === index + 1 ? "active-page" : ""}
+      onClick={() => setCurrentPage(index + 1)}>
+      {index + 1}
+    </button>
+  ))}
+
+  <button disabled={currentPage === totalPages || totalPages === 0}
+    onClick={() => setCurrentPage(currentPage + 1)}>
+    Next
+  </button>
+
+</div>
       </div>
     </DashboardLayout>
   );

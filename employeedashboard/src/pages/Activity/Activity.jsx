@@ -9,6 +9,14 @@ const Activity = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
+  // User Activity Pagination
+  const [activityPage, setActivityPage] = useState(1);
+
+// History Pagination
+  const [historyPage, setHistoryPage] = useState(1);
+
+const rowsPerPage = 10;
+
   const loadData = async () => {
     try {
       setLoading(true);
@@ -18,6 +26,8 @@ const Activity = () => {
       ]);
       setActivities(activityData || []);
       setHistory(historyData || []);
+      setActivityPage(1);
+      setHistoryPage(1);
     } catch (err) {
       console.error(err);
       alert("Failed to load activity.");
@@ -39,6 +49,26 @@ const Activity = () => {
       item.ip_address?.toLowerCase().includes(value)
     );
   });
+
+  // User Activity Pagination
+const totalActivityPages = Math.ceil(
+    filteredActivities.length / rowsPerPage
+);
+
+const currentActivities = filteredActivities.slice(
+    (activityPage - 1) * rowsPerPage,
+    activityPage * rowsPerPage
+);
+
+// History Pagination
+const totalHistoryPages = Math.ceil(
+    history.length / rowsPerPage
+);
+
+const currentHistory = history.slice(
+    (historyPage - 1) * rowsPerPage,
+    historyPage * rowsPerPage
+);
 
   const formatDate = (date) => {
     if (!date) return "-";
@@ -116,7 +146,7 @@ const Activity = () => {
                     </td>
                   </tr>
                 ) : (
-                  filteredActivities.map((item) => (
+                  currentActivities.map((item) => (
                     <tr key={item.id}>
                       <td>
                         {item.username || "-"}
@@ -142,6 +172,27 @@ const Activity = () => {
               </tbody>
             </table>
           )}
+          <div className="pagination">
+
+  <button disabled={activityPage === 1}
+    onClick={() => setActivityPage(activityPage - 1)}>
+    Previous
+  </button>
+
+  {[...Array(totalActivityPages)].map((_, index) => (
+    <button key={index} className={activityPage === index + 1 ? "active-page" : ""}
+      onClick={() => setActivityPage(index + 1)}>
+      {index + 1}
+    </button>
+  ))}
+
+  <button disabled={
+      activityPage === totalActivityPages || totalActivityPages === 0}
+    onClick={() => setActivityPage(activityPage + 1)}>
+    Next
+  </button>
+
+</div>
         </div>
         <div className="history-section">
           <h2>Recent Activity History</h2>
@@ -165,7 +216,7 @@ const Activity = () => {
                   </td>
                 </tr>
               ) : (
-                history.map((log) => (
+                currentHistory.map((log) => (
                   <tr key={log.id}>
                     <td>
                       {log.user_name}
@@ -209,6 +260,27 @@ const Activity = () => {
               )}
             </tbody>
           </table>
+          <div className="pagination">
+
+  <button disabled={historyPage === 1}
+    onClick={() => setHistoryPage(historyPage - 1)}>
+    Previous
+  </button>
+
+  {[...Array(totalHistoryPages)].map((_, index) => (
+    <button key={index} className={historyPage === index + 1 ? "active-page" : ""}
+      onClick={() => setHistoryPage(index + 1)}>
+      {index + 1}
+    </button>
+  ))}
+
+  <button disabled={
+      historyPage === totalHistoryPages || totalHistoryPages === 0}
+    onClick={() => setHistoryPage(historyPage + 1)}>
+    Next
+  </button>
+
+</div>
         </div>
       </div>
     </div>
